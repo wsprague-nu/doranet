@@ -45,7 +45,6 @@ from typing import (
     Union,
     final,
 )
-from sys import exc_info
 
 import rdkit.Chem.rdChemReactions
 from rdkit.Chem import Mol as BuildMol, MolFromSmiles, MolToSmiles
