@@ -17,8 +17,8 @@ from abc import ABC, abstractmethod
 from msilib.schema import Class
 from typing import Any, Iterable, Optional, Tuple, Union
 
-from rdkit.Chem.rdchem import Mol as RDKitMol
-from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
+from rdkit.Chem.rdchem import Mol as RDKitMol  # type: ignore
+from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn  # type: ignore
 
 from pickaxe_generic.containers import (
     ObjectLibrary,

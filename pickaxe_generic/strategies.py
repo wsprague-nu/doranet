@@ -26,7 +26,7 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from rdkit.Chem.rdchem import Mol as RDKitMol
+from rdkit.Chem.rdchem import Mol as RDKitMol  # type: ignore
 
 from pickaxe_generic.containers import ObjectLibrary
 from pickaxe_generic.datatypes import Identifier, MolDatBase, OpDatBase, RxnDatBase
