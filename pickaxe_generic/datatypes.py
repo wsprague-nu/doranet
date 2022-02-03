@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 import builtins
 from io import BytesIO
 from pickle import dumps, Unpickler, UnpicklingError
-from typing import Any, final, FrozenSet, Iterable, List, Optional, Protocol, Sequence, Tuple, TypeVar, Union
+from typing import Any, final, FrozenSet, Iterable, List, Optional, Protocol, Sequence, Tuple, Union
 
 from rdkit.Chem import Mol as BuildMol, MolFromSmiles, MolToSmiles
 from rdkit.Chem.inchi import MolToInchiKey
@@ -181,9 +181,6 @@ class DataUnit(ABC):
 
     def __setstate__(self, data):
         self.__init__(data)
-
-
-DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
 
 
 class MolDatBase(DataUnit):
