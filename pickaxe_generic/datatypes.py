@@ -1,22 +1,19 @@
 """
-Contains classes which define and implement molecule-operator datastructures.
+Contains classes which define and implement molecule-operator data units.
 
 Classes:
 
     Identifier(Protocol)
     DataUnit
-      MolDatBase(DataUnit)
-        MolDatRDKit(MolDatBase)
-          MolDatBasic(MolDatRDKit)
-      OpDatBase(DataUnit)
-        OpDatRDKit(OpDatBase)
-          OpDatBasic(OpDatRDKit)
-      RxnDatBase(DataUnit)
-        RxnDatBasic(RxnDatBase)
-    ObjectLibrary
-      ObjectLibraryBasic(ObjectLibrary)
-    ExpansionStrategy
-      CartesianStrategy(ExpansionStrategy)
+      MolDatBase
+        MolDatRDKit
+          MolDatBasicV1*
+          MolDatBasicV2*
+      OpDatBase
+        OpDatRDKit
+          OpDatBasic*
+      RxnDatBase
+        RxnDatBasic*
 """
 
 from abc import ABC, abstractmethod

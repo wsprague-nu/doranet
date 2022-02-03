@@ -1,3 +1,18 @@
+"""
+Contains classes which define and implement dependency-injection engines.
+Also contains master configuration function create_engine.
+
+Functions:
+
+    create_engine
+
+Classes:
+
+    NetworkEngine
+      NetworkEngineBasic*
+"""
+
+
 from abc import ABC, abstractmethod
 from typing import Iterable, Optional, Tuple, Union
 

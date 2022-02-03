@@ -1,3 +1,14 @@
+"""
+Contains classes which define and implement network expansion strategies.
+
+Classes:
+
+    ExpansionStrategy
+      CartesianStrategy*
+      HybridExpansionStrategy
+        OrderedCartesianHybridExpansionStrategy*
+"""
+
 from abc import ABC, abstractmethod
 from itertools import product as iterproduct
 from typing import (

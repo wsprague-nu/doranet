@@ -1,3 +1,13 @@
+"""
+Contains classes which define and implement relevant smart containers.
+
+Classes:
+
+    ObjectLibrary
+      ObjectLibraryBasic*
+      ObjectLibraryKeyVal*
+"""
+
 from abc import ABC, abstractmethod
 from typing import (
     Callable,

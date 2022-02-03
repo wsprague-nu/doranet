@@ -1,3 +1,13 @@
+"""
+Contains classes which define and implement utility functions.
+
+Classes:
+
+    RxnTracker
+      RxnTrackerSingle*
+      RxnTrackerDepthFirst*
+"""
+
 from abc import ABC, abstractmethod
 from itertools import chain, product as iterproduct
 from typing import Collection, Dict, Generator, Iterable, List, Optional, Sequence, Set
