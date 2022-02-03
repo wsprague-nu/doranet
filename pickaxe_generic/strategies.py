@@ -9,6 +9,7 @@ Classes:
         OrderedCartesianHybridExpansionStrategy*
 """
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from itertools import product as iterproduct
 from typing import (
@@ -22,13 +23,15 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    TYPE_CHECKING,
 )
 
 from rdkit.Chem.rdchem import Mol as RDKitMol
 
-from containers import ObjectLibrary
-from datatypes import Identifier, MolDatBase, OpDatBase, RxnDatBase
-from engine import NetworkEngine
+from pickaxe_generic.containers import ObjectLibrary
+from pickaxe_generic.datatypes import Identifier, MolDatBase, OpDatBase, RxnDatBase
+if TYPE_CHECKING:
+    from pickaxe_generic.engine import NetworkEngine
 
 
 class ExpansionStrategy(ABC):
@@ -416,7 +419,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
 
     def _compat_table_generator(
         self,
-    ) -> Generator[Tuple[Tuple[OpDatBase, FrozenSet[RDKitMol]], int], None, None]:
+    ) -> Generator[Tuple[Tuple[Identifier, FrozenSet[RDKitMol]], int], None, None]:
         for lib_index in range(len(self._op_cache)):
             for op_uid in self._op_cache[lib_index]:
                 for react_uids in (

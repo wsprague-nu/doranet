@@ -14,13 +14,14 @@ Classes:
 
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, Tuple, Union
+from msilib.schema import Class
+from typing import Any, Iterable, Optional, Tuple, Union
 
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 
-from containers import ObjectLibrary, ObjectLibraryBasic, ObjectLibraryKeyVal
-from datatypes import (
+from pickaxe_generic.containers import ObjectLibrary, ObjectLibraryBasic, ObjectLibraryKeyVal
+from pickaxe_generic.datatypes import (
     Identifier,
     MolDatBase,
     MolDatBasicV1,
@@ -32,7 +33,7 @@ from datatypes import (
     RxnDatBase,
     RxnDatBasic,
 )
-from strategies import CartesianStrategy
+from pickaxe_generic.strategies import CartesianStrategy
 
 
 def create_engine(speed: int = 5):
@@ -135,6 +136,10 @@ class NetworkEngineBasic(NetworkEngine):
         "_CartesianStrategy",
         "_speed",
     )
+    _Mol: Any
+    _Mol_Lib: Any
+    _Op_Lib: Any
+    _Rxn_Lib: Any
 
     def __init__(self, speed: int = 5):
         if speed == 1:

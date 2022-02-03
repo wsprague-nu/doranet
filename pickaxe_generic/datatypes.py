@@ -16,6 +16,7 @@ Classes:
         RxnDatBasic*
 """
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import builtins
 from io import BytesIO
@@ -30,6 +31,7 @@ from typing import (
     Protocol,
     Sequence,
     Tuple,
+    TYPE_CHECKING,
     Union,
 )
 
@@ -43,7 +45,8 @@ from rdkit.Chem.rdChemReactions import (
 )
 from rdkit.Chem.rdmolops import AssignStereochemistry, SanitizeMol
 
-from engine import NetworkEngine
+if TYPE_CHECKING:
+    from pickaxe_generic.engine import NetworkEngine
 
 # some code to make loads more safe to arbitrary code execution
 # necessary since external data from a database may be input

@@ -12,8 +12,8 @@ from abc import ABC, abstractmethod
 from itertools import chain, product as iterproduct
 from typing import Collection, Dict, Generator, Iterable, List, Optional, Sequence, Set
 
-from containers import ObjectLibrary
-from datatypes import Identifier, RxnDatBase
+from pickaxe_generic.containers import ObjectLibrary
+from pickaxe_generic.datatypes import Identifier, RxnDatBase
 
 
 class RxnTracker(ABC):

@@ -22,7 +22,7 @@ from typing import (
     Union,
 )
 
-from datatypes import DataUnit, Identifier
+from pickaxe_generic.datatypes import DataUnit, Identifier
 
 DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
 
