@@ -20,7 +20,11 @@ from typing import Any, Iterable, Optional, Tuple, Union
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 
-from pickaxe_generic.containers import ObjectLibrary, ObjectLibraryBasic, ObjectLibraryKeyVal
+from pickaxe_generic.containers import (
+    ObjectLibrary,
+    ObjectLibraryBasic,
+    ObjectLibraryKeyVal,
+)
 from pickaxe_generic.datatypes import (
     Identifier,
     MolDatBase,

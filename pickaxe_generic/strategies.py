@@ -30,6 +30,7 @@ from rdkit.Chem.rdchem import Mol as RDKitMol
 
 from pickaxe_generic.containers import ObjectLibrary
 from pickaxe_generic.datatypes import Identifier, MolDatBase, OpDatBase, RxnDatBase
+
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
 
