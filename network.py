@@ -201,7 +201,8 @@ class DataUnit(ABC):
     def blob(self) -> bytes:
         """
         Binary representation of object.  Must be able to initialize object when
-        passed to __init__ method of compatible subclass.
+        passed to __init__ method of any subclass of same type (viz. initialize
+        a MolDatBasicV2, even if obtained from a MolDatBasicV1).
         """
 
     @property
