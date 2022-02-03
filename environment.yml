@@ -3,17 +3,5 @@ channels:
  - rdkit
  - conda-forge
 dependencies:
- - jupyter
- - mordred
- - numpy
- - numpydoc
- - pandas
- - pymongo
- - pytest
- - pytest-cov
  - python>=3.9
  - rdkit
- - scikit-learn
- - scipy
- - sphinxcontrib-napoleon
- - sqlalchemy
