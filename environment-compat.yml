@@ -1,4 +1,4 @@
-name: pickaxe-compat
+name: pickaxe-generic
 channels:
  - rdkit
  - conda-forge
