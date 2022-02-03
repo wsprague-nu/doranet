@@ -1,0 +1,23 @@
+name: pickaxe-generic-dev
+channels:
+ - rdkit
+ - conda-forge
+dependencies:
+ - black
+ - jupyter
+ - memory-profiler
+ - mordred
+ - mypy
+ - numpy
+ - numpydoc
+ - pandas
+ - pymongo
+ - pytest
+ - pytest-cov
+ - python>=3.9
+ - rdkit
+ - scikit-learn
+ - scipy
+ - snakeviz
+ - sphinxcontrib-napoleon
+ - sqlalchemy
