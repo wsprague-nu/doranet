@@ -697,9 +697,7 @@ class OpDatBasic(OpDatRDKit):
         try:
             return tuple(
                 tuple(self._engine.Mol(product) for product in products)
-                for products in self._rdkitrxn.RunReactants(
-                    rdkitmols, maxProducts=0
-                )
+                for products in self._rdkitrxn.RunReactants(rdkitmols, maxProducts=0)
             )
         except AtomValenceException as e:
             raise ValueError(
@@ -816,9 +814,7 @@ class RxnDatBasic(RxnDatBase):
     _reactants: FrozenSet[Identifier]
 
     _blob: Optional[bytes]
-    _uid: Optional[
-        Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]
-    ]
+    _uid: Optional[Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]]
 
     def __init__(
         self,
@@ -834,11 +830,7 @@ class RxnDatBasic(RxnDatBase):
             self._operator = data[0]
             self._products = frozenset(data[1])
             self._reactants = frozenset(data[2])
-        elif (
-            operator is not None
-            and reactants is not None
-            and products is not None
-        ):
+        elif operator is not None and reactants is not None and products is not None:
             self._operator = operator
             self._reactants = frozenset(reactants)
             self._products = frozenset(products)
@@ -850,9 +842,7 @@ class RxnDatBasic(RxnDatBase):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = dumps(
-                tuple((self._operator, self._products, self._reactants))
-            )
+            self._blob = dumps(tuple((self._operator, self._products, self._reactants)))
         return self._blob
 
     @property
@@ -1198,7 +1188,7 @@ class CartesianStrategy(ExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[MolDatBase],bool] = lambda _: True,
+        filter: Callable[[MolDatBase], bool] = lambda _: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -1215,9 +1205,7 @@ class CartesianStrategy(ExpansionStrategy):
                     if recipe in self._recipe_cache:
                         continue
                     op = self._op_cache[op_uid]
-                    reactants = tuple(
-                        self._mol_cache[uid] for uid in react_uids
-                    )
+                    reactants = tuple(self._mol_cache[uid] for uid in react_uids)
                     for productset in op(reactants):
                         prod_uids = frozenset(mol.uid for mol in productset)
                         # print(prod_uids)
@@ -1444,9 +1432,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
 
     def _compat_table_generator(
         self,
-    ) -> Generator[
-        Tuple[Tuple[OpDatBase, FrozenSet[RDKitMol]], int], None, None
-    ]:
+    ) -> Generator[Tuple[Tuple[OpDatBase, FrozenSet[RDKitMol]], int], None, None]:
         for lib_index in range(len(self._op_cache)):
             for op_uid in self._op_cache[lib_index]:
                 for react_uids in (
@@ -1454,9 +1440,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
                     for reactantset in iterproduct(
                         *(self._compat_table[lib_index][op_uid])
                     )
-                    if all(
-                        self._mol_cache[r][1] <= lib_index for r in reactantset
-                    )
+                    if all(self._mol_cache[r][1] <= lib_index for r in reactantset)
                 ):
                     yield (op_uid, frozenset(react_uids)), lib_index
 
@@ -1465,7 +1449,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[MolDatBase],bool] = lambda _: True,
+        filter: Callable[[MolDatBase], bool] = lambda _: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -1505,8 +1489,8 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
                                 return
                     for mol in temp_mols:
                         self._mol_lib.add(mol)
-                        self._mol_cache[mol.uid] = (mol,lib_index)
-                        self._add_mol_to_compat(mol,lib_index)
+                        self._mol_cache[mol.uid] = (mol, lib_index)
+                        self._add_mol_to_compat(mol, lib_index)
                     self._rxn_lib.add(rxn)
                     exhausted = False
                     num_rxns += 1
@@ -1677,9 +1661,7 @@ class NetworkEngineBasic(NetworkEngine):
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> MolDatRDKit:
-        return self._Mol(
-            molecule=molecule, sanitize=sanitize, neutralize=neutralize
-        )
+        return self._Mol(molecule=molecule, sanitize=sanitize, neutralize=neutralize)
 
     def Op(self, operator: Union[RDKitRxn, str, bytes]) -> OpDatBasic:
         return self._Op(operator=operator, engine=self)
@@ -1789,9 +1771,7 @@ class RxnTrackerSingle(RxnTracker):
                 if reactant in cur_mols:
                     continue
                 noReactions = False
-                for rxnpath in self._getchains(
-                    reactant, cur_mols.union({reactant})
-                ):
+                for rxnpath in self._getchains(reactant, cur_mols.union({reactant})):
                     rxnpath.append(rxnid)
                     yield rxnpath
             if noReactions:
@@ -1853,8 +1833,7 @@ class RxnTrackerDepthFirst(RxnTracker):
                 for rxn in self._mol_lookup[mol]
                 if rxn not in prev_gens_rxns
                 and all(
-                    mol not in prev_gens_mols
-                    for mol in self._rxn_lib[rxn].reactants
+                    mol not in prev_gens_mols for mol in self._rxn_lib[rxn].reactants
                 )
             ]
             rxnsets.append(newrxnset)
@@ -1872,9 +1851,7 @@ class RxnTrackerDepthFirst(RxnTracker):
                 tested_combos.add(frozenset(rxncombo))
             required_reagents = set(
                 mol
-                for mol in chain(
-                    *(self._rxn_lib[rxn].reactants for rxn in rxncombo)
-                )
+                for mol in chain(*(self._rxn_lib[rxn].reactants for rxn in rxncombo))
                 if mol not in reagent_table
             )
             if len(required_reagents) == 0:

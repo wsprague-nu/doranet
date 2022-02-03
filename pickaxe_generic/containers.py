@@ -1,9 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, final, Generator, Generic, Iterable, Iterator, Optional, TypeVar, Union
+from typing import (
+    Callable,
+    Dict,
+    final,
+    Generator,
+    Generic,
+    Iterable,
+    Iterator,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 from datatypes import DataUnit, Identifier
 
 DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
+
 
 class ObjectLibrary(ABC, Generic[DataUnitGen]):
     """

@@ -5,6 +5,7 @@ from typing import Collection, Dict, Generator, Iterable, List, Optional, Sequen
 from containers import ObjectLibrary
 from datatypes import Identifier, RxnDatBase
 
+
 class RxnTracker(ABC):
     """
     Interface representing an object which analyzes rxn network connections.
@@ -45,8 +46,6 @@ class RxnTracker(ABC):
         """
 
 
-
-
 class RxnTrackerSingle(RxnTracker):
     """Implements RxnTracker interface; only compatible with reactions
     involving a single reactant and product.  DEVELOPMENT ONLY"""
@@ -76,9 +75,7 @@ class RxnTrackerSingle(RxnTracker):
                 if reactant in cur_mols:
                     continue
                 noReactions = False
-                for rxnpath in self._getchains(
-                    reactant, cur_mols.union({reactant})
-                ):
+                for rxnpath in self._getchains(reactant, cur_mols.union({reactant})):
                     rxnpath.append(rxnid)
                     yield rxnpath
             if noReactions:
@@ -142,8 +139,7 @@ class RxnTrackerDepthFirst(RxnTracker):
                 for rxn in self._mol_lookup[mol]
                 if rxn not in prev_gens_rxns
                 and all(
-                    mol not in prev_gens_mols
-                    for mol in self._rxn_lib[rxn].reactants
+                    mol not in prev_gens_mols for mol in self._rxn_lib[rxn].reactants
                 )
             ]
             rxnsets.append(newrxnset)
@@ -161,9 +157,7 @@ class RxnTrackerDepthFirst(RxnTracker):
                 tested_combos.add(frozenset(rxncombo))
             required_reagents = set(
                 mol
-                for mol in chain(
-                    *(self._rxn_lib[rxn].reactants for rxn in rxncombo)
-                )
+                for mol in chain(*(self._rxn_lib[rxn].reactants for rxn in rxncombo))
                 if mol not in reagent_table
             )
             if len(required_reagents) == 0:

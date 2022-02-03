@@ -5,11 +5,24 @@ from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 
 from containers import ObjectLibrary, ObjectLibraryBasic, ObjectLibraryKeyVal
-from datatypes import Identifier, MolDatBase, MolDatBasicV1, MolDatBasicV2, MolDatRDKit, OpDatBase, OpDatBasic, OpDatRDKit, RxnDatBase, RxnDatBasic
+from datatypes import (
+    Identifier,
+    MolDatBase,
+    MolDatBasicV1,
+    MolDatBasicV2,
+    MolDatRDKit,
+    OpDatBase,
+    OpDatBasic,
+    OpDatRDKit,
+    RxnDatBase,
+    RxnDatBasic,
+)
 from strategies import CartesianStrategy
+
 
 def create_engine(speed: int = 5):
     return NetworkEngineBasic(speed=speed)
+
 
 class NetworkEngine(ABC):
     """
@@ -152,9 +165,7 @@ class NetworkEngineBasic(NetworkEngine):
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> MolDatRDKit:
-        return self._Mol(
-            molecule=molecule, sanitize=sanitize, neutralize=neutralize
-        )
+        return self._Mol(molecule=molecule, sanitize=sanitize, neutralize=neutralize)
 
     def Op(self, operator: Union[RDKitRxn, str, bytes]) -> OpDatBasic:
         return self._Op(operator=operator, engine=self)

@@ -23,12 +23,27 @@ from abc import ABC, abstractmethod
 import builtins
 from io import BytesIO
 from pickle import dumps, Unpickler, UnpicklingError
-from typing import Any, final, FrozenSet, Iterable, List, Optional, Protocol, Sequence, Tuple, Union
+from typing import (
+    Any,
+    final,
+    FrozenSet,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from rdkit.Chem import Mol as BuildMol, MolFromSmiles, MolToSmiles
 from rdkit.Chem.inchi import MolToInchiKey
 from rdkit.Chem.rdchem import AtomValenceException, KekulizeException, Mol as RDKitMol
-from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn, ReactionFromSmarts, ReactionToSmarts
+from rdkit.Chem.rdChemReactions import (
+    ChemicalReaction as RDKitRxn,
+    ReactionFromSmarts,
+    ReactionToSmarts,
+)
 from rdkit.Chem.rdmolops import AssignStereochemistry, SanitizeMol
 
 from engine import NetworkEngine
@@ -43,19 +58,24 @@ _safe_builtins_classes: FrozenSet[str] = frozenset(
         "tuple",
     }
 )
+
+
 class __SafeUnpickler(Unpickler):
     def find_class(self, module: str, name: str) -> Any:
         if module == "builtins" and name in _safe_builtins_classes:
             return getattr(builtins, name)
         raise UnpicklingError(f"global '{module}.{name}' is forbidden")
+
+
 def loads(s: bytes) -> Any:
     return __SafeUnpickler(BytesIO(s)).load()
+
 
 class Identifier(Protocol):
     """
     Orderable, hashable object used as unique identifier.  Ideally immutable
     using public methods.
-    
+
     Methods
     -------
     __hash__
@@ -66,7 +86,7 @@ class Identifier(Protocol):
     def __hash__(self) -> int:
         """
         Hashes object to integer.
-        
+
         Returns
         -------
         int
@@ -244,12 +264,14 @@ class MolDatRDKit(MolDatBase):
         neutralize: bool = False,
     ) -> None:
         pass
-    
+
     def __lt__(self, other: object) -> bool:
-        if isinstance(other,MolDatRDKit):
+        if isinstance(other, MolDatRDKit):
             return self.uid < other.uid
         else:
-            raise TypeError(f"Invalid comparison between objects of type {type(self)} and type {type(other)}")
+            raise TypeError(
+                f"Invalid comparison between objects of type {type(self)} and type {type(other)}"
+            )
 
     @property
     @abstractmethod
@@ -621,9 +643,7 @@ class OpDatBasic(OpDatRDKit):
         try:
             return tuple(
                 tuple(self._engine.Mol(product) for product in products)
-                for products in self._rdkitrxn.RunReactants(
-                    rdkitmols, maxProducts=0
-                )
+                for products in self._rdkitrxn.RunReactants(rdkitmols, maxProducts=0)
             )
         except AtomValenceException as e:
             raise ValueError(
@@ -740,9 +760,7 @@ class RxnDatBasic(RxnDatBase):
     _reactants: FrozenSet[Identifier]
 
     _blob: Optional[bytes]
-    _uid: Optional[
-        Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]
-    ]
+    _uid: Optional[Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]]
 
     def __init__(
         self,
@@ -758,11 +776,7 @@ class RxnDatBasic(RxnDatBase):
             self._operator = data[0]
             self._products = frozenset(data[1])
             self._reactants = frozenset(data[2])
-        elif (
-            operator is not None
-            and reactants is not None
-            and products is not None
-        ):
+        elif operator is not None and reactants is not None and products is not None:
             self._operator = operator
             self._reactants = frozenset(reactants)
             self._products = frozenset(products)
@@ -774,9 +788,7 @@ class RxnDatBasic(RxnDatBase):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = dumps(
-                tuple((self._operator, self._products, self._reactants))
-            )
+            self._blob = dumps(tuple((self._operator, self._products, self._reactants)))
         return self._blob
 
     @property

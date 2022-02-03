@@ -71,12 +71,8 @@ class TestOpDatBasic:
     @mark.parametrize(
         "init",
         [
-            ReactionFromSmarts(
-                "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-            ),
-            ReactionFromSmarts(
-                "[N!H0:3].[C:1](=[O:2])-[OD1]>>[C:1](=[O:2])[N:3]"
-            ),
+            ReactionFromSmarts("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
+            ReactionFromSmarts("[N!H0:3].[C:1](=[O:2])-[OD1]>>[C:1](=[O:2])[N:3]"),
             "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]",
             "[N!H0:3].[C:1](=[O:2])-[OD1]>>[C:1](=[O:2])[N:3]",
             OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]").blob,
@@ -108,9 +104,7 @@ class TestOpDatBasic:
     @mark.parametrize(
         "init",
         [
-            ReactionFromSmarts(
-                "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-            ),
+            ReactionFromSmarts("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
             "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]",
             OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]").blob,
         ],
@@ -118,22 +112,14 @@ class TestOpDatBasic:
     def test_equality(self, init):
         """Test equality of operator objects."""
         op = OpDatBasic(init)
-        assert op == OpDatBasic(
-            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-        )
-        assert op == OpDatBasic(
-            "[CH1:1](=[O:2])[OD1].[N:3]>>[C:1](=[O:2])[N:3]"
-        )
+        assert op == OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
+        assert op == OpDatBasic("[CH1:1](=[O:2])[OD1].[N:3]>>[C:1](=[O:2])[N:3]")
         assert op != OpDatBasic("[C:1]=[O,N:2]>>[C:1][*:2]")
-        assert op != OpDatBasic(
-            "[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]"
-        )
+        assert op != OpDatBasic("[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]")
 
     def test_hash(self):
         """Test hash method."""
-        assert isinstance(
-            hash(OpDatBasic("[C:1]=[O,N:2]>>[C:1][*:2]").uid), int
-        )
+        assert isinstance(hash(OpDatBasic("[C:1]=[O,N:2]>>[C:1][*:2]").uid), int)
 
     def test_compat(self):
         """Test compat method."""
@@ -438,17 +424,13 @@ class TestCartesianStrategy:
             (
                 ObjectLibraryBasic(),
                 ObjectLibraryBasic(
-                    OpDatBasic(
-                        "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                    )
+                    OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
                 ),
             ),
             (
                 ObjectLibraryBasic(MolDatBasic("CC")),
                 ObjectLibraryBasic(
-                    OpDatBasic(
-                        "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                    )
+                    OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
                 ),
             ),
             (
@@ -456,9 +438,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:1]>>[C:1]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
             ),
@@ -473,9 +453,7 @@ class TestCartesianStrategy:
             (
                 ObjectLibraryBasic(MolDatBasic("CC")),
                 ObjectLibraryBasic(
-                    OpDatBasic(
-                        "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                    )
+                    OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
                 ),
                 1,
                 0,
@@ -485,9 +463,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:2]>>[C:1]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 3,
@@ -498,9 +474,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:2][C:3]>>[C:2]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 3,
@@ -511,9 +485,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[CH3:1][C:2][C:3]>>[CH3:1][C:2].[C:3]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 4,
@@ -596,9 +568,7 @@ class TestCartesianStrategy:
             (
                 ObjectLibraryBasic(MolDatBasic("CC")),
                 ObjectLibraryBasic(
-                    OpDatBasic(
-                        "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                    )
+                    OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
                 ),
                 1,
             ),
@@ -607,9 +577,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:2]>>[C:1]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 3,
@@ -619,9 +587,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:2][C:3]>>[C:2]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 3,
@@ -631,9 +597,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[CH3:1][C:2][C:3]>>[CH3:1][C:2].[C:3]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 4,
@@ -709,9 +673,7 @@ class TestCartesianStrategy:
             (
                 ObjectLibraryBasic(MolDatBasic("CC")),
                 ObjectLibraryBasic(
-                    OpDatBasic(
-                        "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                    )
+                    OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
                 ),
                 0,
             ),
@@ -720,9 +682,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:2]>>[C:1]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 3,
@@ -732,9 +692,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[C:1][C:2][C:3]>>[C:2]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 2,
@@ -744,9 +702,7 @@ class TestCartesianStrategy:
                 ObjectLibraryBasic(
                     (
                         OpDatBasic("[CH3:1][C:2][C:3]>>[CH3:1][C:2].[C:3]"),
-                        OpDatBasic(
-                            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"
-                        ),
+                        OpDatBasic("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"),
                     ),
                 ),
                 2,
