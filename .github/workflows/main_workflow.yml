@@ -19,7 +19,7 @@ jobs:
       run: |
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies and create base conda environment
-      run |
+      run: |
         conda env update -f environment.yml -n base
         conda install black flake8 flake8-bugbear flake8-docstrings isort pytest pytest-cov tox
         conda develop ../Pickaxe-Generic
