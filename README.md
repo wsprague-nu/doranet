@@ -132,11 +132,11 @@ conda install -n env-name -c rdkit rdkit
 
    Command to create new environment (replace env.yml with your chosen environment file)
    ```sh
-   conda create -f env.yml
+   conda env create -f env.yml
    ```
    Existing environment (replace env.yml with your chosen environment file, and env-name with the existing environment name)
    ```sh
-   conda install -n env-name -f env.yml --prune
+   conda env update -n env-name -f env.yml --prune
    ```
 6. Activate the environment you installed rdkit into (replace env-name with your chosen environment name).  If a fresh environment was installed, the default environment name should be displayed on the screen.
    ```sh
