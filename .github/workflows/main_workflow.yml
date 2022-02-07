@@ -1,0 +1,28 @@
+name: Pickaxe-Generic
+
+on: [pull_request, push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Add conda to system path
+      run: |
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies and create base conda environment
+      run |
+        conda env update -f environment.yml -n base
+        conda install black flake8 flake8-bugbear flake8-docstrings isort pytest pytest-cov tox
+        conda develop ../Pickaxe-Generic
+    - name: Run black to determine formatting
+      run: |
+        python -m black .
