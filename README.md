@@ -187,10 +187,11 @@ Project Link: [https://github.com/wsprague-nu/Pickaxe-Generic](https://github.co
 ## Acknowledgments
 
 * [Prof. Linda Broadbelt](broadbelt.northwestern.edu)
+* Kevin Shebek
 * Lauren Lopez
 * Joseph Ni
-* Kevin Shebek
 * Jon Strutz
+* [Prof. Brent Shanks](https://www.engineering.iastate.edu/people/profile/bshanks/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
