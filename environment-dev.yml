@@ -1,4 +1,4 @@
-name: pickaxe-generic-dev
+name: pickaxe-env
 channels:
  - rdkit
  - conda-forge
