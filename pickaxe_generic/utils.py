@@ -9,7 +9,8 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
-from itertools import chain, product as iterproduct
+from itertools import chain
+from itertools import product as iterproduct
 from typing import Collection, Dict, Generator, Iterable, List, Optional, Sequence, Set
 
 from pickaxe_generic.containers import ObjectLibrary

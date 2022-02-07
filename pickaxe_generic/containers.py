@@ -12,7 +12,6 @@ from abc import ABC, abstractmethod
 from typing import (
     Callable,
     Dict,
-    final,
     Generator,
     Generic,
     Iterable,
@@ -20,6 +19,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    final,
 )
 
 from pickaxe_generic.datatypes import DataUnit, Identifier

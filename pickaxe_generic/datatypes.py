@@ -17,13 +17,14 @@ Classes:
 """
 
 from __future__ import annotations
-from abc import ABC, abstractmethod
+
 import builtins
+from abc import ABC, abstractmethod
 from io import BytesIO
-from pickle import dumps, Unpickler, UnpicklingError
+from pickle import Unpickler, UnpicklingError, dumps
 from typing import (
+    TYPE_CHECKING,
     Any,
-    final,
     FrozenSet,
     Iterable,
     List,
@@ -31,19 +32,19 @@ from typing import (
     Protocol,
     Sequence,
     Tuple,
-    TYPE_CHECKING,
     Union,
+    final,
 )
 
-from rdkit.Chem import Mol as BuildMol, MolFromSmiles, MolToSmiles  # type: ignore
+from rdkit.Chem import Mol as BuildMol  # type: ignore
+from rdkit.Chem import MolFromSmiles, MolToSmiles
 from rdkit.Chem.inchi import MolToInchiKey  # type: ignore
-from rdkit.Chem.rdchem import AtomValenceException, KekulizeException, Mol as RDKitMol  # type: ignore
-from rdkit.Chem.rdChemReactions import (  # type: ignore
-    ChemicalReaction as RDKitRxn,
-    ReactionFromSmarts,
-    ReactionToSmarts,
-)
-from rdkit.Chem.rdmolops import AssignStereochemistry, SanitizeMol  # type: ignore
+from rdkit.Chem.rdchem import AtomValenceException, KekulizeException
+from rdkit.Chem.rdchem import Mol as RDKitMol  # type: ignore
+from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn  # type: ignore
+from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
+from rdkit.Chem.rdmolops import AssignStereochemistry  # type: ignore
+from rdkit.Chem.rdmolops import SanitizeMol
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine

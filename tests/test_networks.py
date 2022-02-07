@@ -155,15 +155,12 @@ class TestOpDatBasic:
         prod1_expected = frozenset(("CC(C)CN", "CN"))
         prod2_expected = frozenset(("CCCCN", "CN"))
         prods = op((mol,))
-        assert (
-            frozenset(
-                (
-                    frozenset(tuple(mol.uid for mol in prods[0])),
-                    frozenset(tuple(mol.uid for mol in prods[1])),
-                )
+        assert frozenset(
+            (
+                frozenset(tuple(mol.uid for mol in prods[0])),
+                frozenset(tuple(mol.uid for mol in prods[1])),
             )
-            == frozenset((prod1_expected, prod2_expected))
-        )
+        ) == frozenset((prod1_expected, prod2_expected))
 
 
 class TestRxnDatBasic:

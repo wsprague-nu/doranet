@@ -10,12 +10,13 @@ Classes:
 """
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from itertools import product as iterproduct
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Dict,
-    final,
     FrozenSet,
     Generator,
     List,
@@ -23,7 +24,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    TYPE_CHECKING,
+    final,
 )
 
 from rdkit.Chem.rdchem import Mol as RDKitMol  # type: ignore
