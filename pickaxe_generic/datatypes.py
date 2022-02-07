@@ -36,14 +36,14 @@ from typing import (
     final,
 )
 
-from rdkit.Chem import Mol as BuildMol  # type: ignore
+from rdkit.Chem import Mol as BuildMol
 from rdkit.Chem import MolFromSmiles, MolToSmiles
-from rdkit.Chem.inchi import MolToInchiKey  # type: ignore
+from rdkit.Chem.inchi import MolToInchiKey
 from rdkit.Chem.rdchem import AtomValenceException, KekulizeException
-from rdkit.Chem.rdchem import Mol as RDKitMol  # type: ignore
-from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn  # type: ignore
+from rdkit.Chem.rdchem import Mol as RDKitMol
+from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
-from rdkit.Chem.rdmolops import AssignStereochemistry  # type: ignore
+from rdkit.Chem.rdmolops import AssignStereochemistry
 from rdkit.Chem.rdmolops import SanitizeMol
 
 if TYPE_CHECKING:
