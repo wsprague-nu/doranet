@@ -3,5 +3,6 @@ channels:
  - rdkit
  - conda-forge
 dependencies:
+ - jupyter
  - python>=3.9
  - rdkit
