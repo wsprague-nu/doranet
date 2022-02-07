@@ -144,7 +144,7 @@ conda install -n env-name -c rdkit rdkit
    ```
 7. Install pickaxe-generic using pip.  Use a -e flag after "install" if you want your installation to update automatically when changing the files in this folder.  Otherwise, simply use the command below.
    ```sh
-   python -m pip install pickaxe-generic
+   python -m pip install .
    ```
 8. When running a Python program requiring pickaxe-generic, make sure you first open your terminal and activate the relevant environment using the command from Step 6.
 
