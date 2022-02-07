@@ -94,21 +94,6 @@ To get a local copy up and running follow these simple example steps.
 
 You will need access to the Python package rdkit.  The recommended way to install rdkit is via the Anaconda package/environment manager.  If you do not have Anaconda on your computer, install [Miniconda](https://docs.conda.io/en/latest/miniconda.html) which contains a minimal Anaconda package manager.
 
-Create the rdkit/pickaxe environment using the guidelines below:
-
-* If developing new code, environment-dev.yml is recommended.
-* If using MINE-Database version of Pickaxe, environment-compat.yml is recommended.
-* If using only pickaxe-generic, environment.yml is recommended.
-
-Command to create new environment (replace env.yml with your chosen environment file)
-```sh
-conda create -f env-name.yml -c rdkit rdkit
-```
-Existing environment (replace env-name with your chosen environment name)
-```sh
-conda install -n env-name -c rdkit rdkit
-```
-
 ### Installation
 
 1. Activate Anaconda in a terminal (CMD/bash/etc.) using the methods provided in their documentation.
