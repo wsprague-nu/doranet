@@ -126,7 +126,7 @@ You will need access to the Python package rdkit.  The recommended way to instal
    ```sh
    conda activate env-name
    ```
-7. Install pickaxe-generic using pip.  Use a -e flag after "install" if you want your installation to update automatically when changing the files in this folder.  Otherwise, simply use the command below.
+7. Install pickaxe-generic using pip.  Use a -e flag after "install" if you want your installation to update automatically when changing the files in this folder (recommended).  Otherwise, simply use the command below.
    ```sh
    python -m pip install .
    ```
