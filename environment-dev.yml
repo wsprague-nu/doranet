@@ -5,7 +5,7 @@ channels:
 dependencies:
  - black
  - jupyter
- - memory-profiler
+ - memory_profiler
  - mordred
  - mypy
  - numpy
