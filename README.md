@@ -139,6 +139,26 @@ You will need access to the Python package rdkit.  The recommended way to instal
 <!-- USAGE EXAMPLES -->
 ## Usage
 
+As Pickaxe-Generic is intended as to be an extensible, polymorphic network generation software, effective users should understand the basic architecture of the system.  While each class has its own documentation, a bird's eye view of how the program is organized should assist in development of new code and strategies with minimal overhead.
+
+There are three design properties which informed the abstraction of network generation into an object oriented architecture:
+* Compatibility
+* Efficiency
+* Extensibility
+
+-future elaboration on these properties here-
+
+The network has its start in the Engine object, provided by create_engine.  This object is provided the relevant configuration options for the network expansion, such as the number of available cores (parallelism not yet available), speed/memory tradeoffs required, type of expansion strategy etc., and in exchange provides the relevant objects which meet those criteria.  The Engine is the only object which requires knowledge of the entire class hierarchy since it provides them through several straightforward interfaces.
+
+The ObjectLibrary is in charge of data storage.  It provides a generalized interface for storing generic DataUnit objects such as molecules, operators, and reactions.  The ObjectLibrary is abstracted since it is future-compatible with disk and external database storage.  It works as an iterable, allowing the user to iterate through whichever components it contains, and also allows for lookup much like a dict using the .uid property of the stored DataUnit objects.  Much like a database, a network consists of three ObjectLibraries holding molecules, operators, and reactions respectively.
+
+The DataUnit is the generic abstract class defining an atomic unit of data.  Implementing classes provide the UID, a unique identifier used as a key in ObjectLibrary objects, as well as a BLOB functions to translate the data contained within into a compressed bytestring.
+  * MolDat (or Molecule Data) objects represent molecules.  These are currently only RDKit molecules, but could feasibly represent anything.  The RDKit subclassed versions provide, in addition to the DataUnit properties, the .rdkitmol property to access the RDKit molecule and the .smiles property to access the RDKit canonical SMILES string.
+  * OpDat (or Operator Data) objects represent operators.  These are currently only RDKit SMARTS operators, but could feasibly represent almost anything.  They provide the len() and compat(MolDat,int) methods, which give the number of arguments to the operator and the compatibility of a particular MolDat with a particular argument, used to speed up reaction generation.  They are also callable, and return an iterable of possible reaction product sets.
+  * RxnDat (or Reaction Data) objects represent reactions.  These are, at the moment, not much more than a combination of a set containing reactant uids accessible through .reactants, a set containing product uids accessible through .products, and the operator uid accessible through .operator.
+
+The Strategy puts all these components together to generate a network.  The only Strategy which has a full implementation is the CartesianStrategy.  This strategy attempts to combine every operator with every combination of compatible molecules to expand the network.  A number of "generations" can be specified, which represent the number of times the Cartesian product is performed, with the network expanding every time.  At the moment, a molecule-level filter can be implemented by the user which filters out new molecules and the reactions which produced them based on particular criteria.  This will soon be replaced with a reaction-level filter, which operates on individual reactions.  A holistic filter, which filters out molecules based on the entire new generation, is recommended to be implemented separately by the end user, but this may change.
+
 Work in progress.  Check out example_notebook.ipynb in jupyter for examples.
 <!--
 This is an example of how pickaxe-generic may be used to obtain the heat of formation of an arbitrary molecule (for which the Benson groups exist in primary_groups).
