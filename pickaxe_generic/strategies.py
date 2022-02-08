@@ -177,7 +177,7 @@ class CartesianStrategy(ExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[MolDatBase], bool] = lambda _: True,
+        filter: Callable[[RxnDatBase], bool] = lambda _: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -199,14 +199,13 @@ class CartesianStrategy(ExpansionStrategy):
                         prod_uids = frozenset(mol.uid for mol in productset)
                         # print(prod_uids)
                         rxn = self._engine.Rxn(op_uid, react_uids, prod_uids)
-                        if rxn in self._rxn_lib:
+                        if rxn in self._rxn_lib or not filter(rxn):
                             continue
                         temp_mols: List[MolDatBase] = []
                         for product in productset:
                             if (
                                 product.uid not in self._mol_cache
                                 and product not in self._mol_lib
-                                and filter(product)
                             ):
                                 temp_mols.append(product)
                                 num_mols += 1
