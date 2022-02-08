@@ -72,7 +72,7 @@ class ExpansionStrategy(ABC):
             Limit of new reactions to add.  If None, no limit.
         max_mols : Optional[int] (default: None)
             Limit of new molecules to add.  If None, no limit.
-        num_gens : Optional[int] (defauilt: None)
+        num_gens : Optional[int] (default: None)
             Maximum generations of reactions to enumerate.  If None, no limit.
         """
 
