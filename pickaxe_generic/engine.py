@@ -39,7 +39,21 @@ from pickaxe_generic.datatypes import (
 from pickaxe_generic.strategies import CartesianStrategy
 
 
-def create_engine(speed: int = 5):
+def create_engine(speed: int = 5) -> "NetworkEngine":
+    """
+    Initializes and returns a NetworkEngine based on configuration parameters.
+
+    Parameters
+    ----------
+    speed : int (default: 5)
+        Integer between 1 and 6 determining speed/memory tradeoff of bulk data.
+            6: Maximum caching in RAM, no disk use.
+            5: Most data in RAM, no disk use.
+            4: Bare minimum data in RAM, no disk use.
+            3: Fast primary keys in RAM, disk caches values.
+            2: Smallest possible primary keys in RAM, disk caches values.
+            1: Fast primary keys and values both stored on disk.   
+    """
     return NetworkEngineBasic(speed=speed)
 
 
