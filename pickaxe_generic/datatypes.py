@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 # necessary since external data from a database may be input
 # if you are having issues, add relevant classes to _safe_%module%_classes
 # or if modules not in builtins required, add other if clauses
-_safe_builtins_classes: FrozenSet[str] = frozenset(
+_safe_builtins_classes: frozenset[str] = frozenset(
     {
         "frozenset",
         "tuple",
