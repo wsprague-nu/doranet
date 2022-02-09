@@ -129,7 +129,7 @@ class Identifier(Protocol):
 class DataUnit(ABC):
     """
     Object which provides a unique, hashable identifier, a method of ordering,
-    and can serve up a NamedTuple containing database form of the object.
+    and can serve up a binary form of the object.
 
     Attributes
     ----------
