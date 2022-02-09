@@ -28,6 +28,7 @@ from typing import (
     FrozenSet,
     Iterable,
     List,
+    NoReturn,
     Optional,
     Protocol,
     Sequence,
@@ -110,13 +111,13 @@ class Identifier(Protocol):
             True if object is equivalent to other, False otherwise.
         """
 
-    def __lt__(self, other: object) -> bool:
+    def __lt__(self, other) -> bool:
         """
         Compares object to others of similar type.  Allows sorting.
 
         Arguments
         ---------
-        other : object
+        other
             Object to be compared.
 
         Returns
@@ -151,8 +152,8 @@ class DataUnit(ABC):
     def blob(self) -> bytes:
         """
         Binary representation of object.  Must be able to initialize object when
-        passed to __init__ method of any subclass of same type (viz. initialize
-        a MolDatBasicV2, even if obtained from a MolDatBasicV1).
+        passed to __setstate__ method of any subclass of same type (viz.
+        initialize a MolDatBasicV2, even if obtained from a MolDatBasicV1).
         """
 
     @property
@@ -163,6 +164,7 @@ class DataUnit(ABC):
         lookup tables utilizing hashes.
         """
 
+    @final
     def __eq__(self, other: object) -> bool:
         """
         Compares object to others of similar type.  Enables hashtables.
@@ -197,11 +199,18 @@ class DataUnit(ABC):
             True if object is after self when ordered, False otherwise.
         """
 
-    def __getstate__(self):
+    @final
+    def __getstate__(self) -> bytes:
+        """
+        Serializes object based on blob property.
+        """
         return self.blob
 
-    def __setstate__(self, data):
-        self.__init__(data)
+    @abstractmethod
+    def __setstate__(self, data: bytes) -> NoReturn:
+        """
+        Deserializes object from blob.
+        """
 
 
 class MolDatBase(DataUnit):
