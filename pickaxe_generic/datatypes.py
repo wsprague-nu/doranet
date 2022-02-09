@@ -110,7 +110,7 @@ class Identifier(Protocol):
             True if object is equivalent to other, False otherwise.
         """
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: object) -> bool:
         """
         Compares object to others of similar type.  Allows sorting.
 
