@@ -28,12 +28,10 @@ from typing import (
     FrozenSet,
     Iterable,
     List,
-    NoReturn,
     Optional,
     Protocol,
     Sequence,
     Tuple,
-    Union,
     final,
 )
 
@@ -207,7 +205,7 @@ class DataUnit(ABC):
         return self.blob
 
     @abstractmethod
-    def __setstate__(self, data: bytes) -> NoReturn:
+    def __setstate__(self, data: bytes) -> None:
         """
         Deserializes object from blob.
         """
@@ -239,7 +237,7 @@ class MolDatRDKit(MolDatBase):
 
     Parameters
     ----------
-    molecule : Union[RDKitMol, str, bytes]
+    molecule : RDKitMol | str | bytes
         Sufficient information to generate molecule in the form of an RDKitMol,
         a SMILES string, or the pickled form of an RDKitMol.
     sanitize : bool (default: True)
@@ -269,7 +267,7 @@ class MolDatRDKit(MolDatBase):
     @abstractmethod
     def __init__(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
@@ -282,6 +280,16 @@ class MolDatRDKit(MolDatBase):
             raise TypeError(
                 f"Invalid comparison between objects of type {type(self)} and type {type(other)}"
             )
+    
+    def __setstate__(self, input: bytes) -> None:
+        rdkitmol: Optional[RDKitMol] = BuildMol(input)
+        if rdkitmol is None:
+            raise ValueError("Invalid molecule bytestring")
+        self._buildfrommol(rdkitmol)
+    
+    @abstractmethod
+    def _buildfrommol(self, input: RDKitMol) -> None:
+        pass
 
     @property
     @abstractmethod
@@ -314,7 +322,7 @@ class MolDatRDKit(MolDatBase):
 
     def _processinput(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> RDKitMol:
@@ -361,13 +369,16 @@ class MolDatBasicV1(MolDatRDKit):
 
     def __init__(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
         rdkitmol = self._processinput(molecule, sanitize, neutralize)
-        self._blob = rdkitmol.ToBinary()
-        self._smiles = MolToSmiles(rdkitmol)
+        self._buildfrommol(rdkitmol)
+    
+    def _buildfrommol(self, input: RDKitMol) -> None:
+        self._blob = input.ToBinary()
+        self._smiles = MolToSmiles(input)
 
     @property
     def blob(self) -> bytes:
@@ -406,14 +417,18 @@ class MolDatBasicV2(MolDatRDKit):
 
     def __init__(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
         self._blob = None
         self._inchikey = None
-        self._rdkitmol = self._processinput(molecule, sanitize, neutralize)
-        self._smiles = MolToSmiles(self._rdkitmol)
+        rdkitmol = self._processinput(molecule, sanitize, neutralize)
+        self._buildfrommol(rdkitmol)
+    
+    def _buildfrommol(self, input: RDKitMol) -> None:
+        self._rdkitmol = input
+        self._smiles = MolToSmiles(input)
 
     @property
     def blob(self) -> bytes:
@@ -520,7 +535,7 @@ class OpDatRDKit(OpDatBase):
     __slots__ = ()
 
     @abstractmethod
-    def __init__(self, operator: Union[RDKitRxn, str, bytes]):
+    def __init__(self, operator: RDKitMol | str | bytes):
         pass
 
     @property
@@ -548,7 +563,7 @@ class OpDatBasic(OpDatRDKit):
 
     Parameters
     ----------
-    operator : Union[RDKitRxn, str, bytes]
+    operator : RDKitMol | str | bytes
         SMARTS string which is used to generate operator data, otherwise some
         encoding of relevant data.
 
@@ -582,7 +597,7 @@ class OpDatBasic(OpDatRDKit):
     _uid: Optional[Tuple[Tuple[str, ...], Tuple[str, ...]]]
 
     def __init__(
-        self, operator: Union[RDKitRxn, str, bytes], engine: NetworkEngine
+        self, operator: RDKitMol | str | bytes, engine: NetworkEngine
     ) -> None:
         if isinstance(operator, RDKitRxn):
             self._rdkitrxn = operator
