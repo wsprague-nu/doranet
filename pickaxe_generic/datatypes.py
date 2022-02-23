@@ -197,18 +197,18 @@ class DataUnit(ABC):
             True if object is after self when ordered, False otherwise.
         """
 
-    @final
-    def __getstate__(self) -> bytes:
-        """
-        Serializes object based on blob property.
-        """
-        return self.blob
+    # @final
+    # def __getstate__(self) -> bytes:
+    #     """
+    #     Serializes object based on blob property.
+    #     """
+    #     return self.blob
 
-    @abstractmethod
-    def __setstate__(self, data: bytes) -> None:
-        """
-        Deserializes object from blob.
-        """
+    # @abstractmethod
+    # def __setstate__(self, data: bytes) -> None:
+    #     """
+    #     Deserializes object from blob.
+    #     """
 
 
 class MolDatBase(DataUnit):
