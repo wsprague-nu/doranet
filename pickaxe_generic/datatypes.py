@@ -380,7 +380,7 @@ class MolDatBasicV1(MolDatRDKit):
         return self._smiles
 
     def __repr__(self) -> str:
-        return f'MolDatBasic("{self.smiles}")'
+        return f"MolDatBasic('{self.smiles}')"
 
 
 @final
