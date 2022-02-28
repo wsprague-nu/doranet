@@ -43,8 +43,7 @@ from rdkit.Chem.rdchem import AtomValenceException, KekulizeException
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
-from rdkit.Chem.rdmolops import AssignStereochemistry
-from rdkit.Chem.rdmolops import SanitizeMol
+from rdkit.Chem.rdmolops import AssignStereochemistry, SanitizeMol
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
@@ -380,6 +379,9 @@ class MolDatBasicV1(MolDatRDKit):
     def uid(self) -> Identifier:
         return self._smiles
 
+    def __repr__(self) -> str:
+        return f'MolDatBasic("{self.smiles}")'
+
 
 @final
 class MolDatBasicV2(MolDatRDKit):
@@ -429,6 +431,9 @@ class MolDatBasicV2(MolDatRDKit):
     @property
     def uid(self) -> str:
         return self._smiles
+
+    def __repr__(self) -> str:
+        return f'MolDatBasic("{self.smiles}")'
 
 
 class OpDatBase(DataUnit):
@@ -644,7 +649,9 @@ class OpDatBasic(OpDatRDKit):
         try:
             return tuple(
                 tuple(self._engine.Mol(product) for product in products)
-                for products in self._rdkitrxn.RunReactants(rdkitmols, maxProducts=0)
+                for products in self._rdkitrxn.RunReactants(
+                    rdkitmols, maxProducts=0
+                )
             )
         except AtomValenceException as e:
             raise ValueError(
@@ -761,7 +768,9 @@ class RxnDatBasic(RxnDatBase):
     _reactants: FrozenSet[Identifier]
 
     _blob: Optional[bytes]
-    _uid: Optional[Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]]
+    _uid: Optional[
+        Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]
+    ]
 
     def __init__(
         self,
@@ -777,7 +786,11 @@ class RxnDatBasic(RxnDatBase):
             self._operator = data[0]
             self._products = frozenset(data[1])
             self._reactants = frozenset(data[2])
-        elif operator is not None and reactants is not None and products is not None:
+        elif (
+            operator is not None
+            and reactants is not None
+            and products is not None
+        ):
             self._operator = operator
             self._reactants = frozenset(reactants)
             self._products = frozenset(products)
@@ -789,7 +802,9 @@ class RxnDatBasic(RxnDatBase):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = dumps(tuple((self._operator, self._products, self._reactants)))
+            self._blob = dumps(
+                tuple((self._operator, self._products, self._reactants))
+            )
         return self._blob
 
     @property
