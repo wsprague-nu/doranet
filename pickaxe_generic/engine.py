@@ -188,7 +188,9 @@ class NetworkEngineBasic(NetworkEngine):
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> MolDatRDKit:
-        return self._Mol(molecule=molecule, sanitize=sanitize, neutralize=neutralize)
+        return self._Mol(
+            molecule=molecule, sanitize=sanitize, neutralize=neutralize
+        )
 
     def Op(self, operator: Union[RDKitRxn, str, bytes]) -> OpDatBasic:
         return self._Op(operator=operator, engine=self)
