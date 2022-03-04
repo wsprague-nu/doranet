@@ -52,7 +52,7 @@ def create_engine(speed: int = 5) -> "NetworkEngine":
             4: Bare minimum data in RAM, no disk use.
             3: Fast primary keys in RAM, disk caches values.
             2: Smallest possible primary keys in RAM, disk caches values.
-            1: Fast primary keys and values both stored on disk.   
+            1: Fast primary keys and values both stored on disk.
     """
     return NetworkEngineBasic(speed=speed)
 

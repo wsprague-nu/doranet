@@ -279,13 +279,13 @@ class MolDatRDKit(MolDatBase):
             raise TypeError(
                 f"Invalid comparison between objects of type {type(self)} and type {type(other)}"
             )
-    
+
     def __setstate__(self, input: bytes) -> None:
         rdkitmol: Optional[RDKitMol] = BuildMol(input)
         if rdkitmol is None:
             raise ValueError("Invalid molecule bytestring")
         self._buildfrommol(rdkitmol)
-    
+
     @abstractmethod
     def _buildfrommol(self, input: RDKitMol) -> None:
         pass
@@ -374,7 +374,7 @@ class MolDatBasicV1(MolDatRDKit):
     ) -> None:
         rdkitmol = self._processinput(molecule, sanitize, neutralize)
         self._buildfrommol(rdkitmol)
-    
+
     def _buildfrommol(self, input: RDKitMol) -> None:
         self._blob = input.ToBinary()
         self._smiles = MolToSmiles(input)
@@ -427,7 +427,7 @@ class MolDatBasicV2(MolDatRDKit):
         self._inchikey = None
         rdkitmol = self._processinput(molecule, sanitize, neutralize)
         self._buildfrommol(rdkitmol)
-    
+
     def _buildfrommol(self, input: RDKitMol) -> None:
         self._rdkitmol = input
         self._smiles = MolToSmiles(input)
