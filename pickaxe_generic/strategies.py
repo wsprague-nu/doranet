@@ -36,6 +36,7 @@ from pickaxe_generic.datatypes import (
     OpDatBase,
     RxnDatBase,
 )
+from pickaxe_generic.filters import AlwaysTrueFilter
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
@@ -184,7 +185,7 @@ class CartesianStrategy(ExpansionStrategy):
         num_gens: Optional[int] = None,
         filter: Callable[
             [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
-        ] = lambda x, y, z: True,
+        ] = AlwaysTrueFilter(),
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
