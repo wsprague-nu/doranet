@@ -30,7 +30,12 @@ from typing import (
 from rdkit.Chem.rdchem import Mol as RDKitMol
 
 from pickaxe_generic.containers import ObjectLibrary
-from pickaxe_generic.datatypes import Identifier, MolDatBase, OpDatBase, RxnDatBase
+from pickaxe_generic.datatypes import (
+    Identifier,
+    MolDatBase,
+    OpDatBase,
+    RxnDatBase,
+)
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
@@ -177,7 +182,9 @@ class CartesianStrategy(ExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[RxnDatBase], bool] = lambda _: True,
+        filter: Callable[
+            [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -194,12 +201,16 @@ class CartesianStrategy(ExpansionStrategy):
                     if recipe in self._recipe_cache:
                         continue
                     op = self._op_cache[op_uid]
-                    reactants = tuple(self._mol_cache[uid] for uid in react_uids)
+                    reactants = tuple(
+                        self._mol_cache[uid] for uid in react_uids
+                    )
                     for productset in op(reactants):
+                        if not filter(op, reactants, tuple(productset)):
+                            continue
                         prod_uids = frozenset(mol.uid for mol in productset)
                         # print(prod_uids)
                         rxn = self._engine.Rxn(op_uid, react_uids, prod_uids)
-                        if rxn in self._rxn_lib or not filter(rxn):
+                        if rxn in self._rxn_lib:
                             continue
                         temp_mols: List[MolDatBase] = []
                         for product in productset:
@@ -420,7 +431,9 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
 
     def _compat_table_generator(
         self,
-    ) -> Generator[Tuple[Tuple[Identifier, FrozenSet[RDKitMol]], int], None, None]:
+    ) -> Generator[
+        Tuple[Tuple[Identifier, FrozenSet[RDKitMol]], int], None, None
+    ]:
         for lib_index in range(len(self._op_cache)):
             for op_uid in self._op_cache[lib_index]:
                 for react_uids in (
@@ -428,7 +441,9 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
                     for reactantset in iterproduct(
                         *(self._compat_table[lib_index][op_uid])
                     )
-                    if all(self._mol_cache[r][1] <= lib_index for r in reactantset)
+                    if all(
+                        self._mol_cache[r][1] <= lib_index for r in reactantset
+                    )
                 ):
                     yield (op_uid, frozenset(react_uids)), lib_index
 

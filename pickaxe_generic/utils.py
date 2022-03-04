@@ -11,7 +11,16 @@ Classes:
 from abc import ABC, abstractmethod
 from itertools import chain
 from itertools import product as iterproduct
-from typing import Collection, Dict, Generator, Iterable, List, Optional, Sequence, Set
+from typing import (
+    Collection,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+)
 
 from pickaxe_generic.containers import ObjectLibrary
 from pickaxe_generic.datatypes import Identifier, RxnDatBase
@@ -86,7 +95,9 @@ class RxnTrackerSingle(RxnTracker):
                 if reactant in cur_mols:
                     continue
                 noReactions = False
-                for rxnpath in self._getchains(reactant, cur_mols.union({reactant})):
+                for rxnpath in self._getchains(
+                    reactant, cur_mols.union({reactant})
+                ):
                     rxnpath.append(rxnid)
                     yield rxnpath
             if noReactions:
@@ -150,7 +161,8 @@ class RxnTrackerDepthFirst(RxnTracker):
                 for rxn in self._mol_lookup[mol]
                 if rxn not in prev_gens_rxns
                 and all(
-                    mol not in prev_gens_mols for mol in self._rxn_lib[rxn].reactants
+                    mol not in prev_gens_mols
+                    for mol in self._rxn_lib[rxn].reactants
                 )
             ]
             rxnsets.append(newrxnset)
@@ -168,7 +180,9 @@ class RxnTrackerDepthFirst(RxnTracker):
                 tested_combos.add(frozenset(rxncombo))
             required_reagents = set(
                 mol
-                for mol in chain(*(self._rxn_lib[rxn].reactants for rxn in rxncombo))
+                for mol in chain(
+                    *(self._rxn_lib[rxn].reactants for rxn in rxncombo)
+                )
                 if mol not in reagent_table
             )
             if len(required_reagents) == 0:
