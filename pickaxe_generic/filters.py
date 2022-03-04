@@ -18,7 +18,7 @@ class ReactionFilter(ABC):
 
 
 class AlwaysTrueFilter(ReactionFilter):
-    def __call__(operator, reactants, products):
+    def __call__(self, operator, reactants, products):
         return True
 
 
