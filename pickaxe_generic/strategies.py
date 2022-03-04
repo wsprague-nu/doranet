@@ -182,7 +182,9 @@ class CartesianStrategy(ExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[RxnDatBase], bool] = lambda _: True,
+        filter: Callable[
+            [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -203,10 +205,12 @@ class CartesianStrategy(ExpansionStrategy):
                         self._mol_cache[uid] for uid in react_uids
                     )
                     for productset in op(reactants):
+                        if not filter(op, reactants, tuple(productset)):
+                            continue
                         prod_uids = frozenset(mol.uid for mol in productset)
                         # print(prod_uids)
                         rxn = self._engine.Rxn(op_uid, react_uids, prod_uids)
-                        if rxn in self._rxn_lib or not filter(rxn):
+                        if rxn in self._rxn_lib:
                             continue
                         temp_mols: List[MolDatBase] = []
                         for product in productset:
