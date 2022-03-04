@@ -36,6 +36,7 @@ from pickaxe_generic.datatypes import (
     OpDatBase,
     RxnDatBase,
 )
+from pickaxe_generic.filters import AlwaysTrueFilter
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
@@ -77,7 +78,7 @@ class ExpansionStrategy(ABC):
             Limit of new reactions to add.  If None, no limit.
         max_mols : Optional[int] (default: None)
             Limit of new molecules to add.  If None, no limit.
-        num_gens : Optional[int] (defauilt: None)
+        num_gens : Optional[int] (default: None)
             Maximum generations of reactions to enumerate.  If None, no limit.
         """
 
@@ -184,7 +185,7 @@ class CartesianStrategy(ExpansionStrategy):
         num_gens: Optional[int] = None,
         filter: Callable[
             [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
-        ] = lambda x, y, z: True,
+        ] = AlwaysTrueFilter(),
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0

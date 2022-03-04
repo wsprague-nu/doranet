@@ -32,7 +32,6 @@ from typing import (
     Protocol,
     Sequence,
     Tuple,
-    Union,
     final,
 )
 
@@ -52,7 +51,7 @@ if TYPE_CHECKING:
 # necessary since external data from a database may be input
 # if you are having issues, add relevant classes to _safe_%module%_classes
 # or if modules not in builtins required, add other if clauses
-_safe_builtins_classes: FrozenSet[str] = frozenset(
+_safe_builtins_classes: frozenset[str] = frozenset(
     {
         "frozenset",
         "tuple",
@@ -115,7 +114,7 @@ class Identifier(Protocol):
 
         Arguments
         ---------
-        other : object
+        other
             Object to be compared.
 
         Returns
@@ -128,7 +127,7 @@ class Identifier(Protocol):
 class DataUnit(ABC):
     """
     Object which provides a unique, hashable identifier, a method of ordering,
-    and can serve up a NamedTuple containing database form of the object.
+    and can serve up a binary form of the object.
 
     Attributes
     ----------
@@ -150,8 +149,8 @@ class DataUnit(ABC):
     def blob(self) -> bytes:
         """
         Binary representation of object.  Must be able to initialize object when
-        passed to __init__ method of any subclass of same type (viz. initialize
-        a MolDatBasicV2, even if obtained from a MolDatBasicV1).
+        passed to __setstate__ method of any subclass of same type (viz.
+        initialize a MolDatBasicV2, even if obtained from a MolDatBasicV1).
         """
 
     @property
@@ -162,6 +161,7 @@ class DataUnit(ABC):
         lookup tables utilizing hashes.
         """
 
+    @final
     def __eq__(self, other: object) -> bool:
         """
         Compares object to others of similar type.  Enables hashtables.
@@ -196,11 +196,18 @@ class DataUnit(ABC):
             True if object is after self when ordered, False otherwise.
         """
 
-    def __getstate__(self):
-        return self.blob
+    # @final
+    # def __getstate__(self) -> bytes:
+    #     """
+    #     Serializes object based on blob property.
+    #     """
+    #     return self.blob
 
-    def __setstate__(self, data):
-        self.__init__(data)
+    # @abstractmethod
+    # def __setstate__(self, data: bytes) -> None:
+    #     """
+    #     Deserializes object from blob.
+    #     """
 
 
 class MolDatBase(DataUnit):
@@ -229,7 +236,7 @@ class MolDatRDKit(MolDatBase):
 
     Parameters
     ----------
-    molecule : Union[RDKitMol, str, bytes]
+    molecule : RDKitMol | str | bytes
         Sufficient information to generate molecule in the form of an RDKitMol,
         a SMILES string, or the pickled form of an RDKitMol.
     sanitize : bool (default: True)
@@ -259,7 +266,7 @@ class MolDatRDKit(MolDatBase):
     @abstractmethod
     def __init__(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
@@ -272,6 +279,16 @@ class MolDatRDKit(MolDatBase):
             raise TypeError(
                 f"Invalid comparison between objects of type {type(self)} and type {type(other)}"
             )
+
+    def __setstate__(self, input: bytes) -> None:
+        rdkitmol: Optional[RDKitMol] = BuildMol(input)
+        if rdkitmol is None:
+            raise ValueError("Invalid molecule bytestring")
+        self._buildfrommol(rdkitmol)
+
+    @abstractmethod
+    def _buildfrommol(self, input: RDKitMol) -> None:
+        pass
 
     @property
     @abstractmethod
@@ -304,7 +321,7 @@ class MolDatRDKit(MolDatBase):
 
     def _processinput(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> RDKitMol:
@@ -351,13 +368,16 @@ class MolDatBasicV1(MolDatRDKit):
 
     def __init__(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
         rdkitmol = self._processinput(molecule, sanitize, neutralize)
-        self._blob = rdkitmol.ToBinary()
-        self._smiles = MolToSmiles(rdkitmol)
+        self._buildfrommol(rdkitmol)
+
+    def _buildfrommol(self, input: RDKitMol) -> None:
+        self._blob = input.ToBinary()
+        self._smiles = MolToSmiles(input)
 
     @property
     def blob(self) -> bytes:
@@ -399,14 +419,18 @@ class MolDatBasicV2(MolDatRDKit):
 
     def __init__(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: RDKitMol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
         self._blob = None
         self._inchikey = None
-        self._rdkitmol = self._processinput(molecule, sanitize, neutralize)
-        self._smiles = MolToSmiles(self._rdkitmol)
+        rdkitmol = self._processinput(molecule, sanitize, neutralize)
+        self._buildfrommol(rdkitmol)
+
+    def _buildfrommol(self, input: RDKitMol) -> None:
+        self._rdkitmol = input
+        self._smiles = MolToSmiles(input)
 
     @property
     def blob(self) -> bytes:
@@ -516,7 +540,7 @@ class OpDatRDKit(OpDatBase):
     __slots__ = ()
 
     @abstractmethod
-    def __init__(self, operator: Union[RDKitRxn, str, bytes]):
+    def __init__(self, operator: RDKitMol | str | bytes):
         pass
 
     @property
@@ -544,7 +568,7 @@ class OpDatBasic(OpDatRDKit):
 
     Parameters
     ----------
-    operator : Union[RDKitRxn, str, bytes]
+    operator : RDKitMol | str | bytes
         SMARTS string which is used to generate operator data, otherwise some
         encoding of relevant data.
 
@@ -578,7 +602,7 @@ class OpDatBasic(OpDatRDKit):
     _uid: Optional[Tuple[Tuple[str, ...], Tuple[str, ...]]]
 
     def __init__(
-        self, operator: Union[RDKitRxn, str, bytes], engine: NetworkEngine
+        self, operator: RDKitMol | str | bytes, engine: NetworkEngine
     ) -> None:
         if isinstance(operator, RDKitRxn):
             self._rdkitrxn = operator

@@ -156,7 +156,6 @@ class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
     )
 
     _lookup: Dict[Identifier, bytes]
-    _initializer: Callable[[bytes], DataUnitGen]
 
     def __init__(
         self,
