@@ -10,6 +10,7 @@ line-length = 80
 
 [tool.isort]
 profile = "black"
+line_length = 80
 
 [tool.pylint.format]
 max-line-length = "80"
