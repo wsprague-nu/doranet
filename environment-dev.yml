@@ -18,6 +18,7 @@ dependencies:
  - numpydoc
  - pandas
  - pymongo
+ - pylint
  - pytest
  - pytest-cov
  - python>=3.9
