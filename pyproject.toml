@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=24.2.0","wheel"]
+build-backend = "setuptools.build_meta"
+
+[mypy]
+ignore_missing_imports = True
+
+[tool.black]
+line-length = 80
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.format]
+max-line-length = "80"
