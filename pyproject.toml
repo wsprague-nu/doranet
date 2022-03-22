@@ -3,7 +3,7 @@ requires = ["setuptools>=24.2.0","wheel"]
 build-backend = "setuptools.build_meta"
 
 [mypy]
-ignore_missing_imports = True
+ignore_missing_imports = true
 
 [tool.black]
 line-length = 80
