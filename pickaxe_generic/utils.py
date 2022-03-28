@@ -168,6 +168,8 @@ class RxnTrackerDepthFirst(RxnTracker):
             rxnsets.append(newrxnset)
         if not fail_on_unknown_reagent:
             rxnsets = [rxnset for rxnset in rxnsets if len(rxnset) > 0]
+            if len(rxnsets) == 0: # these two lines
+                return            # close the loophole
         if len(rxnsets) == 0:
             yield []
             return
