@@ -50,7 +50,7 @@ class RxnTracker(ABC):
         target: Identifier,
         reagent_table: Sequence[Identifier] = tuple(),
         fail_on_unknown_reagent: bool = False,
-    ) -> Iterable[Iterable[Iterable[RxnDatBase]]]:
+    ) -> Iterable[Iterable[Iterable[Identifier]]]:
         """
         Gets parent chains for a particular target molecule.
 
@@ -70,7 +70,7 @@ class RxnTrackerSingle(RxnTracker):
     """Implements RxnTracker interface; only compatible with reactions
     involving a single reactant and product.  DEVELOPMENT ONLY"""
 
-    _mol_lookup: Dict[Identifier, Identifier]
+    _mol_lookup: Dict[Identifier, list[Identifier]]
 
     def __init__(self, rxn_lib: ObjectLibrary[RxnDatBase]) -> None:
         self._mol_lookup = {}
@@ -120,7 +120,7 @@ class RxnTrackerDepthFirst(RxnTracker):
     ObjectLibrary interface is updated to include native search functionality.
     """
 
-    _mol_lookup: Dict[Identifier, Identifier]
+    _mol_lookup: Dict[Identifier, list[Identifier]]
     _rxn_lib: ObjectLibrary[RxnDatBase]
 
     def __init__(self, rxn_lib: ObjectLibrary[RxnDatBase]) -> None:
@@ -135,11 +135,11 @@ class RxnTrackerDepthFirst(RxnTracker):
     def _getchains(
         self,
         cur_gen_mols: Collection[Identifier],
-        prev_gens_mols: Set[Iterable[Identifier]] = None,
-        prev_gens_rxns: Set[Iterable[Identifier]] = None,
+        prev_gens_mols: Set[Identifier] = None,
+        prev_gens_rxns: Set[Identifier] = None,
         reagent_table: Optional[Iterable[Identifier]] = None,
         fail_on_unknown_reagent: bool = False,
-    ) -> Generator[List[Set[Identifier]], None, None]:
+    ) -> Generator[list[frozenset[Identifier]], None, None]:
         if len(cur_gen_mols) == 0:
             yield []
             return
@@ -149,14 +149,14 @@ class RxnTrackerDepthFirst(RxnTracker):
             prev_gens_rxns = set()
         if reagent_table is None:
             reagent_table = set()
-        rxnsets: List[List[RxnDatBase]] = []
+        rxnsets: List[List[Identifier]] = []
         for mol in cur_gen_mols:
             if mol in reagent_table:
                 continue
             elif mol not in self._mol_lookup:
                 rxnsets.append([])
                 continue
-            newrxnset: List[RxnDatBase] = [
+            newrxnset: List[Identifier] = [
                 rxn
                 for rxn in self._mol_lookup[mol]
                 if rxn not in prev_gens_rxns
@@ -168,14 +168,14 @@ class RxnTrackerDepthFirst(RxnTracker):
             rxnsets.append(newrxnset)
         if not fail_on_unknown_reagent:
             rxnsets = [rxnset for rxnset in rxnsets if len(rxnset) > 0]
-            if len(rxnsets) == 0: # these two lines
-                return            # close the loophole
+            if len(rxnsets) == 0:  # these two lines
+                return  # close the loophole
         if len(rxnsets) == 0:
             yield []
             return
         tested_combos = set()
-        for rxncombo in iterproduct(*rxnsets):
-            rxncombo = frozenset(rxncombo)
+        for rxntuple in iterproduct(*rxnsets):
+            rxncombo: frozenset[Identifier] = frozenset(rxntuple)
             if rxncombo in tested_combos:
                 continue
             else:
@@ -205,10 +205,11 @@ class RxnTrackerDepthFirst(RxnTracker):
         target: Identifier,
         reagent_table: Sequence[Identifier] = tuple(),
         fail_on_unknown_reagent: bool = False,
-    ) -> Generator[List[Set[RxnDatBase]], None, None]:
+    ) -> Generator[list[frozenset[Identifier]], None, None]:
         if fail_on_unknown_reagent and not reagent_table:
             raise ValueError(
-                "reagent table must be specified if fail_on_unknown_reagent is True"
+                "reagent table must be specified if fail_on_unknown_reagent is "
+                "True"
             )
         return (
             path
