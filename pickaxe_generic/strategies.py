@@ -243,7 +243,8 @@ class CartesianStrategy(ExpansionStrategy):
             self.refresh()
 
     def refresh(self) -> None:
-        # check for molecules in mol_lib which are not in _mol_cache and add them
+        # check for molecules in mol_lib which are not in _mol_cache and add
+        # them
         if len(self._mol_lib) > len(self._mol_cache):
             for mol_uid in self._mol_lib.ids():
                 if mol_uid not in self._mol_cache:
