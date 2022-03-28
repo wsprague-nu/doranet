@@ -852,5 +852,7 @@ class RxnDatBasic(RxnDatBase):
         raise NotImplementedError("Comparison not implemented")
 
     def __repr__(self) -> str:
-        return (f"RxnDatBasic(operator={repr(self.uid[0])}, "
-                f"reactants={repr(self.uid[2])}, products={repr(self.uid[1])})")
+        return (
+            f"RxnDatBasic(operator={repr(self.uid[0])}, "
+            f"reactants={repr(self.uid[2])}, products={repr(self.uid[1])})"
+        )
