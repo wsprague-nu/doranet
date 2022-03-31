@@ -25,6 +25,7 @@ from pickle import Unpickler, UnpicklingError, dumps
 from typing import (
     TYPE_CHECKING,
     Any,
+    Collection,
     FrozenSet,
     Iterable,
     List,
@@ -498,7 +499,7 @@ class OpDatBase(DataUnit):
 
     @abstractmethod
     def __call__(
-        self, reactants: Sequence[MolDatBase]
+        self, reactants: Collection[MolDatBase]
     ) -> Iterable[Iterable[MolDatBase]]:
         """
         React a sequence of MolDat objects using internal operator.
@@ -660,7 +661,7 @@ class OpDatBasic(OpDatRDKit):
             raise err
 
     def __call__(
-        self, reactants: Sequence[MolDatBase]
+        self, reactants: Collection[MolDatBase]
     ) -> Tuple[Tuple[MolDatBase, ...], ...]:
         rdkitmols: List[RDKitMol] = [
             reactant.rdkitmol
