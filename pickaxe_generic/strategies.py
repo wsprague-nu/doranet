@@ -236,7 +236,7 @@ class CartesianStrategy(ExpansionStrategy):
                         self._mol_cache[uid] for uid in react_uids
                     )
                     for productset in op(reactants):
-                        if not filter(op, reactants, tuple(productset)):
+                        if not custom_filter(op, reactants, tuple(productset)):
                             continue
                         prod_uids = frozenset(mol.uid for mol in productset)
                         # print(prod_uids)
@@ -484,7 +484,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[MolDatBase], bool] = lambda _: True,
+        custom_filter: Callable[[MolDatBase], bool] = lambda _: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -516,7 +516,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
                         elif (
                             product.uid not in self._mol_cache
                             and product not in self._mol_lib
-                            and filter(product)
+                            and custom_filter(product)
                         ):
                             temp_mols.append(product)
                             num_mols += 1
