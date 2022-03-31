@@ -16,6 +16,7 @@ from itertools import product as iterproduct
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Collection,
     Dict,
     FrozenSet,
     Generator,
@@ -40,6 +41,25 @@ from pickaxe_generic.filters import AlwaysTrueFilter
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
+
+
+def _perform_reaction(
+    reactants: Collection[MolDatBase],
+    operator: OpDatBase,
+    custom_filter: Optional[
+        Callable[
+            [OpDatBase, Collection[MolDatBase], Collection[MolDatBase]], bool
+        ]
+    ] = None,
+) -> Generator[Collection[MolDatBase], None, None]:
+    if custom_filter is None:
+        custom_filter = AlwaysTrueFilter()
+
+    for productset in operator(reactants):
+        productvals = tuple(productset)
+        if not custom_filter(operator, reactants, productvals):
+            continue
+        yield productvals
 
 
 class ExpansionStrategy(ABC):
@@ -68,6 +88,9 @@ class ExpansionStrategy(ABC):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
+        custom_filter: Callable[
+            [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+        ] = AlwaysTrueFilter(),
     ) -> None:
         """
         Expand molecule library.
@@ -156,6 +179,7 @@ class CartesianStrategy(ExpansionStrategy):
         rxn_lib: ObjectLibrary[RxnDatBase],
         engine: "NetworkEngine",
     ) -> None:
+        super().__init__(None, None, None)
         self._engine = engine
         self._mol_lib = mol_lib
         self._mol_cache = {}
@@ -183,7 +207,7 @@ class CartesianStrategy(ExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[
+        custom_filter: Callable[
             [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
         ] = AlwaysTrueFilter(),
     ) -> None:
