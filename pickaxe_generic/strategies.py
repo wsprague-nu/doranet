@@ -62,6 +62,12 @@ def _perform_reaction(
         yield productvals
 
 
+def _generate_reactant_sets(
+    operator_compat_list: Sequence[Collection[Identifier]],
+) -> Generator[Sequence[Identifier], None, None]:
+    return (react_uids for react_uids in iterproduct(*operator_compat_list))
+
+
 class ExpansionStrategy(ABC):
     """
     Interface representing a network expansion strategy.
