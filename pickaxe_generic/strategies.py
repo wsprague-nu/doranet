@@ -16,6 +16,7 @@ from itertools import product as iterproduct
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Collection,
     Dict,
     FrozenSet,
     Generator,
@@ -40,6 +41,31 @@ from pickaxe_generic.filters import AlwaysTrueFilter
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
+
+
+def _perform_reaction(
+    reactants: Collection[MolDatBase],
+    operator: OpDatBase,
+    custom_filter: Optional[
+        Callable[
+            [OpDatBase, Collection[MolDatBase], Collection[MolDatBase]], bool
+        ]
+    ] = None,
+) -> Generator[Collection[MolDatBase], None, None]:
+    if custom_filter is None:
+        custom_filter = AlwaysTrueFilter()
+
+    for productset in operator(reactants):
+        productvals = tuple(productset)
+        if not custom_filter(operator, reactants, productvals):
+            continue
+        yield productvals
+
+
+def _generate_reactant_sets(
+    operator_compat_list: Sequence[Collection[Identifier]],
+) -> Generator[Sequence[Identifier], None, None]:
+    return (react_uids for react_uids in iterproduct(*operator_compat_list))
 
 
 class ExpansionStrategy(ABC):
@@ -68,6 +94,9 @@ class ExpansionStrategy(ABC):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
+        custom_filter: Callable[
+            [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+        ] = AlwaysTrueFilter(),
     ) -> None:
         """
         Expand molecule library.
@@ -156,6 +185,7 @@ class CartesianStrategy(ExpansionStrategy):
         rxn_lib: ObjectLibrary[RxnDatBase],
         engine: "NetworkEngine",
     ) -> None:
+        super().__init__(None, None, None)
         self._engine = engine
         self._mol_lib = mol_lib
         self._mol_cache = {}
@@ -183,7 +213,7 @@ class CartesianStrategy(ExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[
+        custom_filter: Callable[
             [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
         ] = AlwaysTrueFilter(),
     ) -> None:
@@ -206,7 +236,7 @@ class CartesianStrategy(ExpansionStrategy):
                         self._mol_cache[uid] for uid in react_uids
                     )
                     for productset in op(reactants):
-                        if not filter(op, reactants, tuple(productset)):
+                        if not custom_filter(op, reactants, tuple(productset)):
                             continue
                         prod_uids = frozenset(mol.uid for mol in productset)
                         # print(prod_uids)
@@ -243,7 +273,8 @@ class CartesianStrategy(ExpansionStrategy):
             self.refresh()
 
     def refresh(self) -> None:
-        # check for molecules in mol_lib which are not in _mol_cache and add them
+        # check for molecules in mol_lib which are not in _mol_cache and add
+        # them
         if len(self._mol_lib) > len(self._mol_cache):
             for mol_uid in self._mol_lib.ids():
                 if mol_uid not in self._mol_cache:
@@ -453,7 +484,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
         max_rxns: Optional[int] = None,
         max_mols: Optional[int] = None,
         num_gens: Optional[int] = None,
-        filter: Callable[[MolDatBase], bool] = lambda _: True,
+        custom_filter: Callable[[MolDatBase], bool] = lambda _: True,
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -485,7 +516,7 @@ class OrderedCartesianHybridExpansionStrategy(HybridExpansionStrategy):
                         elif (
                             product.uid not in self._mol_cache
                             and product not in self._mol_lib
-                            and filter(product)
+                            and custom_filter(product)
                         ):
                             temp_mols.append(product)
                             num_mols += 1

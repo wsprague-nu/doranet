@@ -45,8 +45,10 @@ class ObjectLibrary(ABC, Generic[DataUnitGen]):
     @abstractmethod
     def add(self, obj: Union[Iterable[DataUnitGen], DataUnitGen]) -> None:
         """
-        Adds an object or multiple objects to the library (as long as it is
-        unique to the other objects in the library).
+        Add an object or multiple objects to the library.
+
+        This function does not add the new item if it has the same UID as an
+        item already in the library.
 
         Parameters
         ----------
@@ -57,30 +59,67 @@ class ObjectLibrary(ABC, Generic[DataUnitGen]):
     @abstractmethod
     def ids(self) -> Iterable[Identifier]:
         """
-        Returns a set of keys used in the library.
+        Return a set of keys used in the library.
 
         Returns
         -------
         Iterable[Identifier]
             Ids of objects in the library.
         """
-        pass
 
     @abstractmethod
     def __contains__(self, item: DataUnitGen) -> bool:
-        pass
+        """
+        Check if ObjectLibrary contains an object where object.uid == item.uid.
+
+        Parameters
+        ----------
+        item : DataUnit
+            Item to be checked against internal object list.
+
+        Returns
+        -------
+        bool
+            True if ObjectLibrary contains object with same UID.
+        """
 
     @abstractmethod
-    def __getitem__(self, id: Identifier) -> DataUnitGen:
-        pass
+    def __getitem__(self, item: Identifier) -> DataUnitGen:
+        """
+        Return object where object.uid == item returns True.
+
+        Parameters
+        ----------
+        item : Identifier
+            Item to be checked against internal object list.
+
+        Returns
+        -------
+        DataUnit
+            Object where uid attribute is equal to item.
+        """
 
     @abstractmethod
     def __iter__(self) -> Iterator[DataUnitGen]:
-        pass
+        """
+        Return an iterator over the objects contained in the ObjectLibrary.
+
+        Returns
+        -------
+        Iterator[DataUnitGen]
+            Iterator over objects contained in the ObjectLibrary.
+        """
 
     @abstractmethod
     def __len__(self) -> int:
-        pass
+        """
+        Return the number of items contained in the ObjectLibrary.
+
+        Returns
+        -------
+        int
+            Number of items in ObjectLibrary.
+        """
 
 
 @final
@@ -119,13 +158,13 @@ class ObjectLibraryBasic(ObjectLibrary, Generic[DataUnitGen]):
             self._lookup[obj.uid] = obj
 
     def ids(self) -> Generator[Identifier, None, None]:
-        return (key for key in self._lookup.keys())
+        return (key for key in self._lookup)
 
     def __contains__(self, item: DataUnitGen) -> bool:
         return item.uid in self._lookup
 
-    def __getitem__(self, id: Identifier) -> DataUnitGen:
-        return self._lookup[id]
+    def __getitem__(self, item: Identifier) -> DataUnitGen:
+        return self._lookup[item]
 
     def __iter__(self) -> Iterator[DataUnitGen]:
         return iter(self._lookup.values())
@@ -137,10 +176,10 @@ class ObjectLibraryBasic(ObjectLibrary, Generic[DataUnitGen]):
 @final
 class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
     """
-    Minimal class implementing the ObjectLibrary interface; stores binary
-    representation and initializes using passed function.
+    Minimal class implementing the ObjectLibrary interface.
 
-    This class wraps a dict.
+    This class stores binary representation and initializes using passed
+    function.
 
     Parameters
     ----------
@@ -180,13 +219,13 @@ class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
             self._lookup[obj.uid] = obj.blob
 
     def ids(self) -> Generator[Identifier, None, None]:
-        return (key for key in self._lookup.keys())
+        return (key for key in self._lookup)
 
     def __contains__(self, item: DataUnitGen) -> bool:
         return item.uid in self._lookup
 
-    def __getitem__(self, id: Identifier) -> DataUnitGen:
-        return self._initializer(self._lookup[id])
+    def __getitem__(self, item: Identifier) -> DataUnitGen:
+        return self._initializer(self._lookup[item])
 
     def __iter__(self) -> Iterator[DataUnitGen]:
         return (self._initializer(value) for value in self._lookup.values())
