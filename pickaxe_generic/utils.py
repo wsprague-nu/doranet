@@ -108,6 +108,7 @@ class RxnTrackerSingle(RxnTracker):
         target: Identifier,
         reagent_table: Sequence[Identifier] = None,
         fail_on_unknown_reagent: bool = None,
+        max_depth: Optional[int] = None,
     ) -> Iterable[Iterable[Iterable[RxnDatBase]]]:
         if reagent_table is not None or fail_on_unknown_reagent is not None:
             raise NotImplementedError("Arguments besides target not supported.")
@@ -139,7 +140,14 @@ class RxnTrackerDepthFirst(RxnTracker):
         prev_gens_rxns: Set[Identifier] = None,
         reagent_table: Optional[Iterable[Identifier]] = None,
         fail_on_unknown_reagent: bool = False,
+        depth: Optional[int] = None,
     ) -> Generator[list[frozenset[Identifier]], None, None]:
+        if depth is not None:
+            if depth <= 0:
+                return
+            new_depth = depth - 1
+        else:
+            new_depth = None
         if len(cur_gen_mols) == 0:
             yield []
             return
@@ -196,6 +204,7 @@ class RxnTrackerDepthFirst(RxnTracker):
                 prev_gens_rxns.union(rxncombo),
                 reagent_table,
                 fail_on_unknown_reagent,
+                new_depth,
             ):
                 path.append(rxncombo)
                 yield path
@@ -205,6 +214,7 @@ class RxnTrackerDepthFirst(RxnTracker):
         target: Identifier,
         reagent_table: Sequence[Identifier] = tuple(),
         fail_on_unknown_reagent: bool = False,
+        max_depth: Optional[int] = None,
     ) -> Generator[list[frozenset[Identifier]], None, None]:
         if fail_on_unknown_reagent and not reagent_table:
             raise ValueError(
@@ -217,5 +227,6 @@ class RxnTrackerDepthFirst(RxnTracker):
                 [target],
                 reagent_table=reagent_table,
                 fail_on_unknown_reagent=fail_on_unknown_reagent,
+                depth=max_depth,
             )
         )
