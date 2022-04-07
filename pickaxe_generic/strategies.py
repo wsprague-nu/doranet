@@ -37,7 +37,7 @@ from pickaxe_generic.datatypes import (
     OpDatBase,
     RxnDatBase,
 )
-from pickaxe_generic.filters import AlwaysTrueFilter
+from pickaxe_generic.filters import AlwaysTrueFilter, AlwaysTrueUIDPreFilter
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
@@ -97,6 +97,9 @@ class ExpansionStrategy(ABC):
         custom_filter: Callable[
             [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
         ] = AlwaysTrueFilter(),
+        custom_uid_prefilter: Callable[
+            [Identifier, Sequence[Identifier]], bool
+        ] = AlwaysTrueUIDPreFilter(),
     ) -> None:
         """
         Expand molecule library.
@@ -216,6 +219,9 @@ class CartesianStrategy(ExpansionStrategy):
         custom_filter: Callable[
             [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
         ] = AlwaysTrueFilter(),
+        custom_uid_prefilter: Callable[
+            [Identifier, Sequence[Identifier]], bool
+        ] = AlwaysTrueUIDPreFilter(),
     ) -> None:
         exhausted: bool = False
         num_mols: int = 0
@@ -230,6 +236,8 @@ class CartesianStrategy(ExpansionStrategy):
                 for react_uids in iterproduct(*self._compat_table[op_uid]):
                     recipe = (op_uid, frozenset(react_uids))
                     if recipe in self._recipe_cache:
+                        continue
+                    if not custom_uid_prefilter(op_uid,react_uids):
                         continue
                     op = self._op_cache[op_uid]
                     reactants = tuple(
