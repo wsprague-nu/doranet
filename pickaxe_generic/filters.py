@@ -1,9 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Sequence
+from typing import Collection, Iterable, Sequence
 
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
 
-from pickaxe_generic.datatypes import MolDatBase, MolDatRDKit, OpDatBase
+from pickaxe_generic.datatypes import (
+    Identifier,
+    MolDatBase,
+    MolDatRDKit,
+    OpDatBase,
+)
 
 
 class ReactionFilter(ABC):
@@ -43,3 +48,33 @@ class LessThanNElementTypeFilter(ReactionFilter):
                 if len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n:
                     return False
         return True
+
+
+class UIDPreFilter(ABC):
+    @abstractmethod
+    def __call__(
+        self,
+        operator: OpDatBase,
+        reactants: Sequence[Identifier],
+    ) -> bool:
+        pass
+
+
+class AlwaysTrueUIDPreFilter(UIDPreFilter):
+    def __call__(
+        self, operator: OpDatBase, reactants: Sequence[Identifier]
+    ) -> bool:
+        return True
+
+
+class CoreactantUIDPreFilter(UIDPreFilter):
+    def __init__(self, coreactants: Collection[Identifier]):
+        self._coreactants = frozenset(coreactants)
+
+    def __call__(
+        self, operator: OpDatBase, reactants: Sequence[Identifier]
+    ) -> bool:
+        for uid in reactants:
+            if uid not in self._coreactants:
+                return True
+        return False
