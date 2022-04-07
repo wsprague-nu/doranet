@@ -54,7 +54,7 @@ class UIDPreFilter(ABC):
     @abstractmethod
     def __call__(
         self,
-        operator: OpDatBase,
+        operator: Identifier,
         reactants: Sequence[Identifier],
     ) -> bool:
         pass
@@ -62,7 +62,7 @@ class UIDPreFilter(ABC):
 
 class AlwaysTrueUIDPreFilter(UIDPreFilter):
     def __call__(
-        self, operator: OpDatBase, reactants: Sequence[Identifier]
+        self, operator: Identifier, reactants: Sequence[Identifier]
     ) -> bool:
         return True
 
@@ -72,7 +72,7 @@ class CoreactantUIDPreFilter(UIDPreFilter):
         self._coreactants = frozenset(coreactants)
 
     def __call__(
-        self, operator: OpDatBase, reactants: Sequence[Identifier]
+        self, operator: Identifier, reactants: Sequence[Identifier]
     ) -> bool:
         for uid in reactants:
             if uid not in self._coreactants:
