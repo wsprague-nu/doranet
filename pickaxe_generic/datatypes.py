@@ -31,7 +31,6 @@ from typing import (
     List,
     Optional,
     Protocol,
-    Sequence,
     Tuple,
     final,
 )
