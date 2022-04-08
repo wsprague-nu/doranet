@@ -237,7 +237,7 @@ class CartesianStrategy(ExpansionStrategy):
                     recipe = (op_uid, frozenset(react_uids))
                     if recipe in self._recipe_cache:
                         continue
-                    if not custom_uid_prefilter(op_uid,react_uids):
+                    if not custom_uid_prefilter(op_uid, react_uids):
                         continue
                     op = self._op_cache[op_uid]
                     reactants = tuple(
