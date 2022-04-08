@@ -584,6 +584,7 @@ class OpDatBasic(OpDatRDKit):
     __slots__ = (
         "_blob",
         "_engine",
+        "_kekulize",
         "_rdkitrxn",
         "_smarts",
         "_templates",
@@ -678,7 +679,7 @@ class OpDatBasic(OpDatRDKit):
             if isinstance(reactant, MolDatRDKit)
         ]
         if self._kekulize:
-            rdkitmols = [BuildMol(rdkitmol for rdkitmol in rdkitmols)]
+            rdkitmols = [BuildMol(rdkitmol) for rdkitmol in rdkitmols]
             for rdkitmol in rdkitmols:
                 Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
@@ -709,7 +710,10 @@ class OpDatBasic(OpDatRDKit):
         raise NotImplementedError("Comparison not implemented")
 
     def __repr__(self) -> str:
-        return f"OpDatBasic({repr(self.uid)})"
+        sval = f"OpDatBasic({repr(self.uid)})"
+        if self._kekulize:
+            sval = sval + ",kekulize"
+        return sval
 
 
 class RxnDatBase(DataUnit):
