@@ -403,10 +403,10 @@ class MolDatBasicV1(MolDatRDKit):
 
     def __repr__(self) -> str:
         return f"MolDatBasic('{self.smiles}')"
-    
+
     def __getstate__(self) -> bytes:
         return self.blob
-    
+
     def __setstate__(self, arg: bytes) -> None:
         self._blob = arg
         self._smiles = MolToSmiles(BuildMol(arg))
