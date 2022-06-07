@@ -77,19 +77,30 @@ def _evaluate_reaction(
     rxn_filter: Optional[
         Callable[[OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool]
     ] = None,
-) -> tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...]:
+    return_rejects: bool = False,
+) -> tuple[
+    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
+    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
+]:
     resultslist: list[tuple[RxnDatBase, tuple[MolDatBase, ...]]] = []
+    rejectslist: list[tuple[RxnDatBase, tuple[MolDatBase, ...]]] = []
     for productset in operator(reactants):
         productset = tuple(productset)
         if rxn_filter is not None and not rxn_filter(
             operator, reactants, productset
         ):
+            if not return_rejects:
+                continue
+            reactant_uids = tuple((mol.uid for mol in reactants))
+            product_uids = tuple((mol.uid for mol in productset))
+            reaction = engine.Rxn(operator.uid, reactant_uids, product_uids)
+            rejectslist.append((reaction, productset))
             continue
         reactant_uids = tuple((mol.uid for mol in reactants))
         product_uids = tuple((mol.uid for mol in productset))
         reaction = engine.Rxn(operator.uid, reactant_uids, product_uids)
         resultslist.append((reaction, productset))
-    return tuple(resultslist)
+    return tuple(resultslist), tuple(rejectslist)
 
 
 def _evaluate_reaction_unpack(
@@ -103,7 +114,10 @@ def _evaluate_reaction_unpack(
             ]
         ],
     ]
-) -> tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...]:
+) -> tuple[
+    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
+    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
+]:
 
     return _evaluate_reaction(*job)
 
@@ -198,6 +212,7 @@ class CartesianStrategy(ExpansionStrategy):
         op_lib: ObjectLibrary[OpDatBase],
         rxn_lib: ObjectLibrary[RxnDatBase],
         engine: _ReactionProvider,
+        blacklist: Optional[set[Identifier]] = None,
     ) -> None:
         """Initialize strategy by attaching libraries.
 
@@ -216,6 +231,9 @@ class CartesianStrategy(ExpansionStrategy):
         self._op_lib = op_lib
         self._rxn_lib = rxn_lib
         self._engine = engine
+        if blacklist is None:
+            blacklist = set()
+        self._blacklist = blacklist
 
         # stores active molecule IDs
         self._active_mols: set[Identifier] = set(
@@ -283,13 +301,24 @@ class CartesianStrategy(ExpansionStrategy):
                     optable[arg].append(mol_uid)
         self._compat_table[op_uid] = optable
 
+    @property
+    def blacklist(self) -> set[Identifier]:
+        return self._blacklist
+
+    @blacklist.setter
+    def blacklist(self, value: set[Identifier]) -> None:
+        self._blacklist = value
+
     def reset_recipe_cache(self) -> None:
         self._recipe_cache = set()
 
     def refresh(self) -> None:
         if len(self._mol_lib) > len(self._active_mols):
             for mol_uid in self._mol_lib.ids():
-                if mol_uid not in self._active_mols:
+                if (
+                    mol_uid not in self._active_mols
+                    and mol_uid not in self._blacklist
+                ):
                     self._active_mols.add(mol_uid)
                     self._add_mol_to_compat(mol_uid)
 
@@ -312,6 +341,7 @@ class CartesianStrategy(ExpansionStrategy):
         custom_uid_prefilter: Optional[
             Callable[[Identifier, Sequence[Identifier]], bool]
         ] = None,
+        retain_products_to_blacklist: bool = False,
     ) -> None:
         # value used to tell if any new reactions have occurred in a generation
         exhausted: bool = False
@@ -335,9 +365,14 @@ class CartesianStrategy(ExpansionStrategy):
                 )
 
                 # iterate through evaluated reactions
-                for reaction, products in _evaluate_reaction(
-                    operator, reactants, self._engine, custom_filter
-                ):
+                results, rejects = _evaluate_reaction(
+                    operator,
+                    reactants,
+                    self._engine,
+                    custom_filter,
+                    retain_products_to_blacklist,
+                )
+                for reaction, products in rejects:
                     num_mols += len(products)
                     num_rxns += 1
                     if max_mols is not None and num_mols > max_mols:
@@ -345,6 +380,19 @@ class CartesianStrategy(ExpansionStrategy):
                     if max_rxns is not None and num_rxns > max_rxns:
                         return
                     for mol in products:
+                        self._blacklist.add(mol.uid)
+                        self._mol_lib.add(mol)
+                    self._rxn_lib.add(reaction)
+                    exhausted = False
+                for reaction, products in results:
+                    num_mols += len(products)
+                    num_rxns += 1
+                    if max_mols is not None and num_mols > max_mols:
+                        return
+                    if max_rxns is not None and num_rxns > max_rxns:
+                        return
+                    for mol in products:
+                        self._blacklist.discard(mol.uid)
                         self._mol_lib.add(mol)
                     self._rxn_lib.add(reaction)
                     exhausted = False
@@ -514,11 +562,11 @@ class CartesianStrategyParallel(ExpansionStrategy):
             with ProcessPoolExecutor(max_workers=self._num_procs) as executor:
                 for jobchunk in job_generator:
                     jobchunk = tuple(jobchunk)
-                    for result in executor.map(
+                    for results, _ in executor.map(
                         _evaluate_reaction_unpack, jobchunk
                     ):
                         #                    for result in _evaluate_reaction_unpack(jobchunk):
-                        for reaction, products in result:
+                        for reaction, products in results:
                             num_mols += len(products)
                             num_rxns += 1
                             if max_mols is not None and num_mols > max_mols:
