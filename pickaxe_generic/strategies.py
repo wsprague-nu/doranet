@@ -56,7 +56,6 @@ def _generate_recipes_from_compat_table(
     for op_uid, compat_list in compat.items():
         reactants: tuple[Identifier, ...]
         for reactants in iterproduct(*compat_list):
-            reactants = tuple(sorted(reactants))
             recipe = (op_uid, reactants)
             if known_cache is not None:
                 if recipe in known_cache:
