@@ -31,6 +31,7 @@ from typing import (
     List,
     Optional,
     Protocol,
+    Sequence,
     Tuple,
     final,
 )
@@ -505,7 +506,7 @@ class OpDatBase(DataUnit):
 
     @abstractmethod
     def __call__(
-        self, reactants: Collection[MolDatBase]
+        self, reactants: Sequence[MolDatBase]
     ) -> Iterable[Iterable[MolDatBase]]:
         """
         React a sequence of MolDat objects using internal operator.
@@ -678,7 +679,7 @@ class OpDatBasic(OpDatRDKit):
             raise err
 
     def __call__(
-        self, reactants: Collection[MolDatBase]
+        self, reactants: Sequence[MolDatBase]
     ) -> Tuple[Tuple[MolDatBase, ...], ...]:
         rdkitmols: List[RDKitMol] = [
             reactant.rdkitmol
