@@ -43,7 +43,7 @@ from rdkit.Chem.rdchem import AtomValenceException, KekulizeException
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
-from rdkit.Chem.rdmolops import AssignStereochemistry, SanitizeMol
+from rdkit.Chem.rdmolops import AssignStereochemistry, Kekulize, SanitizeMol
 
 if TYPE_CHECKING:
     from pickaxe_generic.engine import NetworkEngine
@@ -405,6 +405,13 @@ class MolDatBasicV1(MolDatRDKit):
     def __repr__(self) -> str:
         return f"MolDatBasic('{self.smiles}')"
 
+    def __getstate__(self) -> bytes:
+        return self.blob
+
+    def __setstate__(self, arg: bytes) -> None:
+        self._blob = arg
+        self._smiles = MolToSmiles(BuildMol(arg))
+
 
 @final
 class MolDatBasicV2(MolDatRDKit):
@@ -499,7 +506,7 @@ class OpDatBase(DataUnit):
 
     @abstractmethod
     def __call__(
-        self, reactants: Collection[MolDatBase]
+        self, reactants: Sequence[MolDatBase]
     ) -> Iterable[Iterable[MolDatBase]]:
         """
         React a sequence of MolDat objects using internal operator.
@@ -585,6 +592,7 @@ class OpDatBasic(OpDatRDKit):
     __slots__ = (
         "_blob",
         "_engine",
+        "_kekulize",
         "_rdkitrxn",
         "_smarts",
         "_templates",
@@ -598,17 +606,23 @@ class OpDatBasic(OpDatRDKit):
     _blob: Optional[bytes]
     _smarts: Optional[str]
     _uid: Optional[Tuple[Tuple[str, ...], Tuple[str, ...]]]
+    _kekulize: bool
 
     def __init__(
-        self, operator: RDKitMol | str | bytes, engine: NetworkEngine
+        self,
+        operator: RDKitMol | str | bytes,
+        engine: NetworkEngine,
+        kekulize_before_operation: bool = False,
     ) -> None:
         if isinstance(operator, RDKitRxn):
             self._rdkitrxn = operator
+            self._kekulize = kekulize_before_operation
         elif isinstance(operator, str):
             self._rdkitrxn = ReactionFromSmarts(operator)
+            self._kekulize = kekulize_before_operation
             # SanitizeRxn(self._rdkitrxn)
         elif isinstance(operator, bytes):
-            self._rdkitrxn = loads(operator)
+            self._rdkitrxn, self._kekulize = loads(operator)
             self._blob = operator
         else:
             raise NotImplementedError("Invalid operator type")
@@ -621,7 +635,7 @@ class OpDatBasic(OpDatRDKit):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = dumps(self.rdkitrxn)
+            self._blob = dumps((self.rdkitrxn, self._kekulize))
         return self._blob
 
     @property
@@ -644,7 +658,11 @@ class OpDatBasic(OpDatRDKit):
         if self._templates is None:
             self._templates = self._build_templates()
         if isinstance(mol, MolDatRDKit):
-            return mol.rdkitmol.HasSubstructMatch(
+            tempmol = mol.rdkitmol
+            if self._kekulize:
+                tempmol = BuildMol(tempmol)
+                Kekulize(tempmol, clearAromaticFlags=True)
+            return tempmol.HasSubstructMatch(
                 self._templates[arg], useChirality=True
             )
         else:
@@ -661,13 +679,17 @@ class OpDatBasic(OpDatRDKit):
             raise err
 
     def __call__(
-        self, reactants: Collection[MolDatBase]
+        self, reactants: Sequence[MolDatBase]
     ) -> Tuple[Tuple[MolDatBase, ...], ...]:
         rdkitmols: List[RDKitMol] = [
             reactant.rdkitmol
             for reactant in reactants
             if isinstance(reactant, MolDatRDKit)
         ]
+        if self._kekulize:
+            rdkitmols = [BuildMol(rdkitmol) for rdkitmol in rdkitmols]
+            for rdkitmol in rdkitmols:
+                Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
             return tuple(
                 tuple(self._engine.Mol(product) for product in products)
@@ -696,7 +718,10 @@ class OpDatBasic(OpDatRDKit):
         raise NotImplementedError("Comparison not implemented")
 
     def __repr__(self) -> str:
-        return f"OpDatBasic({repr(self.uid)})"
+        sval = f"OpDatBasic({repr(self.uid)})"
+        if self._kekulize:
+            sval = sval + ",kekulize"
+        return sval
 
 
 class RxnDatBase(DataUnit):

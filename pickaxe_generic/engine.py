@@ -207,8 +207,12 @@ class NetworkEngineBasic(NetworkEngine):
             molecule=molecule, sanitize=sanitize, neutralize=neutralize
         )
 
-    def Op(self, operator: Union[RDKitRxn, str, bytes]) -> OpDatBasic:
-        return self._Op(operator=operator, engine=self)
+    def Op(
+        self, operator: Union[RDKitRxn, str, bytes], kekulize: bool = False
+    ) -> OpDatBasic:
+        return self._Op(
+            operator=operator, engine=self, kekulize_before_operation=kekulize
+        )
 
     def Rxn(
         self,

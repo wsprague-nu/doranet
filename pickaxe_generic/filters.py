@@ -1,9 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Sequence
+from typing import Collection, Iterable, Sequence
 
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
 
-from pickaxe_generic.datatypes import MolDatBase, MolDatRDKit, OpDatBase
+from pickaxe_generic.datatypes import (
+    Identifier,
+    MolDatBase,
+    MolDatRDKit,
+    OpDatBase,
+)
 
 
 class ReactionFilter(ABC):
@@ -35,6 +40,7 @@ class ChainFilter(ReactionFilter):
 class LessThanNElementTypeFilter(ReactionFilter):
     def __init__(self, n: int, proton_number: int):
         self._n = n
+        self._p = proton_number
         self._q = AtomNumEqualsQueryAtom(proton_number)
 
     def __call__(self, operator, reactants, products):
@@ -43,3 +49,41 @@ class LessThanNElementTypeFilter(ReactionFilter):
                 if len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n:
                     return False
         return True
+
+    def __getstate__(self):
+        return (self._n, self._p)
+
+    def __setstate__(self, arg) -> None:
+        self._n = arg[0]
+        self._p = arg[1]
+        self._q = AtomNumEqualsQueryAtom(self._p)
+
+
+class UIDPreFilter(ABC):
+    @abstractmethod
+    def __call__(
+        self,
+        operator: Identifier,
+        reactants: Sequence[Identifier],
+    ) -> bool:
+        pass
+
+
+class AlwaysTrueUIDPreFilter(UIDPreFilter):
+    def __call__(
+        self, operator: Identifier, reactants: Sequence[Identifier]
+    ) -> bool:
+        return True
+
+
+class CoreactantUIDPreFilter(UIDPreFilter):
+    def __init__(self, coreactants: Collection[Identifier]):
+        self._coreactants = frozenset(coreactants)
+
+    def __call__(
+        self, operator: Identifier, reactants: Sequence[Identifier]
+    ) -> bool:
+        for uid in reactants:
+            if uid not in self._coreactants:
+                return True
+        return False
