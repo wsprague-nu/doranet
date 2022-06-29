@@ -87,3 +87,20 @@ class CoreactantUIDPreFilter(UIDPreFilter):
             if uid not in self._coreactants:
                 return True
         return False
+
+class TanimotoSimilarityFilter(ReactionFilter):
+    def __init__(self, n: float, smi: str):
+        self._n = n
+        self._s = smi
+        self._tmol = Chem.MolFromSmiles(self._s)
+        self._tfp = Chem.RDKFingerprint(self._tmol)
+
+    def __call__(self, operator, reactants, products):
+        for mol in products:
+            if isinstance(mol, MolDatRDKit):
+                mol_fp = Chem.RDKFingerprint(mol.rdkitmol)
+                similarity = DataStructs.TanimotoSimilarity(mol_fp, self._tfp)
+                
+                if similarity > self._n:
+                    return True
+        return False
