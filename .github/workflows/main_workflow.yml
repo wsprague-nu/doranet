@@ -8,9 +8,9 @@ jobs:
         os: [ubuntu-latest,windows-latest]
         include:
           - os: ubuntu-latest
-            shell: bash -l {0}
+            shell: "bash -l {0}"
           - os: windows-latest
-            shell: cmd /C CALL {0}
+            shell: "cmd /C CALL {0}"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
