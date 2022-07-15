@@ -1,7 +1,7 @@
 name: pg-basic
 on: push
 jobs:
-  check-install-unix:
+  test-install-unix:
     strategy:
       fail-fast: true
       matrix:
@@ -28,7 +28,7 @@ jobs:
         python -c "import pickaxe_generic.filters"
         python -c "import pickaxe_generic.strategies"
         python -c "import pickaxe_generic.utils"
-  check-install-windows:
+  test-install-windows:
     strategy:
       fail-fast: true
       matrix:
