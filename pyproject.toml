@@ -15,3 +15,21 @@ line_length = 80
 
 [tool.pylint.format]
 max-line-length = "80"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py
+isolated_build = true
+
+[testenv]
+deps =
+    black
+    isort
+    jupyter-black
+    mypy
+commands =
+    black --check .
+    isort --check .
+    mypy .
+"""
