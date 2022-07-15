@@ -48,7 +48,7 @@ jobs:
     - name: Install with pip
       run: pip install -e .
     - name: Test imports
-      run: >-
+      run: |
         where python
         where pip
         python -c "import pickaxe_generic.containers"
