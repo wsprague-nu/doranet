@@ -1,0 +1,7 @@
+name: pickaxe-env
+channels:
+ - conda-forge
+dependencies:
+ - python
+ - rdkit
+ - tox
