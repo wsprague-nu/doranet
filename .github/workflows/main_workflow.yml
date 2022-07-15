@@ -1,11 +1,11 @@
 name: pg-basic
 on: push
 jobs:
-  check-install-linux:
+  check-install-unix:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest,macos-latest]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -16,7 +16,32 @@ jobs:
       uses: mamba-org/provision-with-micromamba@main
       with:
         environment-file: environment.yml
-    - name: Install with pip (Linux)
+    - name: Install with pip
+      run: pip install -e .
+    - name: Test imports
+      run: |
+        python -c "import pickaxe_generic.containers"
+        python -c "import pickaxe_generic.datatypes"
+        python -c "import pickaxe_generic.engine"
+        python -c "import pickaxe_generic.filters"
+        python -c "import pickaxe_generic.strategies"
+        python -c "import pickaxe_generic.utils"
+  check-install-windows:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: cmd /C call {0}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Conda environment from Micromamba
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        environment-file: environment.yml
+    - name: Install with pip
       run: pip install -e .
     - name: Test imports
       run: |
