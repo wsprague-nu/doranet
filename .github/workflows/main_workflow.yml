@@ -7,9 +7,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    #defaults:
-    #  run:
-    #    shell: bash -l {0}
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
     - name: Install Conda environment from Micromamba
