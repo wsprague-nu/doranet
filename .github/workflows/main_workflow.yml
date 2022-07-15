@@ -1,28 +1,27 @@
-# name: Pickaxe-Generic
-
-# on: [pull_request]
-
-# jobs:
-#   build-linux:
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         python-version: [3.9]
-    
-#     steps:
-#     - uses: actions/checkout@v2
-#     - name: Set up Python ${{ matrix.python-version }}
-#       uses: actions/setup-python@v2
-#       with:
-#         python-version: ${{ matrix.python-version }}
-#     - name: Add conda to system path
-#       run: |
-#         echo $CONDA/bin >> $GITHUB_PATH
-#     - name: Install dependencies and create base conda environment
-#       run: |
-#         conda env update -f environment.yml -n base
-#         conda install black flake8 flake8-bugbear flake8-docstrings isort pytest pytest-cov tox
-#         conda develop ../Pickaxe-Generic
-#     - name: Run black to determine formatting
-#       run: |
-#         python -m black .
+name: pg-basic
+on: push
+jobs:
+  check-imports:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest,windows-latest]
+        include:
+          - os: ubuntu-latest
+            shell: bash -l {0}
+          - os: windows-latest
+            shell: cmd /C CALL {0}
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Conda environment from Micromamba
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        cache-downloads: true
+        environment-file: environment.yml
+    - name: Install with pip
+      shell: ${{ matrix.shell }}
+      run: pip install -e .
+    - name: Test imports
+      shell: ${{ matrix.shell }}
+      run: python -c "import pickaxe_generic"
