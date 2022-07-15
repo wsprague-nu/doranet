@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Collection, Iterable, Sequence
 
+from rdkit.Chem import MolFromSmiles, RDKFingerprint
+from rdkit.DataStructs import TanimotoSimilarity
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
 
 from pickaxe_generic.datatypes import (
@@ -86,4 +88,21 @@ class CoreactantUIDPreFilter(UIDPreFilter):
         for uid in reactants:
             if uid not in self._coreactants:
                 return True
+        return False
+
+class TanimotoSimilarityFilter(ReactionFilter):
+    def __init__(self, n: float, smi: str):
+        self._n = n
+        self._s = smi
+        self._tmol = MolFromSmiles(self._s)
+        self._tfp = RDKFingerprint(self._tmol)
+
+    def __call__(self, operator, reactants, products):
+        for mol in products:
+            if isinstance(mol, MolDatRDKit):
+                mol_fp = RDKFingerprint(mol.rdkitmol)
+                similarity = TanimotoSimilarity(mol_fp, self._tfp)
+                
+                if similarity > self._n:
+                    return True
         return False
