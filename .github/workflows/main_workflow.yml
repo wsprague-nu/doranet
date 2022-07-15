@@ -5,12 +5,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest,windows-latest]
-        include:
-          - os: ubuntu-latest
-            shellvar: "bash -l {0}"
-          - os: windows-latest
-            shellvar: "cmd /C CALL {0}"
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -19,11 +14,9 @@ jobs:
       with:
         cache-downloads: true
         environment-file: environment.yml
-    - name: Install with pip
-      shell: ${{ matrix.shellvar }}
-      run: |
-        pip install -e .
+    - name: Install with pip (Linux)
+      shell: bash -l {0}
+      run: pip install -e .
     - name: Test imports
-      shell: ${{ matrix.shellvar }}
-      run: |
-        python -c "import pickaxe_generic"
+      shell: bash -l {0}
+      run: python -c "import pickaxe_generic"
