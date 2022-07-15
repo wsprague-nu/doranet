@@ -15,7 +15,6 @@ jobs:
     - name: Install Conda environment from Micromamba
       uses: mamba-org/provision-with-micromamba@main
       with:
-        cache-env: true
         cache-downloads: true
         environment-file: test/environment-lint.yml
     - name: Install with pip
@@ -44,7 +43,6 @@ jobs:
     - name: Install Conda environment from Micromamba
       uses: mamba-org/provision-with-micromamba@main
       with:
-        cache-env: true
         cache-downloads: true
         environment-file: test/environment-lint.yml
     - name: Install with pip
