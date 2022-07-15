@@ -2,7 +2,8 @@
 requires = ["setuptools>=24.2.0","wheel"]
 build-backend = "setuptools.build_meta"
 
-[mypy]
+[[tool.mypy.overrides]]
+module = "rdkit.*"
 ignore_missing_imports = true
 
 [tool.black]
