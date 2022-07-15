@@ -15,6 +15,7 @@ jobs:
     - name: Install Conda environment from Micromamba
       uses: mamba-org/provision-with-micromamba@main
       with:
+        channel-priority: flexible
         environment-file: environment.yml
     - name: Install with pip (Linux)
       run: pip install -e .
