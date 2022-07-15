@@ -1,4 +1,4 @@
-name: pickaxe-env
+name: pickaxe-env-lint
 channels:
  - conda-forge
 dependencies:
