@@ -22,7 +22,13 @@ from typing import (
     final,
 )
 
-from pickaxe_generic.datatypes import DataUnit, Identifier
+from pickaxe_generic.datatypes import (
+    DataUnit,
+    Identifier,
+    MolDatBase,
+    OpDatBase,
+    RxnDatBase,
+)
 
 DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
 
@@ -232,3 +238,30 @@ class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
 
     def __len__(self) -> int:
         return len(self._lookup)
+
+
+class ChemNetwork(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def __init__(self) -> None:
+        ...
+
+
+class ChemNetworkBin(ChemNetwork):
+    __slots__ = (
+        "_mol_list",
+        "_op_list",
+        "_rxn_list",
+        "_mol_map",
+        "_op_map",
+        "_rxn_map",
+    )
+
+    def __init__(self) -> None:
+        self._mol_list: list[MolDatBase] = []
+        self._op_list: list[OpDatBase] = []
+        self._rxn_list: list[RxnDatBase] = []
+        self._mol_map: dict[Identifier, MolDatBase] = {}
+        self._op_map: dict[Identifier, OpDatBase] = {}
+        self._rxn_map: dict[Identifier, RxnDatBase] = {}
