@@ -1,5 +1,5 @@
 name: pg-basic
-on: push
+on: [push,pull_request]
 jobs:
   test-install-unix:
     strategy:
