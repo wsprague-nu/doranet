@@ -8,7 +8,7 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
     - name: Install Conda environment from Micromamba
       uses: mamba-org/provision-with-micromamba@main
       with:
