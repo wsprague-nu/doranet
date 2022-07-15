@@ -2,5 +2,5 @@ name: pickaxe-env
 channels:
  - conda-forge
 dependencies:
- - python
+ - python>=3.9
  - rdkit
