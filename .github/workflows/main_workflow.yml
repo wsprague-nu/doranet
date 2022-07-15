@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: cmd /C CALL {0}
+        shell: powershell
     steps:
     - uses: actions/checkout@v2
     - name: Install Conda environment from Micromamba
