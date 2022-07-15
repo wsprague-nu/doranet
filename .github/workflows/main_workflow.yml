@@ -48,7 +48,7 @@ jobs:
     - name: Install with pip
       run: pip install -e .
     - name: Test imports
-      run: |
+      run: >-
         python -c "import pickaxe_generic.containers"
         python -c "import pickaxe_generic.datatypes"
         python -c "import pickaxe_generic.engine"
