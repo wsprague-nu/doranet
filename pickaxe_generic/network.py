@@ -25,14 +25,6 @@ class Reaction:
     products: tuple[_MolIndex, ...]
 
 
-class ChemNetwork(ABC):
-    __slots__ = ()
-
-    @abstractmethod
-    def __init__(self) -> None:
-        ...
-
-
 @dataclass(frozen=True)
 class __ValueQueryData(Generic[DataUnitGen, _I_T]):
     __slots__ = ("_list", "_map")
@@ -99,6 +91,14 @@ class __ValueQueryAssoc(Generic[_ID_T, _I_T]):
 
     def __iter__(self) -> Iterator[_ID_T]:
         return iter(self._list)
+
+
+class ChemNetwork(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def __init__(self) -> None:
+        ...
 
 
 class ChemNetworkBin(ChemNetwork):
