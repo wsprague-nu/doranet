@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Collection, Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
+from gzip import open as gzopen
+from pickle import dump, load
 from typing import Generic, NewType, Optional, TypeVar, Union, overload
 
 from pickaxe_generic.containers import DataUnitGen
@@ -53,6 +55,9 @@ class __ValueQueryData(Generic[DataUnitGen, _I_T]):
 
     def i(self, uid: Identifier) -> _I_T:
         return self._map[uid]
+
+    def keys(self) -> Collection[Identifier]:
+        return self._map.keys()
 
     def uid(self, i: _I_T) -> Identifier:
         return self._list[i].uid
@@ -115,12 +120,23 @@ class ChemNetworkBin(ChemNetwork):
     )
 
     def __init__(self) -> None:
-        self._mol_list: Sequence[MolDatBase] = []
-        self._op_list: Sequence[OpDatBase] = []
-        self._rxn_list: Sequence[Reaction] = []
-        self._mol_map: Mapping[Identifier, _MolIndex] = {}
-        self._op_map: Mapping[Identifier, _OpIndex] = {}
-        self._rxn_map: Mapping[Reaction, _RxnIndex] = {}
+        self._mol_list: list[MolDatBase] = []
+        self._op_list: list[OpDatBase] = []
+        self._rxn_list: list[Reaction] = []
+
+        self._mol_map: dict[Identifier, _MolIndex] = {}
+        self._op_map: dict[Identifier, _OpIndex] = {}
+        self._rxn_map: dict[Reaction, _RxnIndex] = {}
+
+        self._mol_meta: list[dict] = []
+        self._op_meta: list[dict] = []
+        self._rxn_meta: list[dict] = []
+
+        self._mol_producers: Mapping[_MolIndex, Collection[_RxnIndex]] = {}
+        self._mol_consumers: Mapping[_MolIndex, Collection[_RxnIndex]] = {}
+
+        self._compat_table: list[Sequence[list[_MolIndex]]] = []
+
         self._mol_query: Optional[
             __ValueQueryData[MolDatBase, _MolIndex]
         ] = None
@@ -140,7 +156,136 @@ class ChemNetworkBin(ChemNetwork):
         return self._op_query
 
     @property
-    def rxn(self) -> __ValueQueryAssoc[Reaction, _RxnIndex]:
+    def rxns(self) -> __ValueQueryAssoc[Reaction, _RxnIndex]:
         if self._rxn_query is None:
             self._rxn_query = __ValueQueryAssoc(self._rxn_list, self._rxn_map)
         return self._rxn_query
+
+    def consumers(
+        self, mol: Union[int, MolDatBase, Identifier]
+    ) -> Collection[int]:
+        if isinstance(mol, int):
+            return self._mol_consumers[_MolIndex(mol)]
+        elif isinstance(mol, MolDatBase):
+            return self._mol_consumers[self._mol_map[mol.uid]]
+        return self._mol_consumers[self._mol_map[mol]]
+
+    def producers(
+        self, mol: Union[int, MolDatBase, Identifier]
+    ) -> Collection[int]:
+        if isinstance(mol, int):
+            return self._mol_producers[_MolIndex(mol)]
+        elif isinstance(mol, MolDatBase):
+            return self._mol_producers[self._mol_map[mol.uid]]
+        return self._mol_producers[self._mol_map[mol]]
+
+    def add_mol(
+        self, mol: MolDatBase, meta: Optional[Mapping] = None
+    ) -> _MolIndex:
+        # if already in database, return existing index
+        mol_uid = mol.uid
+        if mol_uid in self._mol_map:
+            return self._mol_map[mol_uid]
+
+        # add mol to main mol list
+        mol_index = _MolIndex(len(self._mol_list))
+        self._mol_list.append(mol)
+
+        # add mol id to UID mapping
+        self._mol_map[mol_uid] = mol_index
+
+        # add mol metadata to table
+        if meta is None:
+            self._mol_meta.append({})
+        else:
+            self._mol_meta.append(dict(meta))
+
+        # test operator compatibility and add to table
+        for i, op in enumerate(self.ops):
+            for argnum in range(len(op)):
+                if op.compat(mol, argnum):
+                    self._compat_table[i][argnum].append(mol_index)
+
+        return mol_index
+
+    def add_op(self, op: OpDatBase, meta: Optional[Mapping] = None) -> _OpIndex:
+        # if already in database, return existing index
+        op_uid = op.uid
+        if op_uid in self._op_map:
+            return self._op_map[op_uid]
+
+        # add op to main op list
+        op_index = _OpIndex(len(self._op_list))
+        self._op_list.append(op)
+
+        # add op id to UID mapping
+        self._op_map[op_uid] = op_index
+
+        # add mol metadata to table
+        if meta is None:
+            self._op_meta.append({})
+        else:
+            self._op_meta.append(dict(meta))
+
+        # test operator compatibility and add to table
+        self._compat_table.append(
+            [
+                [
+                    _MolIndex(mol_index)
+                    for mol_index, mol in enumerate(self._mol_list)
+                    if op.compat(mol, argnum)
+                ]
+                for argnum in range(len(op))
+            ]
+        )
+
+        return op_index
+
+    def add_rxn(
+        self,
+        op: _OpIndex,
+        reactants: Sequence[_MolIndex],
+        products: Sequence[_MolIndex],
+        meta: Optional[Mapping] = None,
+    ) -> _RxnIndex:
+        rxn = Reaction(op, tuple(reactants), tuple(products))
+
+        # if already in database, return existing index
+        if rxn in self._rxn_map:
+            return self._rxn_map[rxn]
+
+        # sanity check that all reactants and products exist in the network
+        if max(max(reactants), max(products)) >= len(self._mol_list):
+            IndexError(
+                f"One of the reactant components for reaction {rxn} is not in the network."
+            )
+        # sanity check that operator exists in the network
+        if op >= len(self._op_list):
+            IndexError(
+                f"The operator for reaction {rxn} is not in the network."
+            )
+
+        # add rxn to main rxn list
+        rxn_index = _RxnIndex(len(self._rxn_list))
+        self._rxn_list.append(rxn)
+
+        # add rxn to index mapping
+        self._rxn_map[rxn] = rxn_index
+
+        # add rxn metadata to table
+        if meta is None:
+            self._op_meta.append({})
+        else:
+            self._op_meta.append(dict(meta))
+
+        return rxn_index
+
+
+def dump_network_to_file(filepath: str, network: ChemNetwork) -> None:
+    with gzopen(filepath, "wb") as fout:
+        dump(network, fout)
+
+
+def load_network_from_file(filepath: str) -> ChemNetwork:
+    with gzopen(filepath, "rb") as fin:
+        return load(fin)
