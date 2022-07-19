@@ -52,7 +52,9 @@ def _generate_recipes_from_compat_table(
     uid_prefilter: Optional[
         Callable[[Identifier, Sequence[Identifier]], bool]
     ] = None,
+    add_to_cache: bool = True,
 ) -> Generator[tuple[Identifier, tuple[Identifier, ...]], None, None]:
+    gen_cache = set()
     for op_uid, compat_list in compat.items():
         reactants: tuple[Identifier, ...]
         for reactants in iterproduct(*compat_list):
@@ -61,12 +63,18 @@ def _generate_recipes_from_compat_table(
                 if recipe in known_cache:
                     continue
                 else:
-                    known_cache.add(recipe)
+                    if add_to_cache:
+                        known_cache.add(recipe)
             if uid_prefilter is not None and not uid_prefilter(
                 op_uid, reactants
             ):
                 continue
-            yield (op_uid, reactants)
+            recipe = (op_uid, reactants)
+            if recipe not in gen_cache:
+                gen_cache.add(recipe)
+                yield (op_uid, reactants)
+            else:
+                continue
 
 
 def _evaluate_reaction(

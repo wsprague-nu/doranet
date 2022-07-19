@@ -2,7 +2,8 @@
 requires = ["setuptools>=24.2.0","wheel"]
 build-backend = "setuptools.build_meta"
 
-[mypy]
+[[tool.mypy.overrides]]
+module = "rdkit.*"
 ignore_missing_imports = true
 
 [tool.black]
@@ -14,3 +15,21 @@ line_length = 80
 
 [tool.pylint.format]
 max-line-length = "80"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py
+isolated_build = true
+
+[testenv]
+deps =
+    black
+    isort
+    jupyter-black
+    mypy
+commands =
+    black --check .
+    isort --check .
+    mypy .
+"""

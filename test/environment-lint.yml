@@ -1,6 +1,7 @@
-name: pickaxe-env
+name: pickaxe-env-lint
 channels:
  - conda-forge
 dependencies:
  - python>=3.9
  - rdkit
+ - tox

@@ -159,7 +159,7 @@ The DataUnit is the generic abstract class defining an atomic unit of data.  Imp
 
 The Strategy puts all these components together to generate a network.  The only Strategy which has a full implementation is the CartesianStrategy.  This strategy attempts to combine every operator with every combination of compatible molecules to expand the network.  A number of "generations" can be specified, which represent the number of times the Cartesian product is performed, with the network expanding every time.  A reaction-level filter, implemented by the user, can filter out new reactions based on particular criteria in order to restrict the growth of the network.  A holistic filter, which filters out molecules based on an entire new generation, is recommended to be implemented separately by the end user, but this may change.
 
-Work in progress.  Check out example_notebook.ipynb in jupyter for examples.
+Work in progress.  Check out example_notebook.ipynb in jupyter for examples.  Be sure to first install Jupyter using "conda install jupyter" while your environment is activated.
 <!--
 This is an example of how pickaxe-generic may be used to obtain the heat of formation of an arbitrary molecule (for which the Benson groups exist in primary_groups).
 
