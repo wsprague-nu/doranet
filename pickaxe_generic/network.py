@@ -281,11 +281,11 @@ class ChemNetworkBin(ChemNetwork):
         return rxn_index
 
 
-def dump_network_to_file(filepath: str, network: ChemNetwork) -> None:
+def dump_network_to_file(network: ChemNetwork, filepath: str = "network.dat") -> None:
     with gzopen(filepath, "wb") as fout:
         dump(network, fout)
 
 
-def load_network_from_file(filepath: str) -> ChemNetwork:
+def load_network_from_file(filepath: str = "network.dat") -> ChemNetwork:
     with gzopen(filepath, "rb") as fin:
         return load(fin)
