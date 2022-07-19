@@ -26,13 +26,7 @@ jobs:
     - name: Install with pip
       run: pip install -e .
     - name: Test imports
-      run: |
-        python -c "import pickaxe_generic.containers"
-        python -c "import pickaxe_generic.datatypes"
-        python -c "import pickaxe_generic.engine"
-        python -c "import pickaxe_generic.filters"
-        python -c "import pickaxe_generic.strategies"
-        python -c "import pickaxe_generic.utils"
+      run: python test/import_test.py
     - name: Check formatting
       run: tox
   test-install-windows:
@@ -55,12 +49,6 @@ jobs:
     - name: Install with pip
       run: pip install -e .
     - name: Test imports
-      run: |
-        python -c "import pickaxe_generic.containers"
-        python -c "import pickaxe_generic.datatypes"
-        python -c "import pickaxe_generic.engine"
-        python -c "import pickaxe_generic.filters"
-        python -c "import pickaxe_generic.strategies"
-        python -c "import pickaxe_generic.utils"
+      run: python test/import_test.py
     - name: Check formatting
       run: tox
