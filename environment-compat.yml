@@ -1,6 +1,5 @@
 name: pickaxe-env
 channels:
- - rdkit
  - conda-forge
 dependencies:
  - jupyter
