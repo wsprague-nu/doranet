@@ -257,7 +257,7 @@ class ChemNetworkBin(ChemNetwork):
         # sanity check that all reactants and products exist in the network
         if max(max(reactants), max(products)) >= len(self._mol_list):
             IndexError(
-                f"One of the reactant components for reaction {rxn} is not in the network."
+                f"One of the molecule components for reaction {rxn} is not in the network."
             )
         # sanity check that operator exists in the network
         if op >= len(self._op_list):
