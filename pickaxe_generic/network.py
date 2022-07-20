@@ -292,6 +292,12 @@ class ChemNetworkBin(ChemNetwork):
         # add rxn to index mapping
         self._rxn_map[rxn] = rxn_index
 
+        # add consumption/production mappings
+        for i in reactants:
+            self._mol_consumers[i].append(rxn_index)
+        for i in products:
+            self._mol_producers[i].append(rxn_index)
+
         # add rxn metadata to table
         if meta is None:
             self._op_meta.append({})
