@@ -3,7 +3,15 @@ from collections.abc import Collection, Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from gzip import open as gzopen
 from pickle import dump, load
-from typing import Generic, NewType, Optional, TypeVar, Union, overload
+from typing import (
+    Generic,
+    NewType,
+    Optional,
+    Protocol,
+    TypeVar,
+    Union,
+    overload,
+)
 
 from pickaxe_generic.containers import DataUnitGen
 from pickaxe_generic.datatypes import (
@@ -25,6 +33,74 @@ class Reaction:
     operator: _OpIndex
     reactants: tuple[_MolIndex, ...]
     products: tuple[_MolIndex, ...]
+
+
+class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
+    @abstractmethod
+    def __contains__(self, item: Union[Identifier, DataUnitGen]) -> bool:
+        ...
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, item: slice) -> Sequence[DataUnitGen]:
+        ...
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, item: Union[_I_T, Identifier]) -> DataUnitGen:
+        ...
+
+    @abstractmethod
+    def __getitem__(self, item: Union[slice, _I_T, Identifier]):
+        ...
+
+    @abstractmethod
+    def i(self, uid: Identifier) -> _I_T:
+        ...
+
+    @abstractmethod
+    def keys(self) -> Collection[Identifier]:
+        ...
+
+    @abstractmethod
+    def uid(self, i: _I_T) -> Identifier:
+        ...
+
+    @abstractmethod
+    def __len__(self) -> int:
+        ...
+
+    @abstractmethod
+    def __iter__(self) -> Iterator[DataUnitGen]:
+        ...
+
+
+class ValueQueryAssoc(Protocol, Generic[_ID_T, _I_T]):
+    @overload
+    @abstractmethod
+    def __getitem__(self, item: slice) -> Sequence[_ID_T]:
+        ...
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, item: _I_T) -> _ID_T:
+        ...
+
+    @abstractmethod
+    def __getitem__(self, item: Union[slice, _I_T]):
+        ...
+
+    @abstractmethod
+    def i(self, item: _ID_T) -> _I_T:
+        ...
+
+    @abstractmethod
+    def __len__(self) -> int:
+        ...
+
+    @abstractmethod
+    def __iter__(self) -> Iterator[_ID_T]:
+        ...
 
 
 @dataclass(frozen=True)
@@ -105,6 +181,72 @@ class ChemNetwork(ABC):
     def __init__(self) -> None:
         ...
 
+    @property
+    @abstractmethod
+    def mols(self) -> ValueQueryData[MolDatBase, _MolIndex]:
+        ...
+
+    @property
+    @abstractmethod
+    def ops(self) -> ValueQueryData[OpDatBase, _OpIndex]:
+        ...
+
+    @property
+    @abstractmethod
+    def rxns(self) -> ValueQueryAssoc[Reaction, _RxnIndex]:
+        ...
+
+    @abstractmethod
+    def mol_meta(self, index: int, key: Hashable, value=None):
+        ...
+
+    @abstractmethod
+    def op_meta(self, index: int, key: Hashable, value=None):
+        ...
+
+    @abstractmethod
+    def rxn_meta(self, index: int, key: Hashable, value=None):
+        ...
+
+    @abstractmethod
+    def compat_table(self, index: int) -> Sequence[Sequence[_MolIndex]]:
+        ...
+
+    @abstractmethod
+    def consumers(
+        self, mol: Union[int, MolDatBase, Identifier]
+    ) -> Collection[_RxnIndex]:
+        ...
+
+    @abstractmethod
+    def producers(
+        self, mol: Union[int, MolDatBase, Identifier]
+    ) -> Collection[_RxnIndex]:
+        ...
+
+    @abstractmethod
+    def add_mol(
+        self, mol: MolDatBase, meta: Optional[Mapping] = None
+    ) -> _MolIndex:
+        ...
+
+    @abstractmethod
+    def add_op(
+        self, mol: OpDatBase, meta: Optional[Mapping] = None
+    ) -> _OpIndex:
+        ...
+
+    @abstractmethod
+    def add_rxn(
+        self,
+        rxn: Optional[Reaction] = None,
+        op: Optional[_OpIndex] = None,
+        reactants: Optional[Sequence[_MolIndex]] = None,
+        products: Optional[Sequence[_MolIndex]] = None,
+        meta: Optional[Mapping] = None,
+    ) -> _RxnIndex:
+        ...
+
 
 class ChemNetworkBin(ChemNetwork):
     __slots__ = (
@@ -114,6 +256,12 @@ class ChemNetworkBin(ChemNetwork):
         "_mol_map",
         "_op_map",
         "_rxn_map",
+        "_mol_meta",
+        "_op_meta",
+        "_rxn_meta",
+        "_mol_producers",
+        "_mol_consumers",
+        "_compat_table",
         "_mol_query",
         "_op_query",
         "_rxn_query",
@@ -132,8 +280,8 @@ class ChemNetworkBin(ChemNetwork):
         self._op_meta: list[dict] = []
         self._rxn_meta: list[dict] = []
 
-        self._mol_producers: Mapping[_MolIndex, Collection[_RxnIndex]] = {}
-        self._mol_consumers: Mapping[_MolIndex, Collection[_RxnIndex]] = {}
+        self._mol_producers: Mapping[_MolIndex, list[_RxnIndex]] = {}
+        self._mol_consumers: Mapping[_MolIndex, list[_RxnIndex]] = {}
 
         self._compat_table: list[Sequence[list[_MolIndex]]] = []
 
@@ -181,7 +329,7 @@ class ChemNetworkBin(ChemNetwork):
 
     def consumers(
         self, mol: Union[int, MolDatBase, Identifier]
-    ) -> Collection[int]:
+    ) -> Collection[_RxnIndex]:
         if isinstance(mol, int):
             return self._mol_consumers[_MolIndex(mol)]
         elif isinstance(mol, MolDatBase):
@@ -190,7 +338,7 @@ class ChemNetworkBin(ChemNetwork):
 
     def producers(
         self, mol: Union[int, MolDatBase, Identifier]
-    ) -> Collection[int]:
+    ) -> Collection[_RxnIndex]:
         if isinstance(mol, int):
             return self._mol_producers[_MolIndex(mol)]
         elif isinstance(mol, MolDatBase):
@@ -263,25 +411,36 @@ class ChemNetworkBin(ChemNetwork):
 
     def add_rxn(
         self,
-        op: _OpIndex,
-        reactants: Sequence[_MolIndex],
-        products: Sequence[_MolIndex],
+        rxn: Optional[Reaction] = None,
+        op: Optional[_OpIndex] = None,
+        reactants: Optional[Sequence[_MolIndex]] = None,
+        products: Optional[Sequence[_MolIndex]] = None,
         meta: Optional[Mapping] = None,
     ) -> _RxnIndex:
-        rxn = Reaction(op, tuple(reactants), tuple(products))
+
+        if rxn is None:
+            if (
+                op is not None
+                and reactants is not None
+                and products is not None
+            ):
+                rxn = Reaction(op, tuple(reactants), tuple(products))
+            raise ValueError(
+                f"op ({op}), reactants ({reactants}), and products ({products}) must all be specified if reaction is None"
+            )
 
         # if already in database, return existing index
         if rxn in self._rxn_map:
             return self._rxn_map[rxn]
 
         # sanity check that all reactants and products exist in the network
-        if max(max(reactants), max(products)) >= len(self._mol_list):
-            IndexError(
+        if max(max(rxn.reactants), max(rxn.products)) >= len(self._mol_list):
+            raise IndexError(
                 f"One of the molecule components for reaction {rxn} is not in the network."
             )
         # sanity check that operator exists in the network
-        if op >= len(self._op_list):
-            IndexError(
+        if rxn.operator >= len(self._op_list):
+            raise IndexError(
                 f"The operator for reaction {rxn} is not in the network."
             )
 
@@ -293,9 +452,9 @@ class ChemNetworkBin(ChemNetwork):
         self._rxn_map[rxn] = rxn_index
 
         # add consumption/production mappings
-        for i in reactants:
+        for i in rxn.reactants:
             self._mol_consumers[i].append(rxn_index)
-        for i in products:
+        for i in rxn.products:
             self._mol_producers[i].append(rxn_index)
 
         # add rxn metadata to table
