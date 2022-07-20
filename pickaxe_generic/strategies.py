@@ -32,6 +32,8 @@ from pickaxe_generic.datatypes import (
     OpDatBase,
     RxnDatBase,
 )
+from pickaxe_generic.filters import RecipeFilter
+from pickaxe_generic.network import ChemNetwork
 
 
 class _ReactionProvider(Protocol):
@@ -586,3 +588,15 @@ class CartesianStrategyParallel(ExpansionStrategy):
                             exhausted = False
             gen += 1
             self.refresh()
+
+
+class PriorityQueueStrategy(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def expand(
+        self,
+        num_recipes: int,
+        recipe_filter: Optional[RecipeFilter],
+    ) -> None:
+        ...
