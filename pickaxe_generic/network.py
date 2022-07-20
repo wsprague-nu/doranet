@@ -280,14 +280,12 @@ class ChemNetworkBasic(ChemNetwork):
         self._op_meta: list[dict] = []
         self._rxn_meta: list[dict] = []
 
-        self._mol_producers: Mapping[_MolIndex, list[_RxnIndex]] = {}
-        self._mol_consumers: Mapping[_MolIndex, list[_RxnIndex]] = {}
+        self._mol_producers: list[list[_RxnIndex]] = []
+        self._mol_consumers: list[list[_RxnIndex]] = []
 
         self._compat_table: list[Sequence[list[_MolIndex]]] = []
 
-        self._mol_query: Optional[
-            _ValueQueryData[MolDatBase, _MolIndex]
-        ] = None
+        self._mol_query: Optional[_ValueQueryData[MolDatBase, _MolIndex]] = None
         self._op_query: Optional[_ValueQueryData[OpDatBase, _OpIndex]] = None
         self._rxn_query: Optional[_ValueQueryAssoc[Reaction, _RxnIndex]] = None
 
@@ -360,6 +358,10 @@ class ChemNetworkBasic(ChemNetwork):
         # add mol id to UID mapping
         self._mol_map[mol_uid] = mol_index
 
+        # extend consumer/producer table
+        self._mol_consumers.append([])
+        self._mol_producers.append([])
+
         # add mol metadata to table
         if meta is None:
             self._mol_meta.append({})
@@ -419,15 +421,11 @@ class ChemNetworkBasic(ChemNetwork):
     ) -> _RxnIndex:
 
         if rxn is None:
-            if (
-                op is not None
-                and reactants is not None
-                and products is not None
-            ):
-                rxn = Reaction(op, tuple(reactants), tuple(products))
-            raise ValueError(
-                f"op ({op}), reactants ({reactants}), and products ({products}) must all be specified if reaction is None"
-            )
+            if op is None or reactants is None or products is None:
+                raise ValueError(
+                    f"op ({op}), reactants ({reactants}), and products ({products}) must all be specified if reaction is None"
+                )
+            rxn = Reaction(op, tuple(reactants), tuple(products))
 
         # if already in database, return existing index
         if rxn in self._rxn_map:
