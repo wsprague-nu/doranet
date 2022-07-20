@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Collection, Iterable, Sequence
+from dataclasses import dataclass
+from typing import Collection, Iterable, Protocol, Sequence, final
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -10,6 +11,11 @@ from pickaxe_generic.datatypes import (
     MolDatBase,
     MolDatRDKit,
     OpDatBase,
+)
+from pickaxe_generic.network import (
+    ChemNetwork,
+    ReactionExplicit,
+    RecipeExplicit,
 )
 
 
@@ -107,3 +113,67 @@ class TanimotoSimilarityFilter(ReactionFilter):
                 if similarity > self._n:
                     return True
         return False
+
+
+class RecipeFilter(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def __call__(self, recipe: RecipeExplicit) -> bool:
+        ...
+
+    @final
+    def __and__(self, other: "RecipeFilter") -> "RecipeFilter":
+        return RecipeFilterAnd(self, other)
+
+    @final
+    def __inv__(self, other: "RecipeFilter") -> "RecipeFilter":
+        return RecipeFilterInv(self, other)
+
+    @final
+    def __or__(self, other: "RecipeFilter") -> "RecipeFilter":
+        return RecipeFilterOr(self, other)
+
+    @final
+    def __xor__(self, other: "RecipeFilter") -> "RecipeFilter":
+        return RecipeFilterXor(self, other)
+
+
+@dataclass(frozen=True)  # type: ignore
+def RecipeFilterAnd(RecipeFilter):
+    __slots__ = ("_filter1", "_filter2")
+
+    _filter1: RecipeFilter
+    _filter2: RecipeFilter
+
+    def __call__(self, recipe: RecipeExplicit) -> bool:
+        return self._filter1(recipe) and self._filter2(recipe)
+
+
+@dataclass(frozen=True)  # type: ignore
+def RecipeFilterInv(RecipeFilter):
+    __slots__ = ("_filter",)
+    _filter: RecipeFilter
+
+    def __call__(self, recipe: RecipeExplicit) -> bool:
+        return not self._filter(recipe)
+
+
+@dataclass(frozen=True)  # type: ignore
+def RecipeFilterOr(RecipeFilter):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: RecipeFilter
+    _filter2: RecipeFilter
+
+    def __call__(self, recipe: RecipeExplicit) -> bool:
+        return self._filter1(recipe) or self._filter2(recipe)
+
+
+@dataclass(frozen=True)  # type: ignore
+def RecipeFilterXor(RecipeFilter):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: RecipeFilter
+    _filter2: RecipeFilter
+
+    def __call__(self, recipe: RecipeExplicit) -> bool:
+        return self._filter1(recipe) != self._filter2(recipe)
