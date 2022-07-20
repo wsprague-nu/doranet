@@ -35,6 +35,19 @@ class Reaction:
     products: tuple[_MolIndex, ...]
 
 
+@dataclass(Frozen=True, order=True, slots=True)
+class ReactionExplicit:
+    operator: OpDatBase
+    reactants: tuple[MolDatBase, ...]
+    products: tuple[MolDatBase, ...]
+
+
+@dataclass(frozen=True, order=True, slots=True)
+class RecipeExplicit:
+    operator: OpDatBase
+    reactants: tuple[MolDatBase, ...]
+
+
 class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
     @abstractmethod
     def __contains__(self, item: Union[Identifier, DataUnitGen]) -> bool:
