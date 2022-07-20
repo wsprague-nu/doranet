@@ -43,6 +43,12 @@ class ReactionExplicit:
 
 
 @dataclass(frozen=True, order=True, slots=True)
+class Recipe:
+    operator: _OpIndex
+    reactants: tuple[_MolIndex, ...]
+
+
+@dataclass(frozen=True, order=True, slots=True)
 class RecipeExplicit:
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
