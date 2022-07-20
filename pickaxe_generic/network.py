@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Hashable, Iterator, Mapping, Sequence
+from collections.abc import Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from gzip import open as gzopen
 from pickle import dump, load
@@ -229,14 +229,16 @@ class ChemNetworkBin(ChemNetwork):
 
         # test operator compatibility and add to table
         self._compat_table.append(
-            [
+            tuple(
                 [
-                    _MolIndex(mol_index)
-                    for mol_index, mol in enumerate(self._mol_list)
-                    if op.compat(mol, argnum)
+                    [
+                        _MolIndex(mol_index)
+                        for mol_index, mol in enumerate(self._mol_list)
+                        if op.compat(mol, argnum)
+                    ]
+                    for argnum in range(len(op))
                 ]
-                for argnum in range(len(op))
-            ]
+            )
         )
 
         return op_index
@@ -281,7 +283,9 @@ class ChemNetworkBin(ChemNetwork):
         return rxn_index
 
 
-def dump_network_to_file(network: ChemNetwork, filepath: str = "network.dat") -> None:
+def dump_network_to_file(
+    network: ChemNetwork, filepath: str = "network.dat"
+) -> None:
     with gzopen(filepath, "wb") as fout:
         dump(network, fout)
 
