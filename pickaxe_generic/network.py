@@ -176,6 +176,9 @@ class ChemNetworkBin(ChemNetwork):
             return self._rxn_meta[index][key]
         self._rxn_meta[index][key] = value
 
+    def compat_table(self, index: int) -> Sequence[Sequence[_MolIndex]]:
+        return self._compat_table[index]
+
     def consumers(
         self, mol: Union[int, MolDatBase, Identifier]
     ) -> Collection[int]:
