@@ -104,7 +104,7 @@ class ValueQueryAssoc(Protocol, Generic[_ID_T, _I_T]):
 
 
 @dataclass(frozen=True)
-class __ValueQueryData(Generic[DataUnitGen, _I_T]):
+class _ValueQueryData(Generic[DataUnitGen, _I_T]):
     __slots__ = ("_list", "_map")
     _list: Sequence[DataUnitGen]
     _map: Mapping[Identifier, _I_T]
@@ -146,7 +146,7 @@ class __ValueQueryData(Generic[DataUnitGen, _I_T]):
 
 
 @dataclass(frozen=True)
-class __ValueQueryAssoc(Generic[_ID_T, _I_T]):
+class _ValueQueryAssoc(Generic[_ID_T, _I_T]):
     __slots__ = ("_list", "_map")
     _list: Sequence[_ID_T]
     _map: Mapping[_ID_T, _I_T]
@@ -286,27 +286,27 @@ class ChemNetworkBasic(ChemNetwork):
         self._compat_table: list[Sequence[list[_MolIndex]]] = []
 
         self._mol_query: Optional[
-            __ValueQueryData[MolDatBase, _MolIndex]
+            _ValueQueryData[MolDatBase, _MolIndex]
         ] = None
-        self._op_query: Optional[__ValueQueryData[OpDatBase, _OpIndex]] = None
-        self._rxn_query: Optional[__ValueQueryAssoc[Reaction, _RxnIndex]] = None
+        self._op_query: Optional[_ValueQueryData[OpDatBase, _OpIndex]] = None
+        self._rxn_query: Optional[_ValueQueryAssoc[Reaction, _RxnIndex]] = None
 
     @property
-    def mols(self) -> __ValueQueryData[MolDatBase, _MolIndex]:
+    def mols(self) -> _ValueQueryData[MolDatBase, _MolIndex]:
         if self._mol_query is None:
-            self._mol_query = __ValueQueryData(self._mol_list, self._mol_map)
+            self._mol_query = _ValueQueryData(self._mol_list, self._mol_map)
         return self._mol_query
 
     @property
-    def ops(self) -> __ValueQueryData[OpDatBase, _OpIndex]:
+    def ops(self) -> _ValueQueryData[OpDatBase, _OpIndex]:
         if self._op_query is None:
-            self._op_query = __ValueQueryData(self._op_list, self._op_map)
+            self._op_query = _ValueQueryData(self._op_list, self._op_map)
         return self._op_query
 
     @property
-    def rxns(self) -> __ValueQueryAssoc[Reaction, _RxnIndex]:
+    def rxns(self) -> _ValueQueryAssoc[Reaction, _RxnIndex]:
         if self._rxn_query is None:
-            self._rxn_query = __ValueQueryAssoc(self._rxn_list, self._rxn_map)
+            self._rxn_query = _ValueQueryAssoc(self._rxn_list, self._rxn_map)
         return self._rxn_query
 
     def mol_meta(self, index: int, key: Hashable, value=None):
