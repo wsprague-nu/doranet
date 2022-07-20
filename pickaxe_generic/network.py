@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Iterator, Mapping, Sequence
+from collections.abc import Collection, Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from gzip import open as gzopen
 from pickle import dump, load
@@ -160,6 +160,21 @@ class ChemNetworkBin(ChemNetwork):
         if self._rxn_query is None:
             self._rxn_query = __ValueQueryAssoc(self._rxn_list, self._rxn_map)
         return self._rxn_query
+
+    def mol_meta(self, index: int, key: Hashable, value=None):
+        if value is None:
+            return self._mol_meta[index][key]
+        self._mol_meta[index][key] = value
+
+    def op_meta(self, index: int, key: Hashable, value=None):
+        if value is None:
+            return self._op_meta[index][key]
+        self._op_meta[index][key] = value
+
+    def rxn_meta(self, index: int, key: Hashable, value=None):
+        if value is None:
+            return self._rxn_meta[index][key]
+        self._rxn_meta[index][key] = value
 
     def consumers(
         self, mol: Union[int, MolDatBase, Identifier]
