@@ -248,7 +248,7 @@ class ChemNetwork(ABC):
         ...
 
 
-class ChemNetworkBin(ChemNetwork):
+class ChemNetworkBasic(ChemNetwork):
     __slots__ = (
         "_mol_list",
         "_op_list",
