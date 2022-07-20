@@ -35,7 +35,7 @@ class Reaction:
     products: tuple[_MolIndex, ...]
 
 
-@dataclass(Frozen=True, order=True, slots=True)
+@dataclass(frozen=True, order=True, slots=True)
 class ReactionExplicit:
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
