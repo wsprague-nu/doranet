@@ -40,6 +40,9 @@ class ReactionExplicit:
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
     products: tuple[MolDatBase, ...]
+    operator_meta: Optional[Mapping] = None
+    reactants_meta: Optional[tuple[Mapping]] = None
+    products_meta: Optional[tuple[Mapping]] = None
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -52,6 +55,8 @@ class Recipe:
 class RecipeExplicit:
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
+    operator_meta: Optional[Mapping] = None
+    reactants_meta: Optional[tuple[Mapping]] = None
 
 
 class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
