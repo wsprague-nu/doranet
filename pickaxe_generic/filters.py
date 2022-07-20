@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Collection, Iterable, Protocol, Sequence, final
+from typing import Optional, Protocol, final
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -115,6 +116,12 @@ class TanimotoSimilarityFilter(ReactionFilter):
         return False
 
 
+@dataclass(frozen=True)
+class MetaKeyPacket:
+    operator_keys: frozenset = frozenset()
+    reactant_keys: frozenset = frozenset()
+
+
 class RecipeFilter(ABC):
     __slots__ = ()
 
@@ -177,3 +184,99 @@ def RecipeFilterXor(RecipeFilter):
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
         return self._filter1(recipe) != self._filter2(recipe)
+
+
+class RankValue(Protocol):
+    @abstractmethod
+    def __lt__(self, other: "RankValue") -> bool:
+        ...
+
+
+class RecipeRanker(Protocol):
+    __slots__ = ()
+
+    @abstractmethod
+    def __call__(self, recipe: RecipeExplicit) -> Optional[RankValue]:
+        ...
+
+
+class ReactionFilterBase(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        ...
+
+    @abstractmethod
+    def meta_required(self) -> MetaKeyPacket:
+        ...
+
+    @final
+    def __and__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterAnd(self, other)
+
+    @final
+    def __inv__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterInv(self, other)
+
+    @final
+    def __or__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterOr(self, other)
+
+    @final
+    def __xor__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterXor(self, other)
+
+
+@dataclass(frozen=True)  # type: ignore
+def ReactionFilterAnd(ReactionFilterBase):
+    __slots__ = ("_filter1", "_filter2")
+
+    _filter1: ReactionFilterBase
+    _filter2: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return self._filter1(recipe) and self._filter2(recipe)
+
+    def meta_required(self) -> MetaKeyPacket:
+        return frozenset(
+            self._filter1.meta_required().union(self._filter2.meta_required())
+        )
+
+
+@dataclass(frozen=True)  # type: ignore
+def ReactionFilterInv(ReactionFilterBase):
+    __slots__ = ("_filter",)
+    _filter: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return not self._filter(recipe)
+
+
+@dataclass(frozen=True)  # type: ignore
+def ReactionFilterOr(ReactionFilterBase):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: ReactionFilterBase
+    _filter2: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return self._filter1(recipe) or self._filter2(recipe)
+
+
+@dataclass(frozen=True)  # type: ignore
+def ReactionFilterXor(ReactionFilterBase):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: ReactionFilterBase
+    _filter2: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return self._filter1(recipe) != self._filter2(recipe)
+
+
+def LocalMetaDataCalculator(ABC):
+    __slots__ = ()
+
+    # @abstractmethod
+
+
+# def __call__(self, )
