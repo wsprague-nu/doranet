@@ -617,3 +617,18 @@ class PriorityQueueStrategy(ABC):
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
         ...
+
+
+class PriorityQueueStrategyBasic(PriorityQueueStrategy):
+    __slots__ = (
+        "_network",
+    )
+
+    def __init__(
+        self, network: ChemNetwork, num_procs: Optional[int] = None
+    ) -> None:
+        if num_procs is not None:
+            raise NotImplementedError(
+                f"Parallel processing not yet supported on {type(self)}"
+            )
+        self._network = network
