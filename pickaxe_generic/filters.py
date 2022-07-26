@@ -317,6 +317,11 @@ def MetaDataCalculatorLocal(Protocol):
     def __call__(self, unit: Union[ReactionExplicit, RecipeExplicit]) -> None:
         ...
 
+    @property
+    @abstractmethod
+    def meta_required(self) -> MetaKeyPacket:
+        ...
+
 
 def MetaDataCalculatorGlobal(Protocol):
     @abstractmethod
