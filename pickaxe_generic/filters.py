@@ -148,7 +148,7 @@ class MolFilter(ABC):
         return MolFilterAnd(self, other)
 
     @final
-    def __inv__(self) -> "MolFilter":
+    def __invert__(self) -> "MolFilter":
         return MolFilterInv(self)
 
     @final
@@ -260,7 +260,7 @@ class RecipeFilter(ABC):
         return RecipeFilterAnd(self, other)
 
     @final
-    def __inv__(self) -> "RecipeFilter":
+    def __invert__(self) -> "RecipeFilter":
         return RecipeFilterInv(self)
 
     @final
@@ -360,7 +360,7 @@ class ReactionFilterBase(ABC):
         return ReactionFilterAnd(self, other)
 
     @final
-    def __inv__(self) -> "ReactionFilterBase":
+    def __invert__(self) -> "ReactionFilterBase":
         return ReactionFilterInv(self)
 
     @final
