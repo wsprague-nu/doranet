@@ -333,4 +333,27 @@ class MetaDataUpdate(Protocol):
         ...
 
 
+class DefaultMetaDataUpdate:
+    def __call__(
+        self, unit: ReactionExplicit, network: ChemNetwork
+    ) -> Generator[tuple[Optional[_MolIndex], Optional[_OpIndex]], None, None]:
+        if unit.operator_meta is not None:
+            opIndex = network.ops.i(unit.operator.uid)
+            for key, value in unit.operator_meta.items():
+                network.op_meta(opIndex, key, value)
+            yield (None, opIndex)
+        if unit.reactants_meta is not None:
+            for index, reactant in enumerate(unit.reactants):
+                molIndex = network.mols.i(reactant.uid)
+                for key, value in unit.reactants_meta[index]:
+                    network.mol_meta(molIndex, key, value)
+                yield (molIndex, None)
+        if unit.products_meta is not None:
+            for index, product in enumerate(unit.products):
+                molIndex = network.mols.i(product.uid)
+                for key, value in unit.products_meta[index]:
+                    network.mol_meta(molIndex, key, value)
+                yield (molIndex, None)
+
+
 # def __call__(self, )
