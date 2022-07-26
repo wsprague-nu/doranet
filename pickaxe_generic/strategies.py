@@ -620,9 +620,7 @@ class PriorityQueueStrategy(ABC):
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
-    __slots__ = (
-        "_network",
-    )
+    __slots__ = ("_network",)
 
     def __init__(
         self, network: ChemNetwork, num_procs: Optional[int] = None
@@ -632,3 +630,14 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 f"Parallel processing not yet supported on {type(self)}"
             )
         self._network = network
+
+    def expand(
+        self,
+        max_recipes: Optional[int] = None,
+        batch_size: int = 1,
+        recipe_filter: Optional[RecipeFilter] = None,
+        recipe_ranker: Optional[RecipeRanker] = None,
+        mc_local: Optional[MetaDataCalculatorLocal] = None,
+        mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
+    ) -> None:
+        return
