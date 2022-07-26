@@ -43,6 +43,7 @@ class ReactionExplicit:
     operator_meta: Optional[Mapping] = None
     reactants_meta: Optional[tuple[Mapping]] = None
     products_meta: Optional[tuple[Mapping]] = None
+    reaction_meta: Optional[tuple[Mapping]] = None
 
 
 @dataclass(frozen=True, order=True, slots=True)
