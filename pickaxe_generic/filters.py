@@ -323,7 +323,7 @@ class MetaDataCalculatorLocal(Protocol):
         ...
 
 
-class MetaDataCalculatorGlobal(Protocol):
+class MetaDataUpdate(Protocol):
     @abstractmethod
     def __call__(self, unit: ReactionExplicit, network: ChemNetwork) -> None:
         ...
