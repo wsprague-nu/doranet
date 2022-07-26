@@ -222,7 +222,7 @@ class RecipeRanker(Protocol):
     @abstractmethod
     def __call__(self, recipe: RecipeExplicit) -> Optional[RankValue]:
         ...
-    
+
     @property
     def meta_required(self) -> MetaKeyPacket:
         return MetaKeyPacket()
@@ -312,7 +312,7 @@ def ReactionFilterXor(ReactionFilterBase):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-def MetaDataCalculatorLocal(Protocol):
+class MetaDataCalculatorLocal(Protocol):
     @abstractmethod
     def __call__(self, unit: Union[ReactionExplicit, RecipeExplicit]) -> None:
         ...
@@ -323,7 +323,7 @@ def MetaDataCalculatorLocal(Protocol):
         ...
 
 
-def MetaDataCalculatorGlobal(Protocol):
+class MetaDataCalculatorGlobal(Protocol):
     @abstractmethod
     def __call__(self, unit: ReactionExplicit, network: ChemNetwork) -> None:
         ...
