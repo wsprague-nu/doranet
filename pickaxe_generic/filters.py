@@ -210,6 +210,7 @@ class ReactionFilterBase(ABC):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         ...
 
+    @property
     def meta_required(self) -> MetaKeyPacket:
         return MetaKeyPacket()
 
@@ -240,8 +241,9 @@ def ReactionFilterAnd(ReactionFilterBase):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return self._filter1(recipe) and self._filter2(recipe)
 
+    @property
     def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required() + self._filter2.meta_required()
+        return self._filter1.meta_required + self._filter2.meta_required
 
 
 @dataclass(frozen=True)  # type: ignore
@@ -252,8 +254,9 @@ def ReactionFilterInv(ReactionFilterBase):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return not self._filter(recipe)
 
+    @property
     def meta_required(self) -> MetaKeyPacket:
-        return self._filter.meta_required()
+        return self._filter.meta_required
 
 
 @dataclass(frozen=True)  # type: ignore
@@ -265,8 +268,9 @@ def ReactionFilterOr(ReactionFilterBase):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return self._filter1(recipe) or self._filter2(recipe)
 
+    @property
     def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required() + self._filter2.meta_required()
+        return self._filter1.meta_required + self._filter2.meta_required
 
 
 @dataclass(frozen=True)  # type: ignore
@@ -278,8 +282,9 @@ def ReactionFilterXor(ReactionFilterBase):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return self._filter1(recipe) != self._filter2(recipe)
 
+    @property
     def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required() + self._filter2.meta_required()
+        return self._filter1.meta_required + self._filter2.meta_required
 
 
 def LocalMetaDataCalculator(ABC):
