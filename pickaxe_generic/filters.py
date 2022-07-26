@@ -216,8 +216,6 @@ class RankValue(Protocol):
 
 
 class RecipeRanker(Protocol):
-    __slots__ = ()
-
     @abstractmethod
     def __call__(self, recipe: RecipeExplicit) -> Optional[RankValue]:
         ...
