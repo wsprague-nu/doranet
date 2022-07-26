@@ -32,8 +32,14 @@ from pickaxe_generic.datatypes import (
     OpDatBase,
     RxnDatBase,
 )
-from pickaxe_generic.filters import RecipeFilter
-from pickaxe_generic.network import ChemNetwork
+from pickaxe_generic.filters import (
+    MetaDataCalculatorLocal,
+    MetaDataUpdate,
+    RankValue,
+    RecipeFilter,
+    RecipeRanker,
+)
+from pickaxe_generic.network import ChemNetwork, Recipe
 
 
 class _ReactionProvider(Protocol):
@@ -594,9 +600,17 @@ class PriorityQueueStrategy(ABC):
     __slots__ = ()
 
     @abstractmethod
+    def __init__(self, network: ChemNetwork) -> None:
+        ...
+
+    @abstractmethod
     def expand(
         self,
-        num_recipes: int,
-        recipe_filter: Optional[RecipeFilter],
+        max_recipes: Optional[int] = None,
+        batch_size: int = 1,
+        recipe_filter: Optional[RecipeFilter] = None,
+        recipe_ranker: Optional[RecipeRanker] = None,
+        mc_local: Optional[MetaDataCalculatorLocal] = None,
+        mc_update: Optional[MetaDataUpdate] = None,
     ) -> None:
         ...
