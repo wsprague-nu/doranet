@@ -601,7 +601,9 @@ class PriorityQueueStrategy(ABC):
     __slots__ = ()
 
     @abstractmethod
-    def __init__(self, network: ChemNetwork) -> None:
+    def __init__(
+        self, network: ChemNetwork, num_procs: Optional[int] = None
+    ) -> None:
         ...
 
     @abstractmethod
