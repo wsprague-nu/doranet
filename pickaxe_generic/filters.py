@@ -132,6 +132,10 @@ class RecipeFilter(ABC):
     def __call__(self, recipe: RecipeExplicit) -> bool:
         ...
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return MetaKeyPacket()
+
     @final
     def __and__(self, other: "RecipeFilter") -> "RecipeFilter":
         return RecipeFilterAnd(self, other)
@@ -159,6 +163,10 @@ def RecipeFilterAnd(RecipeFilter):
     def __call__(self, recipe: RecipeExplicit) -> bool:
         return self._filter1(recipe) and self._filter2(recipe)
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
 
 @dataclass(frozen=True)  # type: ignore
 def RecipeFilterInv(RecipeFilter):
@@ -167,6 +175,10 @@ def RecipeFilterInv(RecipeFilter):
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
         return not self._filter(recipe)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter.meta_required
 
 
 @dataclass(frozen=True)  # type: ignore
@@ -178,6 +190,10 @@ def RecipeFilterOr(RecipeFilter):
     def __call__(self, recipe: RecipeExplicit) -> bool:
         return self._filter1(recipe) or self._filter2(recipe)
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
 
 @dataclass(frozen=True)  # type: ignore
 def RecipeFilterXor(RecipeFilter):
@@ -187,6 +203,10 @@ def RecipeFilterXor(RecipeFilter):
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
         return self._filter1(recipe) != self._filter2(recipe)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
 
 
 class RankValue(Protocol):
