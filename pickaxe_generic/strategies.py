@@ -42,7 +42,7 @@ from pickaxe_generic.filters import (
     RecipeFilter,
     RecipeRanker,
 )
-from pickaxe_generic.network import ChemNetwork, Recipe
+from pickaxe_generic.network import ChemNetwork, Recipe, _MolIndex
 
 
 class _ReactionProvider(Protocol):
@@ -636,6 +636,15 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         self._network = network
         self._blacklist_key = f"_blacklist_{id(self)}"
         self._blacklist_func = ~MolFilterMetaVal(self._blacklist_key, True)
+
+    def _blacklist_mol(self, index: _MolIndex) -> None:
+        self._network.mol_meta(index, self._blacklist_key, True)
+
+    def _unblacklist_mol(self, index: _MolIndex) -> None:
+        self._network.mol_meta(index, self._blacklist_key, False)
+
+    def _is_blacklisted(self, index: _MolIndex) -> bool:
+        return self._blacklist_func(self._network.mols[index])
 
     def expand(
         self,
