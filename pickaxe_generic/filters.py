@@ -146,8 +146,8 @@ class MolFilter(ABC):
         return MolFilterAnd(self, other)
 
     @final
-    def __inv__(self, other: "MolFilter") -> "MolFilter":
-        return MolFilterInv(self, other)
+    def __inv__(self) -> "MolFilter":
+        return MolFilterInv(self)
 
     @final
     def __or__(self, other: "MolFilter") -> "MolFilter":
@@ -158,8 +158,8 @@ class MolFilter(ABC):
         return MolFilterXor(self, other)
 
 
-@dataclass(frozen=True)  # type: ignore
-def MolFilterAnd(MolFilter):
+@dataclass(frozen=True)
+class MolFilterAnd(MolFilter):
     __slots__ = ("_filter1", "_filter2")
 
     _filter1: MolFilter
@@ -173,8 +173,8 @@ def MolFilterAnd(MolFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def MolFilterInv(MolFilter):
+@dataclass(frozen=True)
+class MolFilterInv(MolFilter):
     __slots__ = ("_filter",)
     _filter: MolFilter
 
@@ -186,8 +186,8 @@ def MolFilterInv(MolFilter):
         return self._filter.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def MolFilterOr(MolFilter):
+@dataclass(frozen=True)
+class MolFilterOr(MolFilter):
     __slots__ = ("_filter1", "_filter2")
     _filter1: MolFilter
     _filter2: MolFilter
@@ -200,8 +200,8 @@ def MolFilterOr(MolFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def MolFilterXor(MolFilter):
+@dataclass(frozen=True)
+class MolFilterXor(MolFilter):
     __slots__ = ("_filter1", "_filter2")
     _filter1: MolFilter
     _filter2: MolFilter
@@ -230,8 +230,8 @@ class RecipeFilter(ABC):
         return RecipeFilterAnd(self, other)
 
     @final
-    def __inv__(self, other: "RecipeFilter") -> "RecipeFilter":
-        return RecipeFilterInv(self, other)
+    def __inv__(self) -> "RecipeFilter":
+        return RecipeFilterInv(self)
 
     @final
     def __or__(self, other: "RecipeFilter") -> "RecipeFilter":
@@ -242,8 +242,8 @@ class RecipeFilter(ABC):
         return RecipeFilterXor(self, other)
 
 
-@dataclass(frozen=True)  # type: ignore
-def RecipeFilterAnd(RecipeFilter):
+@dataclass(frozen=True)
+class RecipeFilterAnd(RecipeFilter):
     __slots__ = ("_filter1", "_filter2")
 
     _filter1: RecipeFilter
@@ -257,8 +257,8 @@ def RecipeFilterAnd(RecipeFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def RecipeFilterInv(RecipeFilter):
+@dataclass(frozen=True)
+class RecipeFilterInv(RecipeFilter):
     __slots__ = ("_filter",)
     _filter: RecipeFilter
 
@@ -270,8 +270,8 @@ def RecipeFilterInv(RecipeFilter):
         return self._filter.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def RecipeFilterOr(RecipeFilter):
+@dataclass(frozen=True)
+class RecipeFilterOr(RecipeFilter):
     __slots__ = ("_filter1", "_filter2")
     _filter1: RecipeFilter
     _filter2: RecipeFilter
@@ -284,8 +284,8 @@ def RecipeFilterOr(RecipeFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def RecipeFilterXor(RecipeFilter):
+@dataclass(frozen=True)
+class RecipeFilterXor(RecipeFilter):
     __slots__ = ("_filter1", "_filter2")
     _filter1: RecipeFilter
     _filter2: RecipeFilter
@@ -330,8 +330,8 @@ class ReactionFilterBase(ABC):
         return ReactionFilterAnd(self, other)
 
     @final
-    def __inv__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
-        return ReactionFilterInv(self, other)
+    def __inv__(self) -> "ReactionFilterBase":
+        return ReactionFilterInv(self)
 
     @final
     def __or__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
@@ -342,8 +342,8 @@ class ReactionFilterBase(ABC):
         return ReactionFilterXor(self, other)
 
 
-@dataclass(frozen=True)  # type: ignore
-def ReactionFilterAnd(ReactionFilterBase):
+@dataclass(frozen=True)
+class ReactionFilterAnd(ReactionFilterBase):
     __slots__ = ("_filter1", "_filter2")
 
     _filter1: ReactionFilterBase
@@ -357,8 +357,8 @@ def ReactionFilterAnd(ReactionFilterBase):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def ReactionFilterInv(ReactionFilterBase):
+@dataclass(frozen=True)
+class ReactionFilterInv(ReactionFilterBase):
     __slots__ = ("_filter",)
     _filter: ReactionFilterBase
 
@@ -370,8 +370,8 @@ def ReactionFilterInv(ReactionFilterBase):
         return self._filter.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def ReactionFilterOr(ReactionFilterBase):
+@dataclass(frozen=True)
+class ReactionFilterOr(ReactionFilterBase):
     __slots__ = ("_filter1", "_filter2")
     _filter1: ReactionFilterBase
     _filter2: ReactionFilterBase
@@ -384,8 +384,8 @@ def ReactionFilterOr(ReactionFilterBase):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclass(frozen=True)  # type: ignore
-def ReactionFilterXor(ReactionFilterBase):
+@dataclass(frozen=True)
+class ReactionFilterXor(ReactionFilterBase):
     __slots__ = ("_filter1", "_filter2")
     _filter1: ReactionFilterBase
     _filter2: ReactionFilterBase
