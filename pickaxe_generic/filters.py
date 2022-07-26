@@ -222,6 +222,10 @@ class RecipeRanker(Protocol):
     @abstractmethod
     def __call__(self, recipe: RecipeExplicit) -> Optional[RankValue]:
         ...
+    
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return MetaKeyPacket()
 
 
 class ReactionFilterBase(ABC):
