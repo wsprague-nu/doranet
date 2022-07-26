@@ -37,6 +37,7 @@ from pickaxe_generic.filters import (
     MetaDataCalculatorLocal,
     MetaDataUpdate,
     MolFilter,
+    MolFilterMetaVal,
     RankValue,
     RecipeFilter,
     RecipeRanker,
@@ -645,4 +646,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
         filter_mols_local: bool = True,
     ) -> None:
+        if mol_filter is None:
+            self._mol_filter = ~MolFilterMetaVal("_blacklist", True)
+        else:
+            self._mol_filter = mol_filter & (
+                ~MolFilterMetaVal("_blacklist", True)
+            )
         return
