@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Generator, Optional, Protocol, Union, final
+from typing import Any, Generator, Hashable, Optional, Protocol, Union, final
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -134,7 +134,9 @@ class MolFilter(ABC):
     __slots__ = ()
 
     @abstractmethod
-    def __call__(self, mol: MolDatBase) -> bool:
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
         ...
 
     @property
@@ -165,8 +167,10 @@ class MolFilterAnd(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: MolDatBase) -> bool:
-        return self._filter1(mol) and self._filter2(mol)
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
+        return self._filter1(mol, meta) and self._filter2(mol, meta)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -178,8 +182,10 @@ class MolFilterInv(MolFilter):
     __slots__ = ("_filter",)
     _filter: MolFilter
 
-    def __call__(self, mol: MolDatBase) -> bool:
-        return not self._filter(mol)
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
+        return not self._filter(mol, meta)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -192,8 +198,10 @@ class MolFilterOr(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: MolDatBase) -> bool:
-        return self._filter1(mol) or self._filter2(mol)
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
+        return self._filter1(mol, meta) or self._filter2(mol, meta)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -206,12 +214,34 @@ class MolFilterXor(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: MolDatBase) -> bool:
-        return self._filter1(mol) != self._filter2(mol)
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
+        return self._filter1(mol, meta) != self._filter2(mol, meta)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
         return self._filter1.meta_required + self._filter2.meta_required
+
+
+@dataclass(frozen=True)
+class MolFilterMetaVal(MolFilter):
+    __slots__ = ("_key", "_val")
+    _key: Hashable
+    _val: Any
+
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
+        if meta is None:
+            return False
+        if self._key not in meta:
+            return False
+        return meta[self._key] == self._val
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return MetaKeyPacket(frozenset(), frozenset((self._key,)))
 
 
 class RecipeFilter(ABC):
