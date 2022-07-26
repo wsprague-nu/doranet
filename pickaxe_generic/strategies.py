@@ -643,5 +643,6 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         recipe_ranker: Optional[RecipeRanker] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
+        filter_mols_local: bool = True,
     ) -> None:
         return
