@@ -624,7 +624,7 @@ class PriorityQueueStrategy(ABC):
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
-    __slots__ = ("_network",)
+    __slots__ = ("_network", "_blacklist_func")
 
     def __init__(
         self, network: ChemNetwork, num_procs: Optional[int] = None
@@ -634,6 +634,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 f"Parallel processing not yet supported on {type(self)}"
             )
         self._network = network
+        self._blacklist_func = ~MolFilterMetaVal("_blacklist", True)
 
     def expand(
         self,
@@ -646,10 +647,4 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
         filter_mols_local: bool = True,
     ) -> None:
-        if mol_filter is None:
-            self._mol_filter = ~MolFilterMetaVal("_blacklist", True)
-        else:
-            self._mol_filter = mol_filter & (
-                ~MolFilterMetaVal("_blacklist", True)
-            )
         return
