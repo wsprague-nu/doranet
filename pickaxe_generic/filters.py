@@ -308,13 +308,13 @@ def ReactionFilterXor(ReactionFilterBase):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-def LocalMetaDataCalculator(Protocol):
+def MetaDataCalculatorLocal(Protocol):
     @abstractmethod
     def __call__(self, unit: Union[ReactionExplicit, RecipeExplicit]) -> None:
         ...
 
 
-def GlobalMetaDataCalculator(Protocol):
+def MetaDataCalculatorGlobal(Protocol):
     @abstractmethod
     def __call__(self, unit: ReactionExplicit, network: ChemNetwork) -> None:
         ...
