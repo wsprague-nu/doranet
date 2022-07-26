@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Optional, Protocol, final
+from typing import Optional, Protocol, Union, final
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -308,10 +308,16 @@ def ReactionFilterXor(ReactionFilterBase):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-def LocalMetaDataCalculator(ABC):
-    __slots__ = ()
+def LocalMetaDataCalculator(Protocol):
+    @abstractmethod
+    def __call__(self, unit: Union[ReactionExplicit, RecipeExplicit]) -> None:
+        ...
 
-    # @abstractmethod
+
+def GlobalMetaDataCalculator(Protocol):
+    @abstractmethod
+    def __call__(self, unit: ReactionExplicit, network: ChemNetwork) -> None:
+        ...
 
 
 # def __call__(self, )
