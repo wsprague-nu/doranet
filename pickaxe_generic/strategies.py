@@ -33,6 +33,7 @@ from pickaxe_generic.datatypes import (
     RxnDatBase,
 )
 from pickaxe_generic.filters import (
+    DefaultMetaDataUpdate,
     MetaDataCalculatorLocal,
     MetaDataUpdate,
     RankValue,
@@ -611,6 +612,6 @@ class PriorityQueueStrategy(ABC):
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
-        mc_update: Optional[MetaDataUpdate] = None,
+        mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
         ...
