@@ -130,6 +130,90 @@ class MetaKeyPacket:
         )
 
 
+class MolFilter(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def __call__(self, mol: MolDatBase) -> bool:
+        ...
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return MetaKeyPacket()
+
+    @final
+    def __and__(self, other: "MolFilter") -> "MolFilter":
+        return MolFilterAnd(self, other)
+
+    @final
+    def __inv__(self, other: "MolFilter") -> "MolFilter":
+        return MolFilterInv(self, other)
+
+    @final
+    def __or__(self, other: "MolFilter") -> "MolFilter":
+        return MolFilterOr(self, other)
+
+    @final
+    def __xor__(self, other: "MolFilter") -> "MolFilter":
+        return MolFilterXor(self, other)
+
+
+@dataclass(frozen=True)  # type: ignore
+def MolFilterAnd(MolFilter):
+    __slots__ = ("_filter1", "_filter2")
+
+    _filter1: MolFilter
+    _filter2: MolFilter
+
+    def __call__(self, mol: MolDatBase) -> bool:
+        return self._filter1(mol) and self._filter2(mol)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
+
+@dataclass(frozen=True)  # type: ignore
+def MolFilterInv(MolFilter):
+    __slots__ = ("_filter",)
+    _filter: MolFilter
+
+    def __call__(self, mol: MolDatBase) -> bool:
+        return not self._filter(mol)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter.meta_required
+
+
+@dataclass(frozen=True)  # type: ignore
+def MolFilterOr(MolFilter):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: MolFilter
+    _filter2: MolFilter
+
+    def __call__(self, mol: MolDatBase) -> bool:
+        return self._filter1(mol) or self._filter2(mol)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
+
+@dataclass(frozen=True)  # type: ignore
+def MolFilterXor(MolFilter):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: MolFilter
+    _filter2: MolFilter
+
+    def __call__(self, mol: MolDatBase) -> bool:
+        return self._filter1(mol) != self._filter2(mol)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
+
 class RecipeFilter(ABC):
     __slots__ = ()
 
