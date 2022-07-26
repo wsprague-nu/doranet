@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Optional, Protocol, Union, final
+from typing import Generator, Optional, Protocol, Union, final
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -17,6 +17,8 @@ from pickaxe_generic.network import (
     ChemNetwork,
     ReactionExplicit,
     RecipeExplicit,
+    _MolIndex,
+    _OpIndex,
 )
 
 
@@ -325,7 +327,9 @@ class MetaDataCalculatorLocal(Protocol):
 
 class MetaDataUpdate(Protocol):
     @abstractmethod
-    def __call__(self, unit: ReactionExplicit, network: ChemNetwork) -> None:
+    def __call__(
+        self, unit: ReactionExplicit, network: ChemNetwork
+    ) -> Generator[tuple[Optional[_MolIndex], Optional[_OpIndex]], None, None]:
         ...
 
 
