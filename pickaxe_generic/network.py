@@ -222,15 +222,15 @@ class ChemNetwork(ABC):
         ...
 
     @abstractmethod
-    def mol_meta(self, index: int, key: Hashable, value=None):
+    def mol_meta(self, index: _MolIndex, key: Hashable, value=None):
         ...
 
     @abstractmethod
-    def op_meta(self, index: int, key: Hashable, value=None):
+    def op_meta(self, index: _OpIndex, key: Hashable, value=None):
         ...
 
     @abstractmethod
-    def rxn_meta(self, index: int, key: Hashable, value=None):
+    def rxn_meta(self, index: _RxnIndex, key: Hashable, value=None):
         ...
 
     @abstractmethod
@@ -332,17 +332,17 @@ class ChemNetworkBasic(ChemNetwork):
             self._rxn_query = _ValueQueryAssoc(self._rxn_list, self._rxn_map)
         return self._rxn_query
 
-    def mol_meta(self, index: int, key: Hashable, value=None):
+    def mol_meta(self, index: _MolIndex, key: Hashable, value=None):
         if value is None:
             return self._mol_meta[index][key]
         self._mol_meta[index][key] = value
 
-    def op_meta(self, index: int, key: Hashable, value=None):
+    def op_meta(self, index: _OpIndex, key: Hashable, value=None):
         if value is None:
             return self._op_meta[index][key]
         self._op_meta[index][key] = value
 
-    def rxn_meta(self, index: int, key: Hashable, value=None):
+    def rxn_meta(self, index: _RxnIndex, key: Hashable, value=None):
         if value is None:
             return self._rxn_meta[index][key]
         self._rxn_meta[index][key] = value
