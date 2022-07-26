@@ -121,6 +121,9 @@ class MetaKeyPacket:
     operator_keys: frozenset = frozenset()
     reactant_keys: frozenset = frozenset()
 
+    def __add__(self, other: 'MetaKeyPacket') -> 'MetaKeyPacket':
+        return MetaKeyPacket(self.operator_keys.union(other.operator_keys),self.reactant_keys.union(other.reactant_keys))
+
 
 class RecipeFilter(ABC):
     __slots__ = ()
@@ -207,9 +210,8 @@ class ReactionFilterBase(ABC):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         ...
 
-    @abstractmethod
     def meta_required(self) -> MetaKeyPacket:
-        ...
+        return MetaKeyPacket()
 
     @final
     def __and__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
@@ -239,9 +241,7 @@ def ReactionFilterAnd(ReactionFilterBase):
         return self._filter1(recipe) and self._filter2(recipe)
 
     def meta_required(self) -> MetaKeyPacket:
-        return frozenset(
-            self._filter1.meta_required().union(self._filter2.meta_required())
-        )
+        return self._filter1.meta_required() + self._filter2.meta_required()
 
 
 @dataclass(frozen=True)  # type: ignore
@@ -251,6 +251,9 @@ def ReactionFilterInv(ReactionFilterBase):
 
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return not self._filter(recipe)
+
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter.meta_required()
 
 
 @dataclass(frozen=True)  # type: ignore
@@ -262,6 +265,9 @@ def ReactionFilterOr(ReactionFilterBase):
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return self._filter1(recipe) or self._filter2(recipe)
 
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required() + self._filter2.meta_required()
+
 
 @dataclass(frozen=True)  # type: ignore
 def ReactionFilterXor(ReactionFilterBase):
@@ -271,6 +277,9 @@ def ReactionFilterXor(ReactionFilterBase):
 
     def __call__(self, recipe: ReactionExplicit) -> bool:
         return self._filter1(recipe) != self._filter2(recipe)
+
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required() + self._filter2.meta_required()
 
 
 def LocalMetaDataCalculator(ABC):
