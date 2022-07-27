@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from itertools import chain, islice
 from itertools import product as iterproduct
+from math import prod
 from typing import (
     Callable,
     Collection,
@@ -720,14 +721,22 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         ]
         cart_test_index = _MolIndex(0)
         updated_mols_inv_heap: list[_MolIndex] = []
-        updated_ops_inv_heap: list[_OpIndex] = []
+        updated_ops_set: set[_OpIndex] = set()
 
         while (
             cart_test_index < len(network.mols)
             or len(updated_mols_inv_heap) != 0
-            or len(updated_ops_inv_heap) != 0
+            or len(updated_ops_set) != 0
         ):
+            # raise error if operator has been updated
+            if len(updated_ops_set) != 0:
+                raise NotImplementedError(
+                    "Updating necessary operator metadata is not yet supported"
+                )
             # get number of new recipes per operator
+            new_recipes_per_operator: list[int] = []
+            for opIndex, op in enumerate(network.ops):
+                pass
 
             # split recipe generation jobs into batches
             pass
