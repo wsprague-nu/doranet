@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from gzip import open as gzopen
 from pickle import dump, load
 from typing import (
+    Any,
     Generic,
     NewType,
     Optional,
@@ -234,6 +235,30 @@ class ChemNetwork(ABC):
         ...
 
     @abstractmethod
+    def mol_metas(
+        self,
+        indices: Optional[Sequence[_MolIndex]] = None,
+        keys: Optional[Collection[Hashable]] = None,
+    ) -> Sequence[Mapping[Hashable, Any]]:
+        ...
+
+    @abstractmethod
+    def op_metas(
+        self,
+        indices: Optional[Sequence[_OpIndex]] = None,
+        keys: Optional[Collection[Hashable]] = None,
+    ) -> Sequence[Mapping[Hashable, Any]]:
+        ...
+
+    @abstractmethod
+    def rxn_metas(
+        self,
+        indices: Optional[Sequence[_RxnIndex]] = None,
+        keys: Optional[Collection[Hashable]] = None,
+    ) -> Sequence[Mapping[Hashable, Any]]:
+        ...
+
+    @abstractmethod
     def compat_table(self, index: int) -> Sequence[Sequence[_MolIndex]]:
         ...
 
@@ -346,6 +371,87 @@ class ChemNetworkBasic(ChemNetwork):
         if value is None:
             return self._rxn_meta[index][key]
         self._rxn_meta[index][key] = value
+
+    def mol_metas(
+        self,
+        indices: Optional[Sequence[_MolIndex]] = None,
+        keys: Optional[Collection[Hashable]] = None,
+    ) -> Sequence[Mapping[Hashable, Any]]:
+        if indices is None:
+            if keys is None:
+                return self._mol_meta
+            return tuple(
+                {
+                    key: self._mol_meta[i][key]
+                    for key in keys
+                    if key in self._mol_meta[i]
+                }
+                for i in range(len(self._mol_list))
+            )
+        if keys is None:
+            return tuple(self._mol_meta[i] for i in indices)
+        return tuple(
+            {
+                key: self._mol_meta[i][key]
+                for key in keys
+                if key in self._mol_meta[i]
+            }
+            for i in indices
+        )
+
+    def op_metas(
+        self,
+        indices: Optional[Sequence[_OpIndex]] = None,
+        keys: Optional[Collection[Hashable]] = None,
+    ) -> Sequence[Mapping[Hashable, Any]]:
+        if indices is None:
+            if keys is None:
+                return self._op_meta
+            return tuple(
+                {
+                    key: self._op_meta[i][key]
+                    for key in keys
+                    if key in self._op_meta[i]
+                }
+                for i in range(len(self._op_list))
+            )
+        if keys is None:
+            return tuple(self._op_meta[i] for i in indices)
+        return tuple(
+            {
+                key: self._op_meta[i][key]
+                for key in keys
+                if key in self._op_meta[i]
+            }
+            for i in indices
+        )
+
+    def rxn_metas(
+        self,
+        indices: Optional[Sequence[_RxnIndex]] = None,
+        keys: Optional[Collection[Hashable]] = None,
+    ) -> Sequence[Mapping[Hashable, Any]]:
+        if indices is None:
+            if keys is None:
+                return self._rxn_meta
+            return tuple(
+                {
+                    key: self._rxn_meta[i][key]
+                    for key in keys
+                    if key in self._rxn_meta[i]
+                }
+                for i in range(len(self._rxn_list))
+            )
+        if keys is None:
+            return tuple(self._rxn_meta[i] for i in indices)
+        return tuple(
+            {
+                key: self._rxn_meta[i][key]
+                for key in keys
+                if key in self._rxn_meta[i]
+            }
+            for i in indices
+        )
 
     def compat_table(self, index: int) -> Sequence[Sequence[_MolIndex]]:
         return self._compat_table[index]
