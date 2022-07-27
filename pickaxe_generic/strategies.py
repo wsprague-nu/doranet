@@ -41,6 +41,8 @@ from pickaxe_generic.filters import (
     MolFilter,
     MolFilterMetaVal,
     RankValue,
+    ReactionFilter,
+    ReactionFilterBase,
     RecipeFilter,
     RecipeRanker,
 )
@@ -622,6 +624,7 @@ class PriorityQueueStrategy(ABC):
         mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
+        reaction_filter: Optional[ReactionFilterBase] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
@@ -672,6 +675,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
+        reaction_filter: Optional[ReactionFilterBase] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
@@ -682,18 +686,25 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         else:
             mol_filter_local = mol_filter_local & self._blacklist_func
 
-        # set important_key_set so that updated reactions may occur
-        important_key_set: MetaKeyPacket = MetaKeyPacket()
+        # set keysets so that updated reactions may occur and parameters may be
+        # passed to parallel processes
+        recipe_keyset: MetaKeyPacket = MetaKeyPacket()
+        reaction_keyset: MetaKeyPacket = MetaKeyPacket()
         if mol_filter is not None:
-            important_key_set = important_key_set + mol_filter.meta_required
-        important_key_set = important_key_set + mol_filter_local.meta_required
+            recipe_keyset = recipe_keyset + mol_filter.meta_required
         if recipe_filter is not None:
-            important_key_set = important_key_set + recipe_filter.meta_required
+            recipe_keyset = recipe_keyset + recipe_filter.meta_required
         if recipe_ranker is not None:
-            important_key_set = important_key_set + recipe_ranker.meta_required
+            recipe_keyset = recipe_keyset + recipe_ranker.meta_required
+        if reaction_filter is not None:
+            reaction_keyset = reaction_keyset + reaction_filter.meta_required
         if mc_local is not None:
-            important_key_set = important_key_set + mc_local.meta_required
+            reaction_keyset = reaction_keyset + mc_local.meta_required
+        total_keyset = (
+            mol_filter_local.meta_required + recipe_keyset + reaction_keyset
+        )
 
         exhausted: bool = False
 
-
+        while not exhausted:
+            pass
