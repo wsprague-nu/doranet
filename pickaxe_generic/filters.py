@@ -507,7 +507,6 @@ class DefaultMetaDataUpdate:
         self,
         unit: ReactionExplicit,
         network: ChemNetwork,
-        replace_func: Callable[[Hashable, Any, Any], bool],
     ) -> Generator[
         tuple[
             Optional[tuple[_MolIndex, Hashable]],
