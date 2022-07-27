@@ -443,31 +443,48 @@ class MetaDataUpdate(Protocol):
     @abstractmethod
     def __call__(
         self, unit: ReactionExplicit, network: ChemNetwork
-    ) -> Generator[tuple[Optional[_MolIndex], Optional[_OpIndex]], None, None]:
+    ) -> Generator[
+        tuple[
+            Optional[tuple[_MolIndex, Hashable]],
+            Optional[tuple[_OpIndex, Hashable]],
+        ],
+        None,
+        None,
+    ]:
         ...
 
 
 class DefaultMetaDataUpdate:
     def __call__(
         self, unit: ReactionExplicit, network: ChemNetwork
-    ) -> Generator[tuple[Optional[_MolIndex], Optional[_OpIndex]], None, None]:
+    ) -> Generator[
+        tuple[
+            Optional[tuple[_MolIndex, Hashable]],
+            Optional[tuple[_OpIndex, Hashable]],
+        ],
+        None,
+        None,
+    ]:
         if unit.operator_meta is not None:
             opIndex = network.ops.i(unit.operator.uid)
             for key, value in unit.operator_meta.items():
-                network.op_meta(opIndex, key, value)
-            yield (None, opIndex)
+                if network.op_meta(opIndex, key) != value:
+                    network.op_meta(opIndex, key, value)
+                    yield (None, (opIndex, key))
         if unit.reactants_meta is not None:
             for index, reactant in enumerate(unit.reactants):
                 molIndex = network.mols.i(reactant.uid)
                 for key, value in unit.reactants_meta[index]:
-                    network.mol_meta(molIndex, key, value)
-                yield (molIndex, None)
+                    if network.mol_meta(molIndex, key) != value:
+                        network.mol_meta(molIndex, key, value)
+                        yield ((molIndex, key), None)
         if unit.products_meta is not None:
             for index, product in enumerate(unit.products):
                 molIndex = network.mols.i(product.uid)
                 for key, value in unit.products_meta[index]:
-                    network.mol_meta(molIndex, key, value)
-                yield (molIndex, None)
+                    if network.mol_meta(molIndex, key) != value:
+                        network.mol_meta(molIndex, key, value)
+                        yield ((molIndex, key), None)
 
 
 # def __call__(self, )
