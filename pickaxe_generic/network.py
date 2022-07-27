@@ -565,7 +565,8 @@ class ChemNetworkBasic(ChemNetwork):
                     [
                         _MolIndex(mol_index)
                         for mol_index, mol in enumerate(self._mol_list)
-                        if op.compat(mol, argnum)
+                        if self._reactive_list[mol_index]
+                        and op.compat(mol, argnum)
                     ]
                     for argnum in range(len(op))
                 ]
