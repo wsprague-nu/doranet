@@ -8,6 +8,7 @@ Classes:
       CartesianStrategyParallel*
 """
 
+import heapq
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from itertools import chain, islice
@@ -46,7 +47,7 @@ from pickaxe_generic.filters import (
     RecipeFilter,
     RecipeRanker,
 )
-from pickaxe_generic.network import ChemNetwork, Recipe, _MolIndex
+from pickaxe_generic.network import ChemNetwork, Recipe, _MolIndex, _OpIndex
 
 
 class _ReactionProvider(Protocol):
@@ -619,7 +620,8 @@ class PriorityQueueStrategy(ABC):
     def expand(
         self,
         max_recipes: Optional[int] = None,
-        batch_size: int = 1,
+        heap_size: int = 1,
+        batch_size: Optional[int] = None,
         mol_filter_local: Optional[MolFilter] = None,
         mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
@@ -671,6 +673,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         self,
         max_recipes: Optional[int] = None,
         heap_size: int = 1,
+        batch_size: Optional[int] = None,
         mol_filter_local: Optional[MolFilter] = None,
         mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
@@ -704,7 +707,23 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             mol_filter_local.meta_required + recipe_keyset + reaction_keyset
         )
 
+        # initialize loop variables
         exhausted: bool = False
+        network = self._network
+        compat_indices = [
+            [0 for _ in network.compat_table(i)]
+            for i in range(len(network.ops))
+        ]
+        cart_test_index = _MolIndex(0)
+        updated_mols_inv_heap: list[_MolIndex] = []
+        updated_ops_inv_heap: list[_OpIndex] = []
 
-        while not exhausted:
+        while (
+            cart_test_index < len(network.mols)
+            or len(updated_mols_inv_heap) != 0
+            or len(updated_ops_inv_heap) != 0
+        ):
+            # get number of args per operator
+
+            # split recipe generation jobs into batches
             pass
