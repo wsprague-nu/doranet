@@ -40,12 +40,14 @@ from pickaxe_generic.filters import (
     MetaDataUpdate,
     MetaKeyPacket,
     MolFilter,
+    MolFilterMetaExist,
     MolFilterMetaVal,
     RankValue,
     ReactionFilter,
     ReactionFilterBase,
     RecipeFilter,
     RecipeRanker,
+    ReplaceBlacklist,
 )
 from pickaxe_generic.network import ChemNetwork, Recipe, _MolIndex, _OpIndex
 
@@ -655,7 +657,9 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             self._blacklist_key = blacklist_key
         else:
             self._blacklist_key = f"_blacklist_{id(self)}"
-        self._blacklist_func = ~MolFilterMetaVal(self._blacklist_key, True)
+        self._blacklist_func = ~MolFilterMetaExist(
+            self._blacklist_key
+        ) | MolFilterMetaVal(self._blacklist_key, True)
 
     def _blacklist_mol(self, index: _MolIndex) -> None:
         self._network.mol_meta(index, self._blacklist_key, True)
@@ -723,7 +727,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             or len(updated_mols_inv_heap) != 0
             or len(updated_ops_inv_heap) != 0
         ):
-            # get number of args per operator
+            # get number of new recipes per operator
 
             # split recipe generation jobs into batches
             pass
