@@ -665,7 +665,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     def expand(
         self,
         max_recipes: Optional[int] = None,
-        batch_size: int = 1,
+        heap_size: int = 1,
         mol_filter: Optional[MolFilter] = None,
         mol_filter_local: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
@@ -673,4 +673,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
-        return
+        if mol_filter_local is None:
+            mol_filter_local = self._blacklist_func
+        else:
+            mol_filter_local = mol_filter_local & self._blacklist_func
