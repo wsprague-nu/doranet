@@ -676,11 +676,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
+        # set blacklist filter
         if mol_filter_local is None:
             mol_filter_local = self._blacklist_func
         else:
             mol_filter_local = mol_filter_local & self._blacklist_func
 
+        # set important_key_set so that updated reactions may occur
         important_key_set: MetaKeyPacket = MetaKeyPacket()
         if mol_filter is not None:
             important_key_set = important_key_set + mol_filter.meta_required
@@ -693,3 +695,5 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             important_key_set = important_key_set + mc_local.meta_required
 
         exhausted: bool = False
+
+
