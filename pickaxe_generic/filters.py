@@ -1,7 +1,16 @@
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Generator, Hashable, Optional, Protocol, Union, final
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Hashable,
+    Optional,
+    Protocol,
+    Union,
+    final,
+)
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -244,6 +253,25 @@ class MolFilterMetaVal(MolFilter):
         return MetaKeyPacket(frozenset(), frozenset((self._key,)))
 
 
+@dataclass(frozen=True)
+class MolFilterMetaExist(MolFilter):
+    __slots__ = ("_key", "_val")
+    _key: Hashable
+
+    def __call__(
+        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+    ) -> bool:
+        if meta is None:
+            return False
+        if self._key not in meta:
+            return False
+        return True
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return MetaKeyPacket(frozenset(), frozenset((self._key,)))
+
+
 class RecipeFilter(ABC):
     __slots__ = ()
 
@@ -454,9 +482,32 @@ class MetaDataUpdate(Protocol):
         ...
 
 
+def ReplaceNewValue(key: Hashable, old_value: Any, new_value: Any) -> bool:
+    if old_value != new_value:
+        return True
+    return False
+
+
+class ReplaceBlacklist:
+    def __init__(self, blacklist_keys: Collection[Hashable]) -> None:
+        self._blacklist_keys = frozenset(blacklist_keys)
+
+    def __call__(self, key: Hashable, old_value: Any, new_value: Any) -> bool:
+        if key in self._blacklist_keys:
+            if old_value is None:
+                return True
+            elif old_value is False and new_value is True:
+                return True
+            return False
+        return ReplaceNewValue(key, old_value, new_value)
+
+
 class DefaultMetaDataUpdate:
     def __call__(
-        self, unit: ReactionExplicit, network: ChemNetwork
+        self,
+        unit: ReactionExplicit,
+        network: ChemNetwork,
+        replace_func: Callable[[Hashable, Any, Any], bool],
     ) -> Generator[
         tuple[
             Optional[tuple[_MolIndex, Hashable]],
