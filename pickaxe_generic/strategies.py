@@ -728,11 +728,12 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             or len(updated_mols_inv_heap) != 0
             or len(updated_ops_set) != 0
         ):
-            # raise error if operator has been updated
+            # raise error if operator metadata has been updated
             if len(updated_ops_set) != 0:
                 raise NotImplementedError(
                     "Updating necessary operator metadata is not yet supported"
                 )
+
             # get number of new recipes per operator
             new_recipes_per_operator: list[int] = []
             for opIndex, op in enumerate(network.ops):
