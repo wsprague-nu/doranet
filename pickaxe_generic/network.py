@@ -276,7 +276,11 @@ class ChemNetwork(ABC):
 
     @abstractmethod
     def add_mol(
-        self, mol: MolDatBase, meta: Optional[Mapping] = None
+        self,
+        mol: MolDatBase,
+        meta: Optional[Mapping] = None,
+        reactive: bool = True,
+        custom_compat: Optional[Collection[tuple[_OpIndex, int]]] = None,
     ) -> _MolIndex:
         ...
 
@@ -315,6 +319,7 @@ class ChemNetworkBasic(ChemNetwork):
         "_mol_query",
         "_op_query",
         "_rxn_query",
+        "_reactive_list",
     )
 
     def __init__(self) -> None:
@@ -338,6 +343,8 @@ class ChemNetworkBasic(ChemNetwork):
         self._mol_query: Optional[_ValueQueryData[MolDatBase, _MolIndex]] = None
         self._op_query: Optional[_ValueQueryData[OpDatBase, _OpIndex]] = None
         self._rxn_query: Optional[_ValueQueryAssoc[Reaction, _RxnIndex]] = None
+
+        self._reactive_list: list[bool] = []
 
     @property
     def mols(self) -> _ValueQueryData[MolDatBase, _MolIndex]:
@@ -475,12 +482,31 @@ class ChemNetworkBasic(ChemNetwork):
         return self._mol_producers[self._mol_map[mol]]
 
     def add_mol(
-        self, mol: MolDatBase, meta: Optional[Mapping] = None
+        self,
+        mol: MolDatBase,
+        meta: Optional[Mapping] = None,
+        reactive: bool = True,
+        custom_compat: Optional[Collection[tuple[_OpIndex, int]]] = None,
     ) -> _MolIndex:
         # if already in database, return existing index
         mol_uid = mol.uid
         if mol_uid in self._mol_map:
-            return self._mol_map[mol_uid]
+            if not reactive:
+                return self._mol_map[mol_uid]
+
+            # if newly reactive, fill in compat table
+            mol_index = self._mol_map[mol_uid]
+            if not self._reactive_list[mol_index]:
+                self._reactive_list[mol_index] = True
+                if custom_compat is None:
+                    for i, op in enumerate(self.ops):
+                        for argnum in range(len(op)):
+                            if op.compat(mol, argnum):
+                                self._compat_table[i][argnum].append(mol_index)
+                else:
+                    for op_index, argnum in custom_compat:
+                        self._compat_table[op_index][argnum].append(mol_index)
+            return mol_index
 
         # add mol to main mol list
         mol_index = _MolIndex(len(self._mol_list))
@@ -499,11 +525,17 @@ class ChemNetworkBasic(ChemNetwork):
         else:
             self._mol_meta.append(dict(meta))
 
-        # test operator compatibility and add to table
-        for i, op in enumerate(self.ops):
-            for argnum in range(len(op)):
-                if op.compat(mol, argnum):
-                    self._compat_table[i][argnum].append(mol_index)
+        self._reactive_list.append(reactive)
+        if reactive:
+            if custom_compat is None:
+                # test operator compatibility and add to table
+                for i, op in enumerate(self.ops):
+                    for argnum in range(len(op)):
+                        if op.compat(mol, argnum):
+                            self._compat_table[i][argnum].append(mol_index)
+            else:
+                for op_index, argnum in custom_compat:
+                    self._compat_table[op_index][argnum].append(mol_index)
 
         return mol_index
 
