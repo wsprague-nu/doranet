@@ -16,6 +16,7 @@ from typing import (
     Callable,
     Collection,
     Generator,
+    Hashable,
     Iterable,
     Optional,
     Protocol,
@@ -36,6 +37,7 @@ from pickaxe_generic.filters import (
     DefaultMetaDataUpdate,
     MetaDataCalculatorLocal,
     MetaDataUpdate,
+    MetaKeyPacket,
     MolFilter,
     MolFilterMetaVal,
     RankValue,
@@ -673,7 +675,21 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
+
         if mol_filter_local is None:
             mol_filter_local = self._blacklist_func
         else:
             mol_filter_local = mol_filter_local & self._blacklist_func
+
+        important_key_set: MetaKeyPacket = MetaKeyPacket()
+        if mol_filter is not None:
+            important_key_set = important_key_set + mol_filter.meta_required
+        important_key_set = important_key_set + mol_filter_local.meta_required
+        if recipe_filter is not None:
+            important_key_set = important_key_set + recipe_filter.meta_required
+        if recipe_ranker is not None:
+            important_key_set = important_key_set + recipe_ranker.meta_required
+        if mc_local is not None:
+            important_key_set = important_key_set + mc_local.meta_required
+
+        exhausted: bool = False
