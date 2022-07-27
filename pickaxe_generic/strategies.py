@@ -604,7 +604,10 @@ class PriorityQueueStrategy(ABC):
 
     @abstractmethod
     def __init__(
-        self, network: ChemNetwork, num_procs: Optional[int] = None
+        self,
+        network: ChemNetwork,
+        num_procs: Optional[int] = None,
+        blacklist_key: Optional[str] = None,
     ) -> None:
         ...
 
@@ -614,12 +617,16 @@ class PriorityQueueStrategy(ABC):
         max_recipes: Optional[int] = None,
         batch_size: int = 1,
         mol_filter: Optional[MolFilter] = None,
+        mol_filter_local: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
-        filter_mols_local: bool = True,
     ) -> None:
+        ...
+
+    @abstractmethod
+    def blacklist_key(self) -> str:
         ...
 
 
@@ -627,14 +634,20 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     __slots__ = ("_network", "_blacklist_key", "_blacklist_func")
 
     def __init__(
-        self, network: ChemNetwork, num_procs: Optional[int] = None
+        self,
+        network: ChemNetwork,
+        num_procs: Optional[int] = None,
+        blacklist_key: Optional[str] = None,
     ) -> None:
         if num_procs is not None:
             raise NotImplementedError(
                 f"Parallel processing not yet supported on {type(self)}"
             )
         self._network = network
-        self._blacklist_key = f"_blacklist_{id(self)}"
+        if blacklist_key is not None:
+            self._blacklist_key = blacklist_key
+        else:
+            self._blacklist_key = f"_blacklist_{id(self)}"
         self._blacklist_func = ~MolFilterMetaVal(self._blacklist_key, True)
 
     def _blacklist_mol(self, index: _MolIndex) -> None:
@@ -646,15 +659,18 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     def _is_blacklisted(self, index: _MolIndex) -> bool:
         return self._blacklist_func(self._network.mols[index])
 
+    def blacklist_key(self) -> str:
+        return self._blacklist_key
+
     def expand(
         self,
         max_recipes: Optional[int] = None,
         batch_size: int = 1,
         mol_filter: Optional[MolFilter] = None,
+        mol_filter_local: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
-        filter_mols_local: bool = True,
     ) -> None:
         return
