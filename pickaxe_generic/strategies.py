@@ -11,15 +11,18 @@ Classes:
 import heapq
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
 from itertools import chain, islice
 from itertools import product as iterproduct
 from math import prod
 from typing import (
+    Any,
     Callable,
     Collection,
     Generator,
     Hashable,
     Iterable,
+    Mapping,
     Optional,
     Protocol,
     Sequence,
@@ -629,50 +632,36 @@ class PriorityQueueStrategy(ABC):
         mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
-        reaction_filter: Optional[ReactionFilterBase] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
         ...
 
-    @abstractmethod
-    def blacklist_key(self) -> str:
-        ...
+
+@dataclass(frozen=True)
+class RecipeGenerationJob:
+    __slots__ = ()
+
+    operator: OpDatBase
+    molecules: tuple[tuple[MolDatBase, ...]]
+    op_meta: Optional[Mapping[Hashable, Any]] = None
+    mol_meta: Optional[tuple[tuple[Mapping[Hashable, Any]]]] = None
+    min_rankvalue: Optional[RankValue] = None
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
-    __slots__ = ("_network", "_blacklist_key", "_blacklist_func")
+    __slots__ = "_network"
 
     def __init__(
         self,
         network: ChemNetwork,
         num_procs: Optional[int] = None,
-        blacklist_key: Optional[str] = None,
     ) -> None:
         if num_procs is not None:
             raise NotImplementedError(
                 f"Parallel processing not yet supported on {type(self)}"
             )
         self._network = network
-        if blacklist_key is not None:
-            self._blacklist_key = blacklist_key
-        else:
-            self._blacklist_key = f"_blacklist_{id(self)}"
-        self._blacklist_func = ~MolFilterMetaExist(
-            self._blacklist_key
-        ) | MolFilterMetaVal(self._blacklist_key, True)
-
-    def _blacklist_mol(self, index: _MolIndex) -> None:
-        self._network.mol_meta(index, self._blacklist_key, True)
-
-    def _unblacklist_mol(self, index: _MolIndex) -> None:
-        self._network.mol_meta(index, self._blacklist_key, False)
-
-    def _is_blacklisted(self, index: _MolIndex) -> bool:
-        return self._blacklist_func(self._network.mols[index])
-
-    def blacklist_key(self) -> str:
-        return self._blacklist_key
 
     def expand(
         self,
@@ -683,49 +672,44 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
-        reaction_filter: Optional[ReactionFilterBase] = None,
         mc_local: Optional[MetaDataCalculatorLocal] = None,
         mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
-        # set blacklist filter
-        if mol_filter_local is None:
-            mol_filter_local = self._blacklist_func
-        else:
-            mol_filter_local = mol_filter_local & self._blacklist_func
-
         # set keysets so that updated reactions may occur and parameters may be
         # passed to parallel processes
+        mol_filter_local_keyset: MetaKeyPacket = MetaKeyPacket()
         recipe_keyset: MetaKeyPacket = MetaKeyPacket()
         reaction_keyset: MetaKeyPacket = MetaKeyPacket()
+        if mol_filter_local is not None:
+            mol_filter_local_keyset = (
+                mol_filter_local_keyset + mol_filter_local.meta_required
+            )
         if mol_filter is not None:
             recipe_keyset = recipe_keyset + mol_filter.meta_required
         if recipe_filter is not None:
             recipe_keyset = recipe_keyset + recipe_filter.meta_required
         if recipe_ranker is not None:
             recipe_keyset = recipe_keyset + recipe_ranker.meta_required
-        if reaction_filter is not None:
-            reaction_keyset = reaction_keyset + reaction_filter.meta_required
         if mc_local is not None:
-            reaction_keyset = reaction_keyset + mc_local.meta_required
-        total_keyset = (
-            mol_filter_local.meta_required + recipe_keyset + reaction_keyset
-        )
+            reaction_keyset = mc_local.meta_required
+            recipe_keyset = recipe_keyset + reaction_keyset
+        total_keyset = mol_filter_local_keyset + recipe_keyset + reaction_keyset
 
         # initialize loop variables
-        exhausted: bool = False
         network = self._network
-        compat_indices = [
+        compat_indices_table = [
             [0 for _ in network.compat_table(i)]
             for i in range(len(network.ops))
         ]
         cart_test_index = _MolIndex(0)
-        updated_mols_inv_heap: list[_MolIndex] = []
+        updated_mols_set: set[_MolIndex] = set()
         updated_ops_set: set[_OpIndex] = set()
+        recipe_heap: list[tuple[RankValue, Recipe]] = []
 
         while (
             cart_test_index < len(network.mols)
-            or len(updated_mols_inv_heap) != 0
+            or len(updated_mols_set) != 0
             or len(updated_ops_set) != 0
         ):
             # raise error if operator metadata has been updated
@@ -734,10 +718,66 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     "Updating necessary operator metadata is not yet supported"
                 )
 
-            # get number of new recipes per operator
+            # get recipes for each operator
             new_recipes_per_operator: list[int] = []
             for opIndex, op in enumerate(network.ops):
-                pass
+                # for each argument, accumulate a total of old_mols and new_mols
+                compat_table = network.compat_table(opIndex)
+                compat_indices = compat_indices_table[opIndex]
+                for arg_compat, arg_index in zip(compat_table, compat_indices):
+                    if len(updated_mols_set) == 0:
+                        old_mols = arg_compat[:arg_index]
+                        new_mols = arg_compat[arg_index:]
+                    else:
+                        old_mols = [
+                            molIndex
+                            for molIndex in arg_compat[:arg_index]
+                            if molIndex not in updated_mols_set
+                        ]
+                        new_mols = [
+                            molIndex
+                            for molIndex in arg_compat[:arg_index]
+                            if molIndex in updated_mols_set
+                        ]
+                        new_mols.extend(arg_compat[arg_index:])
+                    if mol_filter_local is not None:
+                        old_mols = [
+                            i
+                            for i in old_mols
+                            if mol_filter_local(
+                                network.mols[i],
+                                network.mol_metas(
+                                    (i,),
+                                    mol_filter_local_keyset.molecule_keys,
+                                )[0],
+                            )
+                        ]
+                        new_mols = [
+                            i
+                            for i in old_mols
+                            if mol_filter_local(
+                                network.mols[i],
+                                network.mol_metas(
+                                    (i,),
+                                    mol_filter_local_keyset.molecule_keys,
+                                )[0],
+                            )
+                        ]
+                    # now you have the old_mols and new_mols for the argument
 
             # split recipe generation jobs into batches
             pass
+
+    def _add_recipe_to_heap(
+        self,
+        recipe_heap: list[tuple[RankValue, Recipe]],
+        recipe: Recipe,
+        value: Optional[RankValue],
+        heap_size: Optional[int] = None,
+    ) -> None:
+        if value is None:
+            return
+        if heap_size is None or len(recipe_heap) < heap_size:
+            heapq.heappush(recipe_heap, (value, recipe))
+        elif recipe_heap[0][0] < value:
+            heapq.heappushpop(recipe_heap, (value, recipe))
