@@ -29,15 +29,25 @@ _I_T = TypeVar("_I_T", bound=int)
 _ID_T = TypeVar("_ID_T", bound=Identifier)
 
 
-@dataclass(frozen=True, order=True, slots=True)
+@dataclass(frozen=True, order=True)
 class Reaction:
+    __slots__ = ("operator", "reactants", "products")
     operator: _OpIndex
     reactants: tuple[_MolIndex, ...]
     products: tuple[_MolIndex, ...]
 
 
-@dataclass(frozen=True, order=True, slots=True)
+@dataclass(frozen=True, order=True)
 class ReactionExplicit:
+    __slots__ = (
+        "operator",
+        "reactants",
+        "products",
+        "operator_meta",
+        "reactants_meta",
+        "products_meta",
+        "reaction_meta",
+    )
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
     products: tuple[MolDatBase, ...]
