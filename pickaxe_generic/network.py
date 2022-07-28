@@ -59,7 +59,13 @@ class ReactionExplicit:
 
 @dataclass(frozen=True, order=True)
 class MolSlot:
-    __slots__ = ("operator", "molecule", "argnum", 'operator_meta','molecule_meta')
+    __slots__ = (
+        "operator",
+        "molecule",
+        "argnum",
+        "operator_meta",
+        "molecule_meta",
+    )
     operator: OpDatBase
     molecule: MolDatBase
     argnum: int
