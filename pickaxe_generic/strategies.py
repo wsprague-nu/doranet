@@ -643,9 +643,10 @@ class RecipeGenerationJob:
     __slots__ = ()
 
     operator: OpDatBase
-    molecules: tuple[tuple[MolDatBase, ...]]
-    op_meta: Optional[Mapping[Hashable, Any]] = None
-    mol_meta: Optional[tuple[tuple[Mapping[Hashable, Any]]]] = None
+    compat_indices: tuple[tuple[_MolIndex, ...]]
+    molecules: tuple[MolDatBase, ...]
+    op_meta: Optional[Mapping] = None
+    mol_meta: Optional[tuple[Optional[Mapping]]] = None
     min_rankvalue: Optional[RankValue] = None
 
 
