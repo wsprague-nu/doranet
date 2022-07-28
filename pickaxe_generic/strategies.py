@@ -706,7 +706,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         cart_test_index = _MolIndex(0)
         updated_mols_set: set[_MolIndex] = set()
         updated_ops_set: set[_OpIndex] = set()
-        recipe_heap: list[tuple[RankValue, Recipe]] = []
+        recipe_heap: list[tuple[Optional[RankValue], Recipe]] = []
 
         while (
             cart_test_index < len(network.mols)
@@ -771,14 +771,14 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
     def _add_recipe_to_heap(
         self,
-        recipe_heap: list[tuple[RankValue, Recipe]],
+        recipe_heap: list[tuple[Optional[RankValue], Recipe]],
         recipe: Recipe,
         value: Optional[RankValue],
         heap_size: Optional[int] = None,
     ) -> None:
-        if value is None:
-            return
         if heap_size is None or len(recipe_heap) < heap_size:
             heapq.heappush(recipe_heap, (value, recipe))
-        elif recipe_heap[0][0] < value:
+        elif value is None:
+            return
+        elif recipe_heap[0][0] is None or recipe_heap[0][0] < value:
             heapq.heappushpop(recipe_heap, (value, recipe))
