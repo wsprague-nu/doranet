@@ -18,11 +18,11 @@ from rdkit.DataStructs import TanimotoSimilarity
 
 from pickaxe_generic.datatypes import (
     Identifier,
+    MetaKeyPacket,
     MolDatBase,
     MolDatRDKit,
     OpDatBase,
 )
-from pickaxe_generic.metadata import MetaKeyPacket
 from pickaxe_generic.network import (
     ChemNetwork,
     ReactionExplicit,

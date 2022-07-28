@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import builtins
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from io import BytesIO
 from pickle import Unpickler, UnpicklingError, dumps
 from typing import (
@@ -881,4 +882,16 @@ class RxnDatBasic(RxnDatBase):
         return (
             f"RxnDatBasic(operator={repr(self.uid[0])}, "
             f"reactants={repr(self.uid[2])}, products={repr(self.uid[1])})"
+        )
+
+
+@dataclass(frozen=True)
+class MetaKeyPacket:
+    operator_keys: frozenset = frozenset()
+    molecule_keys: frozenset = frozenset()
+
+    def __add__(self, other: "MetaKeyPacket") -> "MetaKeyPacket":
+        return MetaKeyPacket(
+            self.operator_keys.union(other.operator_keys),
+            self.molecule_keys.union(other.molecule_keys),
         )
