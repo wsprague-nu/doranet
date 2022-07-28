@@ -52,9 +52,9 @@ class ReactionExplicit:
     reactants: tuple[MolDatBase, ...]
     products: tuple[MolDatBase, ...]
     operator_meta: Optional[Mapping] = None
-    reactants_meta: Optional[tuple[Mapping]] = None
-    products_meta: Optional[tuple[Mapping]] = None
-    reaction_meta: Optional[tuple[Mapping]] = None
+    reactants_meta: Optional[tuple[Optional[Mapping]]] = None
+    products_meta: Optional[tuple[Optional[Mapping]]] = None
+    reaction_meta: Optional[tuple[Optional[Mapping]]] = None
 
 
 @dataclass(frozen=True, order=True)
