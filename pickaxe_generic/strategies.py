@@ -667,7 +667,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     def expand(
         self,
         max_recipes: Optional[int] = None,
-        heap_size: int = 1,
+        heap_size: Optional[int] = None,
         batch_size: Optional[int] = None,
         mol_filter_local: Optional[MolFilter] = None,
         mol_filter: Optional[MolFilter] = None,
