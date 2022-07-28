@@ -47,14 +47,24 @@ class ReactionExplicit:
     reaction_meta: Optional[tuple[Mapping]] = None
 
 
-@dataclass(frozen=True, order=True, slots=True)
+@dataclass(frozen=True, order=True)
+class MolSlot:
+    __slots__ = ("operator", "molecule", "argnum")
+    operator: OpDatBase
+    molecule: MolDatBase
+    argnum: int
+
+
+@dataclass(frozen=True, order=True)
 class Recipe:
+    __slots__ = ("operator", "reactants")
     operator: _OpIndex
     reactants: tuple[_MolIndex, ...]
 
 
-@dataclass(frozen=True, order=True, slots=True)
+@dataclass(frozen=True)
 class RecipeExplicit:
+    __slots__ = ("operator", "reactants", "operator_meta", "reactants_meta")
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
     operator_meta: Optional[Mapping] = None
