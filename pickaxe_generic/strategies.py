@@ -653,6 +653,7 @@ class RecipeRankingJob:
     operator: DataPacket[OpDatBase]
     op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
     recipe_ranker: Optional[RecipeRanker]
+    max_heap: Optional[int]
     min_rankvalue: Optional[RankValue]
 
 
@@ -811,6 +812,7 @@ def assemble_recipe_batch_job(
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
     min_rank: Optional[RankValue] = None,
+    max_heap: Optional[int] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
         Generator[Generator[None, None, None], None, None],
@@ -846,7 +848,11 @@ def assemble_recipe_batch_job(
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
-    return RecipeRankingJob(op, mol_batch, recipe_ranker, min_rank)
+    return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap, min_rank)
+
+
+def execute_recipe_ranking(job: RecipeRankingJob) -> tuple[RankValue, Recipe]:
+    pass
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
@@ -939,7 +945,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
                     # assemble recipe ranking job
-                    print(batch)
+                    pass
 
             # update compat_indices_table
             compat_indices_table = [
