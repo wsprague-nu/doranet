@@ -35,6 +35,7 @@ from typing import (
 
 from pickaxe_generic.containers import ObjectLibrary
 from pickaxe_generic.datatypes import (
+    DataPacket,
     Identifier,
     MolDatBase,
     OpDatBase,
@@ -645,19 +646,13 @@ class RecipeGenerationJob:
     __slots__ = (
         "operator",
         "op_args",
-        "molecule",
         "recipe_ranker",
-        "op_meta",
-        "mol_meta",
         "min_rankvalue",
     )
 
-    operator: OpDatBase
-    op_args: tuple[tuple[int, ...]]
-    molecules: tuple[MolDatBase, ...]
+    operator: tuple[DataPacket[OpDatBase]]
+    op_args: tuple[tuple[tuple[DataPacket[MolDatBase]], ...]]
     recipe_ranker: Optional[RecipeRanker]
-    op_meta: Optional[Mapping]
-    mol_meta: Optional[tuple[Optional[Mapping]]]
     min_rankvalue: Optional[RankValue]
 
 
@@ -889,7 +884,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for batch in _generate_recipe_batches(
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
-                    # assemble recipe calculation job
+                    # assemble recipe ranking job
                     pass
 
                 # if mol_filter_local is not None:
