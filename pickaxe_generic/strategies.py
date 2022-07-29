@@ -827,7 +827,7 @@ def assemble_recipe_batch_job(
         op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
     else:
         op_meta = None
-    op: DataPacket[OpDatBase] = DataPacket(op_index, op_data, op_meta)
+    op = DataPacket(op_index, op_data, op_meta)
     if keyset.live_molecule:
         mol_data = ((network.mols[i] for i in mol_list) for mol_list in batch)
     else:
@@ -839,7 +839,7 @@ def assemble_recipe_batch_job(
         )
     else:
         mol_meta = ((None for _ in mol_list) for mol_list in batch)
-    mol_batch: tuple[tuple[DataPacket[MolDatBase], ...], ...] = tuple(
+    mol_batch = tuple(
         tuple(
             DataPacket(i, mol, m_meta)
             for i, mol, m_meta in zip(i_col, mol_col, meta_col)
