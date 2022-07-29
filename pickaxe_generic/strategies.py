@@ -756,6 +756,8 @@ def _generate_recipe_batches(
         size_bundle = (
             num_old[:i_bundle] + (num_new[i_bundle],) + num_tot[i_bundle + 1 :]
         )
+        if not all(size_bundle):
+            continue
 
         batch_split = calc_batch_split(size_bundle, batch_size)
         chunk_sizes = tuple(
@@ -873,13 +875,16 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 # for each argument, accumulate a total of old_mols and new_mols
                 compat_table = network.compat_table(opIndex)
                 compat_indices = compat_indices_table[opIndex]
+                if not all(compat_table):
+                    continue
                 # generate recipe bundles
                 for batch in _generate_recipe_batches(
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
-
                     # process recipe bundle
+                    print(f"operator {op}:")
                     print(batch)
+                    print()
 
                 # if mol_filter_local is not None:
                 #     old_mols = [
