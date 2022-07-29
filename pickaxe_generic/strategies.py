@@ -629,7 +629,7 @@ class PriorityQueueStrategy(ABC):
         self,
         max_recipes: Optional[int] = None,
         heap_size: int = 1,
-        # batch_size: Optional[int] = None,
+        batch_size: Optional[int] = None,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
         # recipe_filter: Optional[RecipeFilter] = None,
@@ -817,7 +817,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         self,
         max_recipes: Optional[int] = None,
         heap_size: Optional[int] = None,
-        # batch_size: Optional[int] = None,
+        batch_size: Optional[int] = None,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
         # recipe_filter: Optional[RecipeFilter] = None,
@@ -853,13 +853,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             for i in range(len(network.ops))
         ]
         cart_test_index = _MolIndex(0)
-        updated_mols_heap: list[_MolIndex] = []
+        updated_mols_set: set[_MolIndex] = set()
         updated_ops_set: set[_OpIndex] = set()
         recipe_heap: list[tuple[Optional[RankValue], Recipe]] = []
 
         while (
             cart_test_index < len(network.mols)
-            or len(updated_mols_heap) != 0
+            or len(updated_mols_set) != 0
             or len(updated_ops_set) != 0
         ):
             # raise error if operator metadata has been updated
@@ -873,40 +873,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 # for each argument, accumulate a total of old_mols and new_mols
                 compat_table = network.compat_table(opIndex)
                 compat_indices = compat_indices_table[opIndex]
-                arg_mols: list[tuple[tuple[_MolIndex, ...], ...]] = []
-                for arg_compat, arg_index in zip(compat_table, compat_indices):
-                    if len(updated_mols_heap) == 0:
-                        old_mols = tuple(arg_compat[:arg_index])
-                        new_mols = tuple(arg_compat[arg_index:])
-                    else:
-                        old_mols = tuple(
-                            molIndex
-                            for molIndex in arg_compat[:arg_index]
-                            if molIndex not in updated_mols_heap
-                        )
-                        new_mols = tuple(
-                            molIndex
-                            for molIndex in arg_compat[:arg_index]
-                            if molIndex in updated_mols_heap
-                        )
-                        new_mols = new_mols + tuple(arg_compat[arg_index:])
-                    arg_mols.append((old_mols, new_mols))
-                compat_indices_table[opIndex] = [
-                    len(arg_compat) for arg_compat in compat_table
-                ]
                 # generate recipe bundles
-                for argnum in range(len(arg_mols)):
-                    bundle: tuple[tuple[_MolIndex, ...], ...] = (
-                        tuple(entry[0] for entry in arg_mols[: argnum - 1])
-                        + (tuple(arg_mols[argnum][1]),)
-                        + tuple(
-                            tuple(compat_table[i])
-                            for i in range(argnum + 1, len(arg_mols))
-                        )
-                    )
+                for batch in _generate_recipe_batches(
+                    compat_table, compat_indices, batch_size, updated_mols_set
+                ):
 
                     # process recipe bundle
-                    print(bundle)
+                    print(batch)
 
                 # if mol_filter_local is not None:
                 #     old_mols = [
