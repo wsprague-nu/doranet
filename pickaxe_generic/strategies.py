@@ -14,6 +14,7 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from itertools import chain, islice
 from itertools import product as iterproduct
+from itertools import repeat
 from math import prod
 from typing import (
     Any,
@@ -651,6 +652,85 @@ class RecipeGenerationJob:
     min_rankvalue: Optional[RankValue] = None
 
 
+def calc_batch_split(
+    size_bundle: Sequence[int], batch_size: int
+) -> tuple[int, ...]:
+    num_split = list(repeat(1, len(size_bundle)))
+    split_size = tuple(size_bundle)
+    while prod(split_size) > batch_size:
+        max_index = max(range(len(split_size)), key=split_size.__getitem__)
+        num_split[max_index] += 1
+        split_size = tuple(
+            -(num_mols // -splitnum)
+            for num_mols, splitnum in zip(size_bundle, num_split)
+        )
+    return tuple(num_split)
+
+
+def _generate_bundles(
+    mol_table: Sequence[Sequence[_MolIndex]],
+    table_indices: Sequence[int],
+    batch_size: Optional[int] = None,
+    updated_mols: set[_MolIndex] = set(),
+) -> Generator[Collection[Collection[_MolIndex]], None, None]:
+    num_args = len(mol_table)
+
+    # get number of old and new mols for each argument
+    num_old: list[int] = []
+    num_new: list[int] = []
+    for mols, i_counter in zip(mol_table, table_indices):
+        n_new_from_old = len(updated_mols.intersection(mols[:i_counter]))
+        n_new = len(updated_mols) - i_counter + n_new_from_old
+        n_old = i_counter - n_new_from_old
+        num_old.append(n_old)
+        num_new.append(n_new)
+
+    # for each argument, generate a bundle and yield batches
+    for i_bundle in range(num_args):
+        value_gens = (
+            tuple(
+                (i for i in mol_list[:i_counter] if i not in updated_mols)
+                for mol_list, i_counter in zip(
+                    mol_table[:i_bundle], table_indices[:i_bundle]
+                )
+            )
+            + ((i for i in mol_table[i_bundle]),)
+            + tuple(
+                (
+                    i
+                    for i in chain(
+                        updated_mols.intersection(mol_list[:i_counter]),
+                        mol_list[i_counter:],
+                    )
+                )
+                for mol_list, i_counter in zip(
+                    mol_table[i_bundle + 1 :], table_indices[i_bundle + 1 :]
+                )
+            )
+        )
+
+        # if no batch size, yield entire bundle as batch
+        if batch_size is None:
+            yield tuple(tuple(mol_gen) for mol_gen in value_gens)
+            return
+
+        # get bundle size
+        size_bundle = tuple(
+            chain(
+                num_old[:i_bundle],
+                (num_new[i_bundle],),
+                (
+                    n_new + n_old
+                    for n_new, n_old in zip(
+                        num_new[i_bundle + 1 :], num_old[i_bundle + 1 :]
+                    )
+                ),
+            )
+        )
+
+        batch_split = calc_batch_split(size_bundle, batch_size)
+
+
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     __slots__ = "_network"
 
@@ -705,13 +785,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             for i in range(len(network.ops))
         ]
         cart_test_index = _MolIndex(0)
-        updated_mols_set: set[_MolIndex] = set()
+        updated_mols_heap: list[_MolIndex] = []
         updated_ops_set: set[_OpIndex] = set()
         recipe_heap: list[tuple[Optional[RankValue], Recipe]] = []
 
         while (
             cart_test_index < len(network.mols)
-            or len(updated_mols_set) != 0
+            or len(updated_mols_heap) != 0
             or len(updated_ops_set) != 0
         ):
             # raise error if operator metadata has been updated
@@ -727,19 +807,19 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 compat_indices = compat_indices_table[opIndex]
                 arg_mols: list[tuple[tuple[_MolIndex, ...], ...]] = []
                 for arg_compat, arg_index in zip(compat_table, compat_indices):
-                    if len(updated_mols_set) == 0:
+                    if len(updated_mols_heap) == 0:
                         old_mols = tuple(arg_compat[:arg_index])
                         new_mols = tuple(arg_compat[arg_index:])
                     else:
                         old_mols = tuple(
                             molIndex
                             for molIndex in arg_compat[:arg_index]
-                            if molIndex not in updated_mols_set
+                            if molIndex not in updated_mols_heap
                         )
                         new_mols = tuple(
                             molIndex
                             for molIndex in arg_compat[:arg_index]
-                            if molIndex in updated_mols_set
+                            if molIndex in updated_mols_heap
                         )
                         new_mols = new_mols + tuple(arg_compat[arg_index:])
                     arg_mols.append((old_mols, new_mols))
