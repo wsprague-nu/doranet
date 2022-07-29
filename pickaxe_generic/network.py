@@ -51,10 +51,10 @@ class ReactionExplicit:
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
     products: tuple[MolDatBase, ...]
-    operator_meta: Optional[Mapping] = None
-    reactants_meta: Optional[tuple[Optional[Mapping]]] = None
-    products_meta: Optional[tuple[Optional[Mapping]]] = None
-    reaction_meta: Optional[tuple[Optional[Mapping]]] = None
+    operator_meta: Optional[Mapping]
+    reactants_meta: Optional[tuple[Optional[Mapping]]]
+    products_meta: Optional[tuple[Optional[Mapping]]]
+    reaction_meta: Optional[tuple[Optional[Mapping]]]
 
 
 @dataclass(frozen=True, order=True)
@@ -69,8 +69,8 @@ class MolSlot:
     operator: OpDatBase
     molecule: MolDatBase
     argnum: int
-    operator_meta: Optional[Mapping] = None
-    molecule_meta: Optional[Mapping] = None
+    operator_meta: Optional[Mapping]
+    molecule_meta: Optional[Mapping]
 
 
 @dataclass(frozen=True, order=True)
@@ -85,8 +85,8 @@ class RecipeExplicit:
     __slots__ = ("operator", "reactants", "operator_meta", "reactants_meta")
     operator: OpDatBase
     reactants: tuple[MolDatBase, ...]
-    operator_meta: Optional[Mapping] = None
-    reactants_meta: Optional[tuple[Mapping]] = None
+    operator_meta: Optional[Mapping]
+    reactants_meta: Optional[tuple[Mapping]]
 
 
 class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
