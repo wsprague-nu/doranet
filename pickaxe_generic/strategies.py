@@ -16,6 +16,7 @@ from itertools import chain, islice
 from itertools import product as iterproduct
 from itertools import repeat
 from math import prod
+from operator import floordiv
 from typing import (
     Any,
     Callable,
@@ -676,59 +677,126 @@ def _generate_bundles(
     num_args = len(mol_table)
 
     # get number of old and new mols for each argument
-    num_old: list[int] = []
-    num_new: list[int] = []
-    for mols, i_counter in zip(mol_table, table_indices):
-        n_new_from_old = len(updated_mols.intersection(mols[:i_counter]))
-        n_new = len(updated_mols) - i_counter + n_new_from_old
-        n_old = i_counter - n_new_from_old
-        num_old.append(n_old)
-        num_new.append(n_new)
-
-    # for each argument, generate a bundle and yield batches
-    for i_bundle in range(num_args):
-        value_gens = (
-            tuple(
-                (i for i in mol_list[:i_counter] if i not in updated_mols)
-                for mol_list, i_counter in zip(
-                    mol_table[:i_bundle], table_indices[:i_bundle]
-                )
-            )
-            + ((i for i in mol_table[i_bundle]),)
-            + tuple(
-                (
-                    i
-                    for i in chain(
-                        updated_mols.intersection(mol_list[:i_counter]),
-                        mol_list[i_counter:],
-                    )
-                )
-                for mol_list, i_counter in zip(
-                    mol_table[i_bundle + 1 :], table_indices[i_bundle + 1 :]
-                )
-            )
+    # num_old: list[int] = []
+    # num_new: list[int] = []
+    # for mols, i_counter in zip(mol_table, table_indices):
+    #     n_new_from_old = len(updated_mols.intersection(mols[:i_counter]))
+    #     n_new = len(updated_mols) - i_counter + n_new_from_old
+    #     n_old = i_counter - n_new_from_old
+    #     num_old.append(n_old)
+    #     num_new.append(n_new)
+    updated_vals: tuple[tuple[_MolIndex, ...], ...] = tuple(
+        tuple(updated_mols.intersection(mol_list)) for mol_list in mol_table
+    )
+    num_old = tuple(table_indices)
+    num_new = tuple(
+        len(col) + len(mol_list) - i_counter
+        for col, mol_list, i_counter in zip(
+            updated_vals, mol_table, table_indices
         )
+    )
+    num_tot = tuple(len(col) for col in mol_table)
 
-        # if no batch size, yield entire bundle as batch
+    # for each argument, generate a bundle
+    for i_bundle in range(num_args):
+        # value_gens = (
+        #     tuple(
+        #         (i for i in mol_list[:i_counter] if i not in updated_mols)
+        #         for mol_list, i_counter in zip(
+        #             mol_table[:i_bundle], table_indices[:i_bundle]
+        #         )
+        #     )
+        #     + ((i for i in mol_table[i_bundle]),)
+        #     + tuple(
+        #         (
+        #             i
+        #             for i in chain(
+        #                 updated_mols.intersection(mol_list[:i_counter]),
+        #                 mol_list[i_counter:],
+        #             )
+        #         )
+        #         for mol_list, i_counter in zip(
+        #             mol_table[i_bundle + 1 :], table_indices[i_bundle + 1 :]
+        #         )
+        #     )
+        # )
+
+        # # if no batch size, yield entire bundle as batch
+        # if batch_size is None:
+        #     yield tuple(tuple(mol_gen) for mol_gen in value_gens)
+        #     return
+
+        # # get bundle size
+        # size_bundle = tuple(
+        #     chain(
+        #         num_old[:i_bundle],
+        #         (num_new[i_bundle],),
+        #         (
+        #             n_new + n_old
+        #             for n_new, n_old in zip(
+        #                 num_new[i_bundle + 1 :], num_old[i_bundle + 1 :]
+        #             )
+        #         ),
+        #     )
+        # )
         if batch_size is None:
-            yield tuple(tuple(mol_gen) for mol_gen in value_gens)
+            yield tuple(
+                tuple(mol_list[:i_counter])
+                for mol_list, i_counter in zip(
+                    mol_table[:i_bundle], table_indices
+                )
+            ) + (
+                updated_vals[i_bundle]
+                + tuple(mol_table[i_bundle][table_indices[i_bundle] :]),
+            ) + tuple(
+                tuple(mol_list) for mol_list in mol_table[i_bundle + 1 :]
+            )
             return
 
-        # get bundle size
-        size_bundle = tuple(
-            chain(
-                num_old[:i_bundle],
-                (num_new[i_bundle],),
-                (
-                    n_new + n_old
-                    for n_new, n_old in zip(
-                        num_new[i_bundle + 1 :], num_old[i_bundle + 1 :]
-                    )
-                ),
-            )
+        size_bundle = (
+            num_old[:i_bundle] + (num_new[i_bundle],) + num_tot[i_bundle + 1 :]
         )
 
         batch_split = calc_batch_split(size_bundle, batch_size)
+        chunk_sizes = tuple(
+            -(num_mols // -splitnum)
+            for num_mols, splitnum in zip(size_bundle, batch_split)
+        )
+        split_indices = (range(num_splits) for num_splits in batch_split)
+        for batch_subindices in iterproduct(*split_indices):
+            prev_column_mols = tuple(
+                tuple(
+                    mol_list[:i_counter][
+                        subindex * chunk_size : (subindex + 1) * chunk_size
+                    ]
+                )
+                for mol_list, i_counter, chunk_size, subindex in zip(
+                    mol_table[:i_bundle],
+                    table_indices[:i_bundle],
+                    chunk_sizes[:i_bundle],
+                    batch_subindices[:i_bundle],
+                )
+            )
+            cur_column_mols = tuple(
+                mol_table[i_bundle][
+                    batch_subindices[i_bundle]
+                    * chunk_sizes[i_bundle] : (batch_subindices[i_bundle] + 1)
+                    * chunk_sizes[i_bundle]
+                ]
+            )
+            next_column_mols = tuple(
+                tuple(
+                    mol_list[
+                        subindex * chunk_size : (subindex + 1) * chunk_size
+                    ]
+                )
+                for mol_list, chunk_size, subindex in zip(
+                    mol_table[i_bundle + 1 :],
+                    chunk_sizes[i_bundle + 1 :],
+                    batch_subindices[i_bundle + 1 :],
+                )
+            )
+            yield prev_column_mols + (cur_column_mols,) + next_column_mols
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
