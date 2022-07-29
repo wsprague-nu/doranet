@@ -805,11 +805,12 @@ def _generate_recipe_batches(
 
 
 def assemble_recipe_batch_job(
-    batch: tuple[tuple[_MolIndex]],
     op_index: _OpIndex,
+    batch: tuple[tuple[_MolIndex]],
     network: ChemNetwork,
     keyset: MetaKeyPacket,
 ) -> RecipeRankingJob:
+
     return RecipeRankingJob()
 
 
