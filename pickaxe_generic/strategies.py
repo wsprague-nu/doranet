@@ -651,7 +651,7 @@ class RecipeRankingJob:
     )
 
     operator: DataPacket[OpDatBase]
-    op_args: tuple[tuple[DataPacket[MolDatBase], ...]]
+    op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
     recipe_ranker: Optional[RecipeRanker]
     min_rankvalue: Optional[RankValue]
 
@@ -809,9 +809,44 @@ def assemble_recipe_batch_job(
     batch: tuple[tuple[_MolIndex]],
     network: ChemNetwork,
     keyset: MetaKeyPacket,
+    recipe_ranker: Optional[RecipeRanker] = None,
+    min_rank: Optional[RankValue] = None,
 ) -> RecipeRankingJob:
-
-    return RecipeRankingJob()
+    mol_data: Union[
+        Generator[Generator[None, None, None], None, None],
+        Generator[Generator[MolDatBase, None, None], None, None],
+    ]
+    mol_meta: Generator[
+        Union[Sequence[Mapping], Generator[None, None, None]], None, None
+    ]
+    if keyset.live_operator:
+        op_data = network.ops[op_index]
+    else:
+        op_data = None
+    if keyset.operator_keys:
+        op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
+    else:
+        op_meta = None
+    op: DataPacket[OpDatBase] = DataPacket(op_index, op_data, op_meta)
+    if keyset.live_molecule:
+        mol_data = ((network.mols[i] for i in mol_list) for mol_list in batch)
+    else:
+        mol_data = ((None for _ in mol_list) for mol_list in batch)
+    if keyset.molecule_keys:
+        mol_meta = (
+            network.mol_metas(mol_list, keyset.molecule_keys)
+            for mol_list in batch
+        )
+    else:
+        mol_meta = ((None for _ in mol_list) for mol_list in batch)
+    mol_batch: tuple[tuple[DataPacket[MolDatBase], ...], ...] = tuple(
+        tuple(
+            DataPacket(i, mol, m_meta)
+            for i, mol, m_meta in zip(i_col, mol_col, meta_col)
+        )
+        for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
+    )
+    return RecipeRankingJob(op, mol_batch, recipe_ranker, min_rank)
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
