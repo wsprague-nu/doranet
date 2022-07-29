@@ -642,15 +642,23 @@ class PriorityQueueStrategy(ABC):
 
 @dataclass(frozen=True)
 class RecipeGenerationJob:
-    __slots__ = ()
+    __slots__ = (
+        "operator",
+        "op_args",
+        "molecule",
+        "recipe_ranker",
+        "op_meta",
+        "mol_meta",
+        "min_rankvalue",
+    )
 
     operator: OpDatBase
-    compat_indices: tuple[tuple[_MolIndex, ...]]
+    op_args: tuple[tuple[int, ...]]
     molecules: tuple[MolDatBase, ...]
-    recipe_ranker: Optional[RecipeRanker] = None
-    op_meta: Optional[Mapping] = None
-    mol_meta: Optional[tuple[Optional[Mapping]]] = None
-    min_rankvalue: Optional[RankValue] = None
+    recipe_ranker: Optional[RecipeRanker]
+    op_meta: Optional[Mapping]
+    mol_meta: Optional[tuple[Optional[Mapping]]]
+    min_rankvalue: Optional[RankValue]
 
 
 def calc_batch_split(
@@ -881,10 +889,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for batch in _generate_recipe_batches(
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
-                    # process recipe bundle
-                    print(f"operator {op}:")
-                    print(batch)
-                    print()
+                    # assemble recipe calculation job
+                    pass
 
                 # if mol_filter_local is not None:
                 #     old_mols = [
