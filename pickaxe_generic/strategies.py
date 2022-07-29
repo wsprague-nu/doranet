@@ -806,7 +806,7 @@ def _generate_recipe_batches(
 
 def assemble_recipe_batch_job(
     op_index: _OpIndex,
-    batch: tuple[tuple[_MolIndex]],
+    batch: tuple[tuple[_MolIndex, ...], ...],
     network: ChemNetwork,
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
@@ -952,7 +952,18 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
                     # assemble recipe ranking job
-                    pass
+                    recipejob = assemble_recipe_batch_job(
+                        _OpIndex(opIndex),
+                        batch,
+                        network,
+                        recipe_keyset,
+                        recipe_ranker,
+                        heap_size,
+                    )
+                    for rank, recipe in execute_recipe_ranking(
+                        recipejob, recipe_heap[0][0]
+                    ):
+                        pass
 
             # update compat_indices_table
             compat_indices_table = [
