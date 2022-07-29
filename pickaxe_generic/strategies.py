@@ -877,7 +877,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 compat_indices = compat_indices_table[opIndex]
                 if not all(compat_table):
                     continue
-                # generate recipe bundles
+                # generate recipe batches
                 for batch in _generate_recipe_batches(
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
