@@ -836,6 +836,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mol_filter_local_keyset: MetaKeyPacket = MetaKeyPacket()
         recipe_keyset: MetaKeyPacket = MetaKeyPacket()
         reaction_keyset: MetaKeyPacket = MetaKeyPacket()
+        if recipe_ranker is not None:
+            recipe_keyset = recipe_keyset + recipe_ranker.meta_required
         # if mol_filter_local is not None:
         #     mol_filter_local_keyset = (
         #         mol_filter_local_keyset + mol_filter_local.meta_required
@@ -857,13 +859,20 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             [0 for _ in network.compat_table(i)]
             for i in range(len(network.ops))
         ]
-        cart_test_index = _MolIndex(0)
         updated_mols_set: set[_MolIndex] = set()
         updated_ops_set: set[_OpIndex] = set()
         recipe_heap: list[tuple[Optional[RankValue], Recipe]] = []
 
         while (
-            cart_test_index < len(network.mols)
+            any(
+                any(
+                    i_tested < len(compat_mols)
+                    for i_tested, compat_mols in zip(
+                        op_index_table, network.compat_table(op_index)
+                    )
+                )
+                for op_index, op_index_table in enumerate(compat_indices_table)
+            )
             or len(updated_mols_set) != 0
             or len(updated_ops_set) != 0
         ):
@@ -873,7 +882,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     "Updating necessary operator metadata is not yet supported"
                 )
 
-            # for each operator, iterate through new recipes
+            # for each operator, create recipe batches
             for opIndex, op in enumerate(network.ops):
                 # for each argument, accumulate a total of old_mols and new_mols
                 compat_table = network.compat_table(opIndex)
@@ -887,33 +896,11 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     # assemble recipe ranking job
                     pass
 
-                # if mol_filter_local is not None:
-                #     old_mols = [
-                #         i
-                #         for i in old_mols
-                #         if mol_filter_local(
-                #             network.mols[i],
-                #             network.mol_metas(
-                #                 (i,),
-                #                 mol_filter_local_keyset.molecule_keys,
-                #             )[0],
-                #         )
-                #     ]
-                #     new_mols = [
-                #         i
-                #         for i in old_mols
-                #         if mol_filter_local(
-                #             network.mols[i],
-                #             network.mol_metas(
-                #                 (i,),
-                #                 mol_filter_local_keyset.molecule_keys,
-                #             )[0],
-                #         )
-                #     ]
-                # now you have the old_mols and new_mols for the argument
-
-            # split recipe generation jobs into batches
-            pass
+            # update compat_indices_table
+            compat_indices_table = [
+                [len(mol_list) for mol_list in network.compat_table(i)]
+                for i in range(len(network.ops))
+            ]
 
     def _add_recipe_to_heap(
         self,
