@@ -642,7 +642,7 @@ class PriorityQueueStrategy(ABC):
 
 
 @dataclass(frozen=True)
-class RecipeGenerationJob:
+class RecipeRankingJob:
     __slots__ = (
         "operator",
         "op_args",
@@ -676,7 +676,7 @@ def _generate_recipe_batches(
     table_indices: Sequence[int],
     batch_size: Optional[int] = None,
     updated_mols: set[_MolIndex] = set(),
-) -> Generator[Collection[Collection[_MolIndex]], None, None]:
+) -> Generator[tuple[tuple[_MolIndex, ...], ...], None, None]:
     num_args = len(mol_table)
 
     # get number of old and new mols for each argument
@@ -804,6 +804,15 @@ def _generate_recipe_batches(
             yield prev_column_mols + (cur_column_mols,) + next_column_mols
 
 
+def assemble_recipe_batch_job(
+    batch: tuple[tuple[_MolIndex]],
+    op_index: _OpIndex,
+    network: ChemNetwork,
+    keyset: MetaKeyPacket,
+) -> RecipeRankingJob:
+    return RecipeRankingJob()
+
+
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     __slots__ = "_network"
 
@@ -894,7 +903,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     compat_table, compat_indices, batch_size, updated_mols_set
                 ):
                     # assemble recipe ranking job
-                    pass
+                    print(batch)
 
             # update compat_indices_table
             compat_indices_table = [
