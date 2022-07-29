@@ -654,7 +654,6 @@ class RecipeRankingJob:
     op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
     recipe_ranker: Optional[RecipeRanker]
     max_heap: Optional[int]
-    min_rankvalue: Optional[RankValue]
 
 
 def calc_batch_split(
@@ -811,7 +810,6 @@ def assemble_recipe_batch_job(
     network: ChemNetwork,
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
-    min_rank: Optional[RankValue] = None,
     max_heap: Optional[int] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
@@ -848,11 +846,11 @@ def assemble_recipe_batch_job(
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
-    return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap, min_rank)
+    return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap)
 
 
 def execute_recipe_ranking(job: RecipeRankingJob) -> tuple[RankValue, Recipe]:
-    pass
+    recipe_heap = heapq
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
