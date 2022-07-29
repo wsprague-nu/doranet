@@ -28,12 +28,15 @@ from typing import (
     Any,
     Collection,
     FrozenSet,
+    Generic,
     Iterable,
     List,
+    Mapping,
     Optional,
     Protocol,
     Sequence,
     Tuple,
+    TypeVar,
     final,
 )
 
@@ -216,6 +219,9 @@ class DataUnit(ABC):
     #     """
     #     Deserializes object from blob.
     #     """
+
+
+DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
 
 
 class MolDatBase(DataUnit):
@@ -899,3 +905,11 @@ class MetaKeyPacket:
             self.live_operator or other.live_operator,
             self.live_molecule or other.live_molecule,
         )
+
+
+@dataclass(frozen=True)
+class DataPacket(Generic[DataUnitGen]):
+    __slots__ = ("i", "mol", "meta")
+    i: int
+    mol: Optional[DataUnitGen]
+    meta: Optional[Mapping]

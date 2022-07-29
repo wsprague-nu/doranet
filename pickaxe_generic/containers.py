@@ -25,13 +25,12 @@ from typing import (
 
 from pickaxe_generic.datatypes import (
     DataUnit,
+    DataUnitGen,
     Identifier,
     MolDatBase,
     OpDatBase,
     RxnDatBase,
 )
-
-DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
 
 
 class ObjectLibrary(ABC, Generic[DataUnitGen]):
