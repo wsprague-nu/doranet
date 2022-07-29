@@ -650,8 +650,8 @@ class RecipeGenerationJob:
         "min_rankvalue",
     )
 
-    operator: tuple[DataPacket[OpDatBase]]
-    op_args: tuple[tuple[tuple[DataPacket[MolDatBase]], ...]]
+    operator: DataPacket[OpDatBase]
+    op_args: tuple[tuple[DataPacket[MolDatBase], ...]]
     recipe_ranker: Optional[RecipeRanker]
     min_rankvalue: Optional[RankValue]
 
