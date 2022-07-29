@@ -668,7 +668,7 @@ def calc_batch_split(
     return tuple(num_split)
 
 
-def _generate_bundles(
+def _generate_recipe_batches(
     mol_table: Sequence[Sequence[_MolIndex]],
     table_indices: Sequence[int],
     batch_size: Optional[int] = None,
