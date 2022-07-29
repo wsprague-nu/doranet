@@ -960,10 +960,16 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         recipe_ranker,
                         heap_size,
                     )
+                    if len(recipe_heap) == 0:
+                        min_recipe_val = None
+                    else:
+                        min_recipe_val = recipe_heap[0][0]
                     for rank, recipe in execute_recipe_ranking(
-                        recipejob, recipe_heap[0][0]
+                        recipejob, min_recipe_val
                     ):
-                        pass
+                        self._add_recipe_to_heap(
+                            recipe_heap, recipe, rank, heap_size
+                        )
 
             # update compat_indices_table
             compat_indices_table = [
