@@ -889,9 +889,13 @@ class RxnDatBasic(RxnDatBase):
 class MetaKeyPacket:
     operator_keys: frozenset = frozenset()
     molecule_keys: frozenset = frozenset()
+    live_operator: bool = False
+    live_molecule: bool = False
 
     def __add__(self, other: "MetaKeyPacket") -> "MetaKeyPacket":
         return MetaKeyPacket(
             self.operator_keys.union(other.operator_keys),
             self.molecule_keys.union(other.molecule_keys),
+            self.live_operator or other.live_operator,
+            self.live_molecule or other.live_molecule,
         )
