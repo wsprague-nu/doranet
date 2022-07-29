@@ -849,8 +849,17 @@ def assemble_recipe_batch_job(
     return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap)
 
 
-def execute_recipe_ranking(job: RecipeRankingJob) -> tuple[RankValue, Recipe]:
-    recipe_heap = heapq
+def execute_recipe_ranking(
+    job: RecipeRankingJob, min_rank: Optional[RankValue] = None
+) -> tuple[tuple[Optional[RankValue], Recipe], ...]:
+    if job.recipe_ranker is None:
+        if min_rank is not None:
+            return tuple()
+        return tuple(
+            (None, Recipe(_OpIndex(job.operator.i), reactants))
+            for reactants in iterproduct(*job.op_args)
+        )
+    recipe_heap: list[tuple[RankValue, Recipe]] = []
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
