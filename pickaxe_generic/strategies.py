@@ -959,14 +959,14 @@ class RecipeHeap:
     def __init__(
         self,
         maxsize: Optional[int] = None,
-        heap: Optional[list[RecipePriorityItem]] = None,
+        _heap: Optional[list[RecipePriorityItem]] = None,
     ) -> None:
-        if heap is None:
+        if _heap is None:
             self._heap = []
-        elif maxsize is not None and len(heap) > maxsize:
-            self._heap = heap[-maxsize:]
+        elif maxsize is not None and len(_heap) > maxsize:
+            self._heap = _heap[-maxsize:]
         else:
-            self._heap = heap
+            self._heap = _heap
         self._maxsize = maxsize
 
     def add_recipe(self, recipe: RecipePriorityItem) -> None:
@@ -980,8 +980,24 @@ class RecipeHeap:
             raise ValueError(
                 f"Heap sizes do not match ({self._maxsize} != {other._maxsize})"
             )
+
         return RecipeHeap(
-            self._maxsize, list(heapq.merge(self._heap, other._heap))
+            self._maxsize,
+            list(
+                reversed(
+                    tuple(
+                        islice(
+                            heapq.merge(
+                                reversed(self._heap),
+                                reversed(other._heap),
+                                reverse=True,
+                            ),
+                            0,
+                            self._maxsize,
+                        )
+                    )
+                )
+            ),
         )
 
 
