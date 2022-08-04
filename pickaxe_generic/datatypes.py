@@ -911,5 +911,5 @@ class MetaKeyPacket:
 class DataPacket(Generic[DataUnitGen]):
     __slots__ = ("i", "mol", "meta")
     i: int
-    mol: Optional[DataUnitGen]
+    item: Optional[DataUnitGen]
     meta: Optional[Mapping]
