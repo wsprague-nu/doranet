@@ -1140,6 +1140,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for recipe in recipes_to_be_expanded
             )
 
+            for reaction_job in reaction_jobs:
+                # evaluate reaction
+                ...
+
 
 def _add_recipe_to_heap(
     recipe_heap: list[RecipePriorityItem],
