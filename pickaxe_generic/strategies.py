@@ -11,7 +11,7 @@ Classes:
 import heapq
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import chain, islice
 from itertools import product as iterproduct
 from itertools import repeat
@@ -631,6 +631,7 @@ class PriorityQueueStrategy(ABC):
         max_recipes: Optional[int] = None,
         heap_size: int = 1,
         batch_size: Optional[int] = None,
+        beam_size: Optional[int] = 1,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
         # recipe_filter: Optional[RecipeFilter] = None,
@@ -647,13 +648,15 @@ class RecipeRankingJob:
         "operator",
         "op_args",
         "recipe_ranker",
-        "min_rankvalue",
+        "heap_size",
+        "min_rank",
     )
 
     operator: DataPacket[OpDatBase]
     op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
     recipe_ranker: Optional[RecipeRanker]
-    max_heap: Optional[int]
+    heap_size: Optional[int]
+    min_rank: Optional[RankValue]
 
 
 def calc_batch_split(
@@ -811,6 +814,7 @@ def assemble_recipe_batch_job(
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
     max_heap: Optional[int] = None,
+    min_rank: Optional[RankValue] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
         Generator[Generator[None, None, None], None, None],
@@ -846,17 +850,25 @@ def assemble_recipe_batch_job(
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
-    return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap)
+    return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap, min_rank)
+
+
+@dataclass(frozen=True, order=True)
+class RecipePriorityItem:
+    rank: Optional[RankValue]
+    recipe: Recipe = field(compare=False)
 
 
 def execute_recipe_ranking(
     job: RecipeRankingJob, min_rank: Optional[RankValue] = None
-) -> tuple[tuple[Optional[RankValue], Recipe], ...]:
+) -> tuple[RecipePriorityItem, ...]:
     if job.recipe_ranker is None:
         if min_rank is not None:
             return tuple()
         return tuple(
-            (None, Recipe(_OpIndex(job.operator.i), reactants))
+            RecipePriorityItem(
+                None, Recipe(_OpIndex(job.operator.i), reactants)
+            )
             for reactants in iterproduct(*job.op_args)
         )
     recipe_heap: list[tuple[RankValue, Recipe]] = []
@@ -881,6 +893,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         max_recipes: Optional[int] = None,
         heap_size: Optional[int] = None,
         batch_size: Optional[int] = None,
+        beam_size: Optional[int] = 1,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
         # recipe_filter: Optional[RecipeFilter] = None,
@@ -919,7 +932,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         ]
         updated_mols_set: set[_MolIndex] = set()
         updated_ops_set: set[_OpIndex] = set()
-        recipe_heap: list[tuple[Optional[RankValue], Recipe]] = []
+        recipe_heap: list[RecipePriorityItem] = []
+        recipes_tested: set[Recipe] = set()
 
         while (
             any(
@@ -963,13 +977,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     if len(recipe_heap) == 0:
                         min_recipe_val = None
                     else:
-                        min_recipe_val = recipe_heap[0][0]
-                    for rank, recipe in execute_recipe_ranking(
+                        min_recipe_val = recipe_heap[0].rank
+                    for item in execute_recipe_ranking(
                         recipejob, min_recipe_val
                     ):
-                        self._add_recipe_to_heap(
-                            recipe_heap, recipe, rank, heap_size
-                        )
+                        if item.recipe in recipes_tested:
+                            continue
+                        self._add_recipe_to_heap(recipe_heap, item, heap_size)
 
             # update compat_indices_table
             compat_indices_table = [
@@ -979,14 +993,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
     def _add_recipe_to_heap(
         self,
-        recipe_heap: list[tuple[Optional[RankValue], Recipe]],
-        recipe: Recipe,
-        value: Optional[RankValue],
+        recipe_heap: list[RecipePriorityItem],
+        item: RecipePriorityItem,
         heap_size: Optional[int] = None,
     ) -> None:
         if heap_size is None or len(recipe_heap) < heap_size:
-            heapq.heappush(recipe_heap, (value, recipe))
-        elif value is None:
+            heapq.heappush(recipe_heap, item)
+        elif item.rank is None:
             return
-        elif recipe_heap[0][0] is None or recipe_heap[0][0] < value:
-            heapq.heappushpop(recipe_heap, (value, recipe))
+        elif recipe_heap[0].rank is None or recipe_heap[0].rank < item.rank:
+            heapq.heappushpop(recipe_heap, item)
