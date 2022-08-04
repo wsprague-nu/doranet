@@ -655,11 +655,13 @@ class RecipeRankingJob:
         "operator",
         "op_args",
         "recipe_ranker",
+        "heap_size",
     )
 
     operator: DataPacket[OpDatBase]
     op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
     recipe_ranker: Optional[RecipeRanker]
+    heap_size: Optional[int]
 
 
 def calc_batch_split(
@@ -816,6 +818,7 @@ def assemble_recipe_batch_job(
     network: ChemNetwork,
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
+    heap_size: Optional[int] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
         Generator[Generator[None, None, None], None, None],
@@ -851,7 +854,47 @@ def assemble_recipe_batch_job(
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
-    return RecipeRankingJob(op, mol_batch, recipe_ranker)
+    return RecipeRankingJob(op, mol_batch, recipe_ranker, heap_size)
+
+
+@dataclass(frozen=True)
+class ReactionJob:
+    __slots__ = (
+        "operator",
+        "op_args",
+    )
+
+    operator: DataPacket[OpDatBase]
+    op_args: tuple[DataPacket[MolDatBase], ...]
+
+
+def assemble_reaction_job(
+    recipe: Recipe, network: ChemNetwork, keyset: MetaKeyPacket
+) -> ReactionJob:
+    op_index = recipe.operator
+    op_data = network.ops[op_index]
+
+    if keyset.operator_keys:
+        op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
+    else:
+        op_meta = None
+
+    op = DataPacket(op_index, op_data, op_meta)
+
+    mol_data = (network.mols[i] for i in recipe.reactants)
+
+    mol_meta: Iterable[Optional[Mapping]]
+    if keyset.molecule_keys:
+        mol_meta = network.mol_metas(recipe.reactants, keyset.molecule_keys)
+    else:
+        mol_meta = (None for _ in recipe.reactants)
+
+    reactants = tuple(
+        DataPacket(i, mol, meta)
+        for i, mol, meta in zip(recipe.reactants, mol_data, mol_meta)
+    )
+
+    return ReactionJob(op, reactants)
 
 
 @dataclass(frozen=True)
@@ -865,6 +908,11 @@ class RecipePriorityItem:
         if self.rank is None:
             return True
         return self.rank < other.rank
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, RecipePriorityItem) and self.rank == other.rank:
+            return True
+        return False
 
 
 def execute_recipe_ranking(
@@ -902,6 +950,41 @@ def execute_recipe_ranking(
     return tuple(recipe_heap)
 
 
+class RecipeHeap:
+    __slots__ = ("_heap", "_maxsize")
+
+    _heap: list[RecipePriorityItem]
+    _maxsize: Optional[int]
+
+    def __init__(
+        self,
+        maxsize: Optional[int] = None,
+        heap: Optional[list[RecipePriorityItem]] = None,
+    ) -> None:
+        if heap is None:
+            self._heap = []
+        elif maxsize is not None and len(heap) > maxsize:
+            self._heap = heap[-maxsize:]
+        else:
+            self._heap = heap
+        self._maxsize = maxsize
+
+    def add_recipe(self, recipe: RecipePriorityItem) -> None:
+        if self._maxsize is None or len(self._heap) < self._maxsize:
+            heapq.heappush(self._heap, recipe)
+        elif self._heap[0] < recipe:
+            heapq.heapreplace(self._heap, recipe)
+
+    def __add__(self, other: "RecipeHeap") -> "RecipeHeap":
+        if self._maxsize != other._maxsize:
+            raise ValueError(
+                f"Heap sizes do not match ({self._maxsize} != {other._maxsize})"
+            )
+        return RecipeHeap(
+            self._maxsize, list(heapq.merge(self._heap, other._heap))
+        )
+
+
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
     __slots__ = "_network"
 
@@ -929,6 +1012,11 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         # mc_local: Optional[MetaDataCalculatorLocal] = None,
         # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
+
+        if heap_size is not None and beam_size is not None:
+            ValueError(
+                f"Heap size ({heap_size}) must be greater than beam size ({beam_size})"
+            )
 
         # set keysets so that updated reactions may occur and parameters may be
         # passed to parallel processes
@@ -1000,6 +1088,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         network,
                         recipe_keyset,
                         recipe_ranker,
+                        heap_size,
                     )
                     # assign minimum recipe value to reduce overcounting
                     if len(recipe_heap) == 0:
@@ -1019,7 +1108,21 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for i in range(len(network.ops))
             ]
 
-            # perform reactions in beams
+            # perform beam expansion
+            end_index = len(recipe_heap)
+            if beam_size is not None:
+                end_index = min(len(recipe_heap), beam_size)
+            recipe_heap.reverse()
+            recipes_to_be_expanded = tuple(
+                recipe_item.recipe for recipe_item in recipe_heap[:end_index]
+            )
+            recipe_heap = recipe_heap[end_index:]
+            heapq.heapify(recipe_heap)
+
+            reaction_jobs = (
+                assemble_reaction_job(recipe, network, reaction_keyset)
+                for recipe in recipes_to_be_expanded
+            )
 
 
 def _add_recipe_to_heap(
