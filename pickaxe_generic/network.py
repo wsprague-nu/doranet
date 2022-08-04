@@ -88,6 +88,13 @@ class RecipeExplicit:
     reactants: tuple[DataPacket[MolDatBase], ...]
 
 
+def recipe_from_explicit(recipe_explicit: RecipeExplicit) -> Recipe:
+    return Recipe(
+        _OpIndex(recipe_explicit.operator.i),
+        tuple(_MolIndex(data.i) for data in recipe_explicit.reactants),
+    )
+
+
 class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
     @abstractmethod
     def __contains__(self, item: Union[Identifier, DataUnitGen]) -> bool:
