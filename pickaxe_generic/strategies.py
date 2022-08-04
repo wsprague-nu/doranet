@@ -871,7 +871,7 @@ def execute_recipe_ranking(
             )
             for reactants in iterproduct(*job.op_args)
         )
-    recipe_heap: list[tuple[RankValue, Recipe]] = []
+    recipe_heap: list[RecipePriorityItem] = []
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
