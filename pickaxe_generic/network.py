@@ -16,6 +16,7 @@ from typing import (
 
 from pickaxe_generic.containers import DataUnitGen
 from pickaxe_generic.datatypes import (
+    DataPacket,
     DataUnit,
     Identifier,
     MolDatBase,
@@ -83,8 +84,8 @@ class Recipe:
 @dataclass(frozen=True)
 class RecipeExplicit:
     __slots__ = ("operator", "reactants", "operator_meta", "reactants_meta")
-    operator: OpDatBase
-    reactants: tuple[MolDatBase, ...]
+    operator: DataPacket[OpDatBase]
+    reactants: tuple[DataPacket[MolDatBase], ...]
     operator_meta: Optional[Mapping]
     reactants_meta: Optional[tuple[Mapping]]
 
