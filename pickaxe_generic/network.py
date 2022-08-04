@@ -86,8 +86,6 @@ class RecipeExplicit:
     __slots__ = ("operator", "reactants", "operator_meta", "reactants_meta")
     operator: DataPacket[OpDatBase]
     reactants: tuple[DataPacket[MolDatBase], ...]
-    operator_meta: Optional[Mapping]
-    reactants_meta: Optional[tuple[Mapping]]
 
 
 class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
