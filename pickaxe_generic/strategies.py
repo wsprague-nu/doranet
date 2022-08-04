@@ -56,7 +56,14 @@ from pickaxe_generic.filters import (
     RecipeRanker,
     ReplaceBlacklist,
 )
-from pickaxe_generic.network import ChemNetwork, Recipe, _MolIndex, _OpIndex
+from pickaxe_generic.network import (
+    ChemNetwork,
+    Recipe,
+    RecipeExplicit,
+    _MolIndex,
+    _OpIndex,
+    recipe_from_explicit,
+)
 
 
 class _ReactionProvider(Protocol):
@@ -648,15 +655,11 @@ class RecipeRankingJob:
         "operator",
         "op_args",
         "recipe_ranker",
-        "heap_size",
-        "min_rank",
     )
 
     operator: DataPacket[OpDatBase]
     op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
     recipe_ranker: Optional[RecipeRanker]
-    heap_size: Optional[int]
-    min_rank: Optional[RankValue]
 
 
 def calc_batch_split(
@@ -813,8 +816,6 @@ def assemble_recipe_batch_job(
     network: ChemNetwork,
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
-    max_heap: Optional[int] = None,
-    min_rank: Optional[RankValue] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
         Generator[Generator[None, None, None], None, None],
@@ -850,17 +851,25 @@ def assemble_recipe_batch_job(
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
-    return RecipeRankingJob(op, mol_batch, recipe_ranker, max_heap, min_rank)
+    return RecipeRankingJob(op, mol_batch, recipe_ranker)
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class RecipePriorityItem:
     rank: Optional[RankValue]
-    recipe: Recipe = field(compare=False)
+    recipe: Recipe
+
+    def __lt__(self, other: "RecipePriorityItem") -> bool:
+        if other.rank is None:
+            return False
+        if self.rank is None:
+            return True
+        return self.rank < other.rank
 
 
 def execute_recipe_ranking(
-    job: RecipeRankingJob, min_rank: Optional[RankValue] = None
+    job: RecipeRankingJob,
+    min_rank: Optional[RankValue],
 ) -> tuple[RecipePriorityItem, ...]:
     if job.recipe_ranker is None:
         if min_rank is not None:
@@ -871,7 +880,26 @@ def execute_recipe_ranking(
             )
             for reactants in iterproduct(*job.op_args)
         )
+
     recipe_heap: list[RecipePriorityItem] = []
+    for recipe_explicit in (
+        RecipeExplicit(
+            job.operator,
+            reactants_data,
+        )
+        for reactants_data in iterproduct(*job.op_args)
+    ):
+        rank = job.recipe_ranker(recipe_explicit)
+        if rank is not None:
+            if min_rank is None:
+                continue
+            elif rank < min_rank:
+                continue
+        recipe_item = RecipePriorityItem(
+            rank, recipe_from_explicit(recipe_explicit)
+        )
+        recipe_heap.append(recipe_item)
+    return tuple(recipe_heap)
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
@@ -972,7 +1000,6 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         network,
                         recipe_keyset,
                         recipe_ranker,
-                        heap_size,
                     )
                     if len(recipe_heap) == 0:
                         min_recipe_val = None
@@ -983,7 +1010,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     ):
                         if item.recipe in recipes_tested:
                             continue
-                        self._add_recipe_to_heap(recipe_heap, item, heap_size)
+                        _add_recipe_to_heap(recipe_heap, item, heap_size)
 
             # update compat_indices_table
             compat_indices_table = [
@@ -991,15 +1018,15 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for i in range(len(network.ops))
             ]
 
-    def _add_recipe_to_heap(
-        self,
-        recipe_heap: list[RecipePriorityItem],
-        item: RecipePriorityItem,
-        heap_size: Optional[int] = None,
-    ) -> None:
-        if heap_size is None or len(recipe_heap) < heap_size:
-            heapq.heappush(recipe_heap, item)
-        elif item.rank is None:
-            return
-        elif recipe_heap[0].rank is None or recipe_heap[0].rank < item.rank:
-            heapq.heappushpop(recipe_heap, item)
+
+def _add_recipe_to_heap(
+    recipe_heap: list[RecipePriorityItem],
+    item: RecipePriorityItem,
+    heap_size: Optional[int] = None,
+) -> None:
+    if heap_size is None or len(recipe_heap) < heap_size:
+        heapq.heappush(recipe_heap, item)
+    elif item.rank is None:
+        return
+    elif recipe_heap[0].rank is None or recipe_heap[0].rank < item.rank:
+        heapq.heappushpop(recipe_heap, item)
