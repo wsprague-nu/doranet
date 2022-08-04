@@ -353,7 +353,9 @@ class RankValue(Protocol):
 
 class RecipeRanker(Protocol):
     @abstractmethod
-    def __call__(self, recipe: RecipeExplicit) -> Optional[RankValue]:
+    def __call__(
+        self, recipe: RecipeExplicit, min_rank: Optional[RankValue] = None
+    ) -> Optional[RankValue]:
         ...
 
     @property

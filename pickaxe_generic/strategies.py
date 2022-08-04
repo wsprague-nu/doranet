@@ -889,7 +889,7 @@ def execute_recipe_ranking(
         )
         for reactants_data in iterproduct(*job.op_args)
     ):
-        rank = job.recipe_ranker(recipe_explicit)
+        rank = job.recipe_ranker(recipe_explicit, min_rank)
         if rank is not None:
             if min_rank is None:
                 continue
@@ -1001,6 +1001,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         recipe_keyset,
                         recipe_ranker,
                     )
+                    # assign minimum recipe value to reduce overcounting
                     if len(recipe_heap) == 0:
                         min_recipe_val = None
                     else:
@@ -1017,6 +1018,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 [len(mol_list) for mol_list in network.compat_table(i)]
                 for i in range(len(network.ops))
             ]
+
+            # perform reactions in beams
 
 
 def _add_recipe_to_heap(
