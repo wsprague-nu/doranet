@@ -24,6 +24,7 @@ from typing import (
     Generator,
     Hashable,
     Iterable,
+    Iterator,
     Mapping,
     Optional,
     Protocol,
@@ -31,6 +32,7 @@ from typing import (
     TypeVar,
     Union,
     final,
+    overload,
 )
 
 from pickaxe_generic.containers import ObjectLibrary
@@ -951,25 +953,107 @@ def execute_recipe_ranking(
 
 
 class RecipeHeap:
-    __slots__ = ("_heap", "_maxsize")
+    __slots__ = ("_heap", "_maxsize", "_ordered")
 
-    _heap: list[RecipePriorityItem]
+    _heap: Optional[list[RecipePriorityItem]]
+    _ordered: Optional[list[RecipePriorityItem]]
     _maxsize: Optional[int]
 
     def __init__(
         self,
         maxsize: Optional[int] = None,
-        _heap: Optional[list[RecipePriorityItem]] = None,
+        heaps: Optional[Collection["RecipeHeap"]] = None,
     ) -> None:
-        if _heap is None:
-            self._heap = []
-        elif maxsize is not None and len(_heap) > maxsize:
-            self._heap = _heap[-maxsize:]
+        if heaps is None:
+            self._heap = None
+            self._ordered = None
+        elif maxsize is not None:
+            self._heap = None
+            self._ordered = list(heapq.merge(*heaps))
         else:
-            self._heap = _heap
+            self._heap = None
+            self._ordered = list(
+                reversed(
+                    tuple(
+                        islice(
+                            heapq.merge(
+                                *(reversed(heap) for heap in heaps),
+                                reverse=True,
+                            ),
+                            0,
+                            maxsize,
+                        )
+                    )
+                )
+            )
         self._maxsize = maxsize
 
+    @property
+    def min(self) -> Optional[RecipePriorityItem]:
+        if self._heap is None:
+            if self._ordered is None:
+                return None
+            return min(self._ordered)
+        return self._heap[0]
+
+    def popvals(self, n: Optional[int]) -> tuple[RecipePriorityItem, ...]:
+        if self._ordered is None:
+            if self._heap is None:
+                return tuple()
+            self._ordered = list(sorted(self._heap))
+        self._heap = None
+        if n is None:
+            vals = tuple(reversed(self._ordered))
+            self._ordered = None
+            return vals
+        return tuple(
+            self._ordered.pop() for _ in range(min(len(self._ordered), n))
+        )
+
+    @overload
+    def __getitem__(self, item: slice) -> Sequence[RecipePriorityItem]:
+        ...
+
+    @overload
+    def __getitem__(self, item: int) -> RecipePriorityItem:
+        ...
+
+    def __getitem__(self, item: Union[int, slice]):
+        if self._ordered is None:
+            if self._heap is None:
+                raise IndexError(f"Invalid index {item=}; heap is empty")
+            self._ordered = sorted(self._heap)
+        return self._ordered[item]
+
+    def __len__(self) -> int:
+        if self._heap is None:
+            if self._ordered is None:
+                return 0
+            return len(self._ordered)
+        return len(self._heap)
+
+    def __iter__(self) -> Iterator[RecipePriorityItem]:
+        if self._ordered is None:
+            if self._heap is None:
+                return iter([])
+            self._ordered = sorted(self._heap)
+        return iter(self._ordered)
+
+    def __reversed__(self) -> Iterator[RecipePriorityItem]:
+        if self._ordered is None:
+            if self._heap is None:
+                return iter([])
+            self._ordered = sorted(self._heap)
+        return reversed(self._ordered)
+
     def add_recipe(self, recipe: RecipePriorityItem) -> None:
+        if self._heap is None:
+            if self._ordered is None:
+                self._heap = []
+            else:
+                self._heap = list(self._ordered)
+                heapq.heapify(self._heap)
+                self._ordered = None
         if self._maxsize is None or len(self._heap) < self._maxsize:
             heapq.heappush(self._heap, recipe)
         elif self._heap[0] < recipe:
@@ -981,24 +1065,7 @@ class RecipeHeap:
                 f"Heap sizes do not match ({self._maxsize} != {other._maxsize})"
             )
 
-        return RecipeHeap(
-            self._maxsize,
-            list(
-                reversed(
-                    tuple(
-                        islice(
-                            heapq.merge(
-                                reversed(self._heap),
-                                reversed(other._heap),
-                                reverse=True,
-                            ),
-                            0,
-                            self._maxsize,
-                        )
-                    )
-                )
-            ),
-        )
+        return RecipeHeap(self._maxsize, (self, other))
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
@@ -1064,7 +1131,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         ]
         updated_mols_set: set[_MolIndex] = set()
         updated_ops_set: set[_OpIndex] = set()
-        recipe_heap: list[RecipePriorityItem] = []
+        recipe_heap: RecipeHeap = RecipeHeap(maxsize=heap_size)
         recipes_tested: set[Recipe] = set()
 
         while (
@@ -1116,7 +1183,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     ):
                         if item.recipe in recipes_tested:
                             continue
-                        _add_recipe_to_heap(recipe_heap, item, heap_size)
+                        recipe_heap.add_recipe(item)
 
             # update compat_indices_table
             compat_indices_table = [
@@ -1125,34 +1192,15 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             ]
 
             # perform beam expansion
-            end_index = len(recipe_heap)
-            if beam_size is not None:
-                end_index = min(len(recipe_heap), beam_size)
-            recipe_heap.reverse()
-            recipes_to_be_expanded = tuple(
-                recipe_item.recipe for recipe_item in recipe_heap[:end_index]
-            )
-            recipe_heap = recipe_heap[end_index:]
-            heapq.heapify(recipe_heap)
+            recipes_to_be_expanded = recipe_heap.popvals(beam_size)
 
             reaction_jobs = (
-                assemble_reaction_job(recipe, network, reaction_keyset)
-                for recipe in recipes_to_be_expanded
+                assemble_reaction_job(
+                    reciperank.recipe, network, reaction_keyset
+                )
+                for reciperank in recipes_to_be_expanded
             )
 
             for reaction_job in reaction_jobs:
                 # evaluate reaction
                 ...
-
-
-def _add_recipe_to_heap(
-    recipe_heap: list[RecipePriorityItem],
-    item: RecipePriorityItem,
-    heap_size: Optional[int] = None,
-) -> None:
-    if heap_size is None or len(recipe_heap) < heap_size:
-        heapq.heappush(recipe_heap, item)
-    elif item.rank is None:
-        return
-    elif recipe_heap[0].rank is None or recipe_heap[0].rank < item.rank:
-        heapq.heappushpop(recipe_heap, item)
