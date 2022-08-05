@@ -91,20 +91,3 @@ class MetaUpdateMultiple(MetaUpdate):
             if new_reaction is not None:
                 cur_reaction = new_reaction
         return cur_reaction
-
-
-@final
-class MetaUpdateDefault(MetaUpdate):
-    __slots__ = ()
-
-    def __call__(
-        self, reaction: ReactionExplicit, network: ChemNetwork
-    ) -> None:
-        op_meta = reaction.operator_meta
-        if op_meta is not None:
-            op_index = network.ops.i(reaction.operator.uid)
-            for key, value in op_meta:
-                network.op_meta(op_index, key, value)
-        react_meta = reaction.reactants_meta
-        if react_meta is not None:
-            ...

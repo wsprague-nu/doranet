@@ -44,18 +44,12 @@ class ReactionExplicit:
         "operator",
         "reactants",
         "products",
-        "operator_meta",
-        "reactants_meta",
-        "products_meta",
         "reaction_meta",
     )
-    operator: OpDatBase
-    reactants: tuple[MolDatBase, ...]
-    products: tuple[MolDatBase, ...]
-    operator_meta: Optional[Mapping]
-    reactants_meta: Optional[tuple[Optional[Mapping]]]
-    products_meta: Optional[tuple[Optional[Mapping]]]
-    reaction_meta: Optional[tuple[Optional[Mapping]]]
+    operator: DataPacket[OpDatBase]
+    reactants: tuple[DataPacket[MolDatBase], ...]
+    products: tuple[DataPacket[MolDatBase], ...]
+    reaction_meta: Optional[tuple[Optional[Mapping], ...]]
 
 
 @dataclass(frozen=True, order=True)

@@ -44,7 +44,6 @@ from pickaxe_generic.datatypes import (
     RxnDatBase,
 )
 from pickaxe_generic.filters import (
-    DefaultMetaDataUpdate,
     MetaDataCalculatorLocal,
     MetaDataUpdate,
     MetaKeyPacket,
@@ -60,6 +59,7 @@ from pickaxe_generic.filters import (
 )
 from pickaxe_generic.network import (
     ChemNetwork,
+    ReactionExplicit,
     Recipe,
     RecipeExplicit,
     _MolIndex,
@@ -1066,6 +1066,10 @@ class RecipeHeap:
             )
 
         return RecipeHeap(self._maxsize, (self, other))
+
+
+def evaluate_reaction(rxn_job: ReactionJob) -> tuple[ReactionExplicit, ...]:
+    ...
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
