@@ -1068,7 +1068,7 @@ class RecipeHeap:
         return RecipeHeap(self._maxsize, (self, other))
 
 
-def evaluate_reaction(rxn_job: ReactionJob) -> tuple[ReactionExplicit, ...]:
+def execute_reaction(rxn_job: ReactionJob) -> tuple[ReactionExplicit, ...]:
     ...
 
 
