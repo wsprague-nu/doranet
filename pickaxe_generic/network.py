@@ -14,6 +14,8 @@ from typing import (
     overload,
 )
 
+from sqlalchemy import false
+
 from pickaxe_generic.containers import DataUnitGen
 from pickaxe_generic.datatypes import (
     DataPacket,
@@ -68,11 +70,28 @@ class MolSlot:
     molecule_meta: Optional[Mapping]
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class Recipe:
     __slots__ = ("operator", "reactants")
     operator: _OpIndex
     reactants: tuple[_MolIndex, ...]
+
+    def __lt__(self, other: 'Recipe') -> bool:
+        max_self = max(self.reactants)
+        max_other = max(other.reactants)
+        if max_self < max_other:
+            return True
+        elif max_other < max_self:
+            return False
+        if self.operator < other.operator:
+            return True
+        elif other.operator < self.operator:
+            return False
+        if len(self.reactants) < len(other.reactants):
+            return True
+        elif len(other.reactants) < len(self.reactants):
+            return False
+        return self.reactants < other.reactants
 
 
 @dataclass(frozen=True)
