@@ -9,9 +9,11 @@ Classes:
 """
 
 import heapq
+import operator
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
+from functools import reduce
 from itertools import chain, islice
 from itertools import product as iterproduct
 from itertools import repeat
@@ -1094,6 +1096,14 @@ def execute_reaction(
         )
         rxns_return.append((rxn, True))
     return tuple(rxns_return)
+
+
+def execute_reactions(
+    rxn_jobs: Collection[ReactionJob],
+) -> tuple[tuple[ReactionExplicit, bool], ...]:
+    return reduce(
+        operator.add, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)
+    )
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
