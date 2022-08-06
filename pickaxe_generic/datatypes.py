@@ -909,7 +909,7 @@ class MetaKeyPacket:
 
 @dataclass(frozen=True)
 class DataPacket(Generic[DataUnitGen]):
-    __slots__ = ("i", "mol", "meta")
+    __slots__ = ("i", "item", "meta")
     i: int
     item: Optional[DataUnitGen]
     meta: Optional[Mapping]
