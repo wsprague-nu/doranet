@@ -1190,6 +1190,12 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     "Updating necessary operator metadata is not yet supported"
                 )
 
+            if len(recipe_heap) == 0:
+                compat_indices_table = [
+                    [0 for _ in network.compat_table(i)]
+                    for i in range(len(network.ops))
+                ]
+
             # for each operator, create recipe batches
             for opIndex, _ in enumerate(network.ops):
                 # for each argument, accumulate a total of old_mols and new_mols
@@ -1211,10 +1217,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         heap_size,
                     )
                     # assign minimum recipe value to reduce overcounting
-                    if len(recipe_heap) == 0:
+                    if len(recipe_heap) == 0 or recipe_heap.min is None:
                         min_recipe_val = None
                     else:
-                        min_recipe_val = recipe_heap[0].rank
+                        min_recipe_val = recipe_heap.min.rank
                     for item in execute_recipe_ranking(
                         recipejob, min_recipe_val
                     ):
