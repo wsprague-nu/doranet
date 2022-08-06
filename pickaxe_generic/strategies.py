@@ -886,8 +886,6 @@ def assemble_reaction_job(
 
     op = DataPacket(op_index, op_data, op_meta)
 
-    mol_data = (network.mols[i] for i in recipe.reactants)
-
     mol_meta: Iterable[Optional[Mapping]]
     if keyset.molecule_keys:
         mol_meta = network.mol_metas(recipe.reactants, keyset.molecule_keys)
@@ -895,8 +893,8 @@ def assemble_reaction_job(
         mol_meta = (None for _ in recipe.reactants)
 
     reactants = tuple(
-        DataPacket(i, mol, meta)
-        for i, mol, meta in zip(recipe.reactants, mol_data, mol_meta)
+        DataPacket(i, network.mols[i], meta)
+        for i, meta in zip(recipe.reactants, mol_meta)
     )
 
     return ReactionJob(op, reactants)
@@ -929,7 +927,11 @@ def execute_recipe_ranking(
             return tuple()
         return tuple(
             RecipePriorityItem(
-                None, Recipe(_OpIndex(job.operator.i), reactants)
+                None,
+                Recipe(
+                    _OpIndex(job.operator.i),
+                    tuple(reactant.i for reactant in reactants),
+                ),
             )
             for reactants in iterproduct(*job.op_args)
         )
@@ -1169,7 +1171,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         recipe_heap: RecipeHeap = RecipeHeap(maxsize=heap_size)
         recipes_tested: set[Recipe] = set()
 
-        while (
+        while (max_recipes is None or len(recipes_tested) < max_recipes) and (
             any(
                 any(
                     i_tested < len(compat_mols)
@@ -1220,6 +1222,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                             continue
                         recipe_heap.add_recipe(item)
 
+                continue
+
             # update compat_indices_table
             compat_indices_table = [
                 [len(mol_list) for mol_list in network.compat_table(i)]
@@ -1237,34 +1241,40 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             )
 
             # execute reactions
-            for rxn in execute_reactions(reaction_jobs):
+            for rxn, pass_filter in execute_reactions(reaction_jobs):
                 # add product mols to network
                 products_indices = tuple(
-                    network.add_mol(mol.item, mol.meta, rxn[1])
-                    for mol in rxn[0].products
+                    network.add_mol(mol.item, mol.meta, pass_filter)
+                    for mol in rxn.products
                     if mol.item is not None
                 )
 
                 # build reaction
                 reactants_indices = tuple(
-                    _MolIndex(mol.i) for mol in rxn[0].reactants
+                    _MolIndex(mol.i) for mol in rxn.reactants
                 )
                 rxn_implicit = Reaction(
-                    _OpIndex(rxn[0].operator.i),
+                    _OpIndex(rxn.operator.i),
                     reactants_indices,
                     products_indices,
                 )
 
                 # add reaction to network
-                network.add_rxn(rxn_implicit, meta=rxn[0].reaction_meta)
+                network.add_rxn(rxn_implicit, meta=rxn.reaction_meta)
 
                 # update reactant metadata
-                for m_dat in zip(reactants_indices, rxn[0].reactants):
+                for m_dat in zip(reactants_indices, rxn.reactants):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.values():
                             network.mol_meta(m_dat[0], key, value)
 
                 # update operator metadata
-                if rxn[0].operator.meta is not None:
-                    for key, value in rxn[0].operator.meta:
+                if rxn.operator.meta is not None:
+                    for key, value in rxn.operator.meta:
                         network.op_meta(rxn_implicit.operator, key, value)
+
+            recipes_tested.update(
+                (reciperank.recipe for reciperank in recipes_to_be_expanded)
+            )
+
+            continue
