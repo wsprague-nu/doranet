@@ -61,6 +61,7 @@ from pickaxe_generic.filters import (
 )
 from pickaxe_generic.network import (
     ChemNetwork,
+    Reaction,
     ReactionExplicit,
     Recipe,
     RecipeExplicit,
@@ -1228,13 +1229,41 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             # perform beam expansion
             recipes_to_be_expanded = recipe_heap.popvals(beam_size)
 
-            reaction_jobs = (
+            reaction_jobs = tuple(
                 assemble_reaction_job(
                     reciperank.recipe, network, reaction_keyset
                 )
                 for reciperank in recipes_to_be_expanded
             )
 
-            for reaction_job in reaction_jobs:
-                # evaluate reaction
-                ...
+            for rxn in execute_reactions(reaction_jobs):
+                # add product mols to network
+                products_indices = tuple(
+                    network.add_mol(mol.item, mol.meta, rxn[1])
+                    for mol in rxn[0].products
+                    if mol.item is not None
+                )
+
+                # build reaction
+                reactants_indices = tuple(
+                    _MolIndex(mol.i) for mol in rxn[0].reactants
+                )
+                rxn_implicit = Reaction(
+                    _OpIndex(rxn[0].operator.i),
+                    reactants_indices,
+                    products_indices,
+                )
+
+                # add reaction to network
+                network.add_rxn(rxn_implicit, meta=rxn[0].reaction_meta)
+
+                # update reactant metadata
+                for m_dat in zip(reactants_indices, rxn[0].reactants):
+                    if m_dat[1].meta is not None:
+                        for key, value in m_dat[1].meta.values():
+                            network.mol_meta(m_dat[0], key, value)
+
+                # update operator metadata
+                if rxn[0].operator.meta is not None:
+                    for key, value in rxn[0].operator.meta:
+                        network.op_meta(rxn_implicit.operator, key, value)

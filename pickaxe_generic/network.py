@@ -519,11 +519,14 @@ class ChemNetworkBasic(ChemNetwork):
         # if already in database, return existing index
         mol_uid = mol.uid
         if mol_uid in self._mol_map:
+            mol_index = self._mol_map[mol_uid]
+            if meta is not None:
+                self._mol_meta[mol_index].update(meta)
+
             if not reactive:
-                return self._mol_map[mol_uid]
+                return mol_index
 
             # if newly reactive, fill in compat table
-            mol_index = self._mol_map[mol_uid]
             if not self._reactive_list[mol_index]:
                 self._reactive_list[mol_index] = True
                 if custom_compat is None:
@@ -571,7 +574,10 @@ class ChemNetworkBasic(ChemNetwork):
         # if already in database, return existing index
         op_uid = op.uid
         if op_uid in self._op_map:
-            return self._op_map[op_uid]
+            op_index = self._op_map[op_uid]
+            if meta is not None:
+                self._op_meta[op_index].update(meta)
+            return op_index
 
         # add op to main op list
         op_index = _OpIndex(len(self._op_list))
@@ -621,10 +627,16 @@ class ChemNetworkBasic(ChemNetwork):
 
         # if already in database, return existing index
         if rxn in self._rxn_map:
-            return self._rxn_map[rxn]
+            rxn_index = self._rxn_map[rxn]
+            if meta is not None:
+                self._rxn_meta[rxn_index].update(meta)
+            return rxn_index
 
         # sanity check that all reactants and products exist in the network
-        if max(max(rxn.reactants), max(rxn.products)) >= len(self._mol_list):
+        if (
+            max(max(rxn.reactants), max(rxn.products)) >= len(self._mol_list)
+            or min(min(rxn.reactants), min(rxn.products)) < 0
+        ):
             raise IndexError(
                 f"One of the molecule components for reaction {rxn} is not in the network."
             )
