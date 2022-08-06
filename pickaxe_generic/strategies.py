@@ -1072,7 +1072,7 @@ class RecipeHeap:
 
 def execute_reaction(
     rxn_job: ReactionJob,
-) -> tuple[tuple[ReactionExplicit, bool], ...]:
+) -> Generator[tuple[ReactionExplicit, bool], None, None]:
     reactants = tuple(mol.item for mol in rxn_job.op_args)
     if rxn_job.operator.item is None or any(mol is None for mol in reactants):
         raise ValueError("ReactionJob has non-None item components!")
@@ -1083,7 +1083,6 @@ def execute_reaction(
     operator_datapacket = DataPacket(
         rxn_job.operator.i, rxn_job.operator.item, None
     )
-    rxns_return = []
     for rxn_products in product_packets:
         product_datapackets = tuple(
             DataPacket(-1, product, None) for product in rxn_products
@@ -1094,16 +1093,13 @@ def execute_reaction(
             product_datapackets,
             None,
         )
-        rxns_return.append((rxn, True))
-    return tuple(rxns_return)
+        yield rxn, True
 
 
 def execute_reactions(
     rxn_jobs: Collection[ReactionJob],
-) -> tuple[tuple[ReactionExplicit, bool], ...]:
-    return reduce(
-        operator.add, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)
-    )
+) -> Iterable[tuple[ReactionExplicit, bool]]:
+    return reduce(chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs))
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
