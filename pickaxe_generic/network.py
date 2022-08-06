@@ -80,18 +80,18 @@ class Recipe:
         max_self = max(self.reactants)
         max_other = max(other.reactants)
         if max_self < max_other:
-            return True
+            return False
         elif max_other < max_self:
-            return False
+            return True
         if self.operator < other.operator:
-            return True
+            return False
         elif other.operator < self.operator:
-            return False
-        if len(self.reactants) < len(other.reactants):
             return True
-        elif len(other.reactants) < len(self.reactants):
+        if len(self.reactants) < len(other.reactants):
             return False
-        return self.reactants < other.reactants
+        elif len(other.reactants) < len(self.reactants):
+            return True
+        return other.reactants < self.reactants
 
 
 @dataclass(frozen=True)

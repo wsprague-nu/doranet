@@ -907,6 +907,8 @@ class RecipePriorityItem:
 
     def __lt__(self, other: "RecipePriorityItem") -> bool:
         if other.rank is None:
+            if self.rank is None:
+                return self.recipe < other.recipe
             return False
         if self.rank is None:
             return True
@@ -1183,18 +1185,13 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             )
             or len(updated_mols_set) != 0
             or len(updated_ops_set) != 0
+            or len(recipe_heap) > 0
         ):
             # raise error if operator metadata has been updated
             if len(updated_ops_set) != 0:
                 raise NotImplementedError(
                     "Updating necessary operator metadata is not yet supported"
                 )
-
-            if len(recipe_heap) == 0:
-                compat_indices_table = [
-                    [0 for _ in network.compat_table(i)]
-                    for i in range(len(network.ops))
-                ]
 
             # for each operator, create recipe batches
             for opIndex, _ in enumerate(network.ops):
@@ -1282,5 +1279,12 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)
             )
+
+
+            if len(recipe_heap) == 0:
+                compat_indices_table = [
+                    [0 for _ in network.compat_table(i)]
+                    for i in range(len(network.ops))
+                ]
 
             continue
