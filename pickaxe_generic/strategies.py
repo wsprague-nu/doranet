@@ -1236,6 +1236,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for reciperank in recipes_to_be_expanded
             )
 
+            # execute reactions
             for rxn in execute_reactions(reaction_jobs):
                 # add product mols to network
                 products_indices = tuple(
