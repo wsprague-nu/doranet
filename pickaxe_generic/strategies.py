@@ -1189,7 +1189,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 )
 
             # for each operator, create recipe batches
-            for opIndex, op in enumerate(network.ops):
+            for opIndex, _ in enumerate(network.ops):
                 # for each argument, accumulate a total of old_mols and new_mols
                 compat_table = network.compat_table(opIndex)
                 compat_indices = compat_indices_table[opIndex]
