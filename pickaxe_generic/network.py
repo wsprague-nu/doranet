@@ -49,7 +49,7 @@ class ReactionExplicit:
     operator: DataPacket[OpDatBase]
     reactants: tuple[DataPacket[MolDatBase], ...]
     products: tuple[DataPacket[MolDatBase], ...]
-    reaction_meta: Optional[tuple[Optional[Mapping], ...]]
+    reaction_meta: Optional[Mapping]
 
 
 @dataclass(frozen=True, order=True)
