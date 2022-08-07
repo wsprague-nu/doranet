@@ -83,13 +83,13 @@ class Recipe:
             return False
         elif max_other < max_self:
             return True
+        if len(self.reactants) < len(other.reactants):
+            return True
+        elif len(other.reactants) < len(self.reactants):
+            return False
         if self.operator < other.operator:
             return False
         elif other.operator < self.operator:
-            return True
-        if len(self.reactants) < len(other.reactants):
-            return False
-        elif len(other.reactants) < len(self.reactants):
             return True
         return other.reactants < self.reactants
 
