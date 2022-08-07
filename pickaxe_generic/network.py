@@ -76,7 +76,7 @@ class Recipe:
     operator: _OpIndex
     reactants: tuple[_MolIndex, ...]
 
-    def __lt__(self, other: 'Recipe') -> bool:
+    def __lt__(self, other: "Recipe") -> bool:
         max_self = max(self.reactants)
         max_other = max(other.reactants)
         if max_self < max_other:
