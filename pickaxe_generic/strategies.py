@@ -1039,7 +1039,7 @@ class RecipeHeap:
     @property
     def min(self) -> Optional[RecipePriorityItem]:
         if self._heap is None:
-            if self._ordered is None:
+            if self._ordered is None or len(self._ordered) == 0:
                 return None
             return min(self._ordered)
         return self._heap[0]
@@ -1287,7 +1287,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             for rxn, pass_filter in execute_reactions(reaction_jobs):
                 # add product mols to network
                 products_indices = tuple(
-                    network.add_mol(mol.item, mol.meta, pass_filter)
+                    network.add_mol(mol.item, None, pass_filter)
                     for mol in rxn.products
                     if mol.item is not None
                 )
@@ -1305,16 +1305,32 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 # add reaction to network
                 network.add_rxn(rxn_implicit, meta=rxn.reaction_meta)
 
+                updated_mols_set = set()
+                updated_ops_set = set()
+
                 # update reactant metadata
                 for m_dat in zip(reactants_indices, rxn.reactants):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.values():
+                            if network.mol_meta(m_dat[0],key) != value:
+                                updated_mols_set.add(m_dat[0])
+                            network.mol_meta(m_dat[0], key, value)
+
+                # update product metadata
+                for m_dat in zip(products_indices, rxn.products):
+                    if m_dat[1].meta is not None:
+                        for key, value in m_dat[1].meta.values():
+                            if network.mol_meta(m_dat[0],key) != value:
+                                updated_mols_set.add(m_dat[0])
                             network.mol_meta(m_dat[0], key, value)
 
                 # update operator metadata
                 if rxn.operator.meta is not None:
                     for key, value in rxn.operator.meta:
+                        if network.op_meta(rxn_implicit.operator,key) != value:
+                            updated_ops_set.add(m_dat[1])
                         network.op_meta(rxn_implicit.operator, key, value)
+                        
 
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)
