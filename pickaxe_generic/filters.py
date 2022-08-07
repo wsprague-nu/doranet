@@ -354,7 +354,7 @@ class CoreactantFilter(RecipeFilter):
         self._coreactants = set(coreactants)
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
-        if any(mol.i in self._coreactants for mol in recipe.reactants):
+        if all(mol.i in self._coreactants for mol in recipe.reactants):
             return False
         return True
 
