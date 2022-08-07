@@ -646,7 +646,7 @@ class PriorityQueueStrategy(ABC):
         beam_size: Optional[int] = 1,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
-        # recipe_filter: Optional[RecipeFilter] = None,
+        recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
         # mc_local: Optional[MetaDataCalculatorLocal] = None,
         # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
@@ -659,12 +659,14 @@ class RecipeRankingJob:
     __slots__ = (
         "operator",
         "op_args",
+        "recipe_filter",
         "recipe_ranker",
         "heap_size",
     )
 
     operator: DataPacket[OpDatBase]
     op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
+    recipe_filter: Optional[RecipeFilter]
     recipe_ranker: Optional[RecipeRanker]
     heap_size: Optional[int]
 
@@ -824,6 +826,7 @@ def assemble_recipe_batch_job(
     keyset: MetaKeyPacket,
     recipe_ranker: Optional[RecipeRanker] = None,
     heap_size: Optional[int] = None,
+    recipe_filter: Optional[RecipeFilter] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
         Generator[Generator[None, None, None], None, None],
@@ -859,7 +862,9 @@ def assemble_recipe_batch_job(
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
-    return RecipeRankingJob(op, mol_batch, recipe_ranker, heap_size)
+    return RecipeRankingJob(
+        op, mol_batch, recipe_filter, recipe_ranker, heap_size
+    )
 
 
 @dataclass(frozen=True)
@@ -925,23 +930,6 @@ def execute_recipe_ranking(
     min_rank: Optional[RankValue],
     recipes_tested: Collection[Recipe],
 ) -> "RecipeHeap":
-    if job.recipe_ranker is None:
-        if min_rank is not None:
-            return RecipeHeap(job.heap_size)
-        return RecipeHeap.from_iter(
-            RecipePriorityItem(
-                None,
-                recipe,
-            )
-            for recipe in (
-                Recipe(
-                    _OpIndex(job.operator.i),
-                    tuple(reactant.i for reactant in reactants),
-                )
-                for reactants in iterproduct(*job.op_args)
-            )
-            if recipe not in recipes_tested
-        )
     recipe_generator = (
         (RecipeExplicit(job.operator, reactants_data), recipe)
         for reactants_data, recipe in (
@@ -956,11 +944,45 @@ def execute_recipe_ranking(
         )
         if recipe not in recipes_tested
     )
-    rank_generator = (
-        (job.recipe_ranker(recipe_explicit, min_rank), recipe)
-        for recipe_explicit, recipe in recipe_generator
-        if True
-    )
+
+    if job.recipe_ranker is None:
+        if min_rank is not None:
+            return RecipeHeap(job.heap_size)
+        elif job.recipe_filter is None:
+            return RecipeHeap.from_iter(
+                RecipePriorityItem(
+                    None,
+                    recipe,
+                )
+                for recipe in (
+                    Recipe(
+                        _OpIndex(job.operator.i),
+                        tuple(reactant.i for reactant in reactants),
+                    )
+                    for reactants in iterproduct(*job.op_args)
+                )
+                if recipe not in recipes_tested
+            )
+        return RecipeHeap.from_iter(
+            RecipePriorityItem(None, recipe)
+            for recipe_explicit, recipe in recipe_generator
+            if job.recipe_filter(recipe_explicit)
+        )
+
+    # ideally, pass the min_rank to recipe_ranker, but only if the heap is full;
+    # strategy utilizing heap and parallel reduction is likely best
+    # but difficult to implement
+    if job.recipe_filter is None:
+        rank_generator = (
+            (job.recipe_ranker(recipe_explicit), recipe)
+            for recipe_explicit, recipe in recipe_generator
+        )
+    else:
+        rank_generator = (
+            (job.recipe_ranker(recipe_explicit), recipe)
+            for recipe_explicit, recipe in recipe_generator
+            if job.recipe_filter(recipe_explicit)
+        )
     priority_item_generator = (
         RecipePriorityItem(rank, recipe)
         for rank, recipe in rank_generator
@@ -1148,7 +1170,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         beam_size: Optional[int] = 1,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
-        # recipe_filter: Optional[RecipeFilter] = None,
+        recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
         # mc_local: Optional[MetaDataCalculatorLocal] = None,
         # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
@@ -1164,6 +1186,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         mol_filter_local_keyset: MetaKeyPacket = MetaKeyPacket()
         recipe_keyset: MetaKeyPacket = MetaKeyPacket()
         reaction_keyset: MetaKeyPacket = MetaKeyPacket()
+        if recipe_filter is not None:
+            recipe_keyset = recipe_keyset + recipe_filter.meta_required
         if recipe_ranker is not None:
             recipe_keyset = recipe_keyset + recipe_ranker.meta_required
         # if mol_filter_local is not None:
@@ -1231,6 +1255,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         recipe_keyset,
                         recipe_ranker,
                         heap_size,
+                        recipe_filter,
                     )
                     cur_min = None
                     if recipe_heap.min is not None:
