@@ -345,6 +345,20 @@ class RecipeFilterXor(RecipeFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
+@dataclass
+class CoreactantFilter(RecipeFilter):
+    __slots__ = "_coreactants"
+    _coreactants: set[_MolIndex]
+
+    def __init__(self, coreactants: Iterable[_MolIndex]) -> None:
+        self._coreactants = set(coreactants)
+
+    def __call__(self, recipe: RecipeExplicit) -> bool:
+        if any(mol.i in self._coreactants for mol in recipe.reactants):
+            return False
+        return True
+
+
 class RankValue(Protocol):
     @abstractmethod
     def __lt__(self, other: "RankValue") -> bool:
