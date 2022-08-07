@@ -924,11 +924,11 @@ def execute_recipe_ranking(
     job: RecipeRankingJob,
     min_rank: Optional[RankValue],
     recipes_tested: Collection[Recipe],
-) -> tuple[RecipePriorityItem, ...]:
+) -> "RecipeHeap":
     if job.recipe_ranker is None:
         if min_rank is not None:
-            return tuple()
-        return tuple(
+            return RecipeHeap(job.heap_size)
+        return RecipeHeap.from_iter(
             RecipePriorityItem(
                 None,
                 recipe,
@@ -942,26 +942,31 @@ def execute_recipe_ranking(
             )
             if recipe not in recipes_tested
         )
-
-    recipe_heap: list[RecipePriorityItem] = []
-    for recipe_explicit in (
-        RecipeExplicit(
-            job.operator,
-            reactants_data,
+    recipe_generator = (
+        (RecipeExplicit(job.operator, reactants_data), recipe)
+        for reactants_data, recipe in (
+            (
+                reactants_data,
+                Recipe(
+                    _OpIndex(job.operator.i),
+                    tuple(reactant.i for reactant in reactants_data),
+                ),
+            )
+            for reactants_data in iterproduct(*job.op_args)
         )
-        for reactants_data in iterproduct(*job.op_args)
-    ):
-        rank = job.recipe_ranker(recipe_explicit, min_rank)
-        if rank is not None:
-            if min_rank is None:
-                continue
-            elif rank < min_rank:
-                continue
-        recipe_item = RecipePriorityItem(
-            rank, recipe_from_explicit(recipe_explicit)
-        )
-        recipe_heap.append(recipe_item)
-    return tuple(recipe_heap)
+        if recipe not in recipes_tested
+    )
+    rank_generator = (
+        (job.recipe_ranker(recipe_explicit, min_rank), recipe)
+        for recipe_explicit, recipe in recipe_generator
+        if True
+    )
+    priority_item_generator = (
+        RecipePriorityItem(rank, recipe)
+        for rank, recipe in rank_generator
+        if (min_rank is None) or (rank is not None and not rank < min_rank)
+    )
+    return RecipeHeap.from_iter(priority_item_generator, maxsize=job.heap_size)
 
 
 class RecipeHeap:
@@ -1000,6 +1005,15 @@ class RecipeHeap:
             )
         self._maxsize = maxsize
 
+    @classmethod
+    def from_iter(
+        cls, data: Iterable[RecipePriorityItem], maxsize: Optional[int] = None
+    ) -> "RecipeHeap":
+        heap = RecipeHeap(maxsize)
+        for item in data:
+            heap.add_recipe(item)
+        return heap
+
     @property
     def min(self) -> Optional[RecipePriorityItem]:
         if self._heap is None:
@@ -1012,7 +1026,7 @@ class RecipeHeap:
         if self._ordered is None:
             if self._heap is None:
                 return tuple()
-            self._ordered = list(sorted(self._heap))
+            self._ordered = sorted(self._heap)
         self._heap = None
         if n is None:
             vals = tuple(reversed(self._ordered))
@@ -1216,17 +1230,15 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         network,
                         recipe_keyset,
                         recipe_ranker,
-                        heap_size
+                        heap_size,
                     )
-                    # assign minimum recipe value to reduce overcounting
-                    if len(recipe_heap) == 0 or recipe_heap.min is None:
-                        min_recipe_val = None
-                    else:
-                        min_recipe_val = recipe_heap.min.rank
-                    for item in execute_recipe_ranking(
-                        recipejob, min_recipe_val, recipes_tested
-                    ):
-                        recipe_heap.add_recipe(item)
+                    cur_min = None
+                    if recipe_heap.min is not None:
+                        cur_min = recipe_heap.min.rank
+                    new_recipe_heap = execute_recipe_ranking(
+                        recipejob, cur_min, recipes_tested
+                    )
+                    recipe_heap = recipe_heap + new_recipe_heap
 
                 continue
 
