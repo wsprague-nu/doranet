@@ -923,6 +923,7 @@ class RecipePriorityItem:
 def execute_recipe_ranking(
     job: RecipeRankingJob,
     min_rank: Optional[RankValue],
+    recipes_tested: Collection[Recipe],
 ) -> tuple[RecipePriorityItem, ...]:
     if job.recipe_ranker is None:
         if min_rank is not None:
@@ -930,12 +931,16 @@ def execute_recipe_ranking(
         return tuple(
             RecipePriorityItem(
                 None,
+                recipe,
+            )
+            for recipe in (
                 Recipe(
                     _OpIndex(job.operator.i),
                     tuple(reactant.i for reactant in reactants),
-                ),
+                )
+                for reactants in iterproduct(*job.op_args)
             )
-            for reactants in iterproduct(*job.op_args)
+            if recipe not in recipes_tested
         )
 
     recipe_heap: list[RecipePriorityItem] = []
@@ -1211,7 +1216,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         network,
                         recipe_keyset,
                         recipe_ranker,
-                        heap_size,
+                        heap_size
                     )
                     # assign minimum recipe value to reduce overcounting
                     if len(recipe_heap) == 0 or recipe_heap.min is None:
@@ -1219,10 +1224,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     else:
                         min_recipe_val = recipe_heap.min.rank
                     for item in execute_recipe_ranking(
-                        recipejob, min_recipe_val
+                        recipejob, min_recipe_val, recipes_tested
                     ):
-                        if item.recipe in recipes_tested:
-                            continue
                         recipe_heap.add_recipe(item)
 
                 continue
@@ -1279,7 +1282,6 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)
             )
-
 
             if len(recipe_heap) == 0:
                 compat_indices_table = [
