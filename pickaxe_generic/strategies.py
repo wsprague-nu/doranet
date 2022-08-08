@@ -920,7 +920,7 @@ class RecipePriorityItem:
         return self.rank < other.rank
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, RecipePriorityItem) and self.rank == other.rank:
+        if isinstance(other, RecipePriorityItem) and self.rank == other.rank and self.recipe == other.recipe:
             return True
         return False
 
@@ -1006,7 +1006,7 @@ class RecipeHeap:
         if heaps is None:
             self._heap = None
             self._ordered = None
-        elif maxsize is not None:
+        elif maxsize is None:
             self._heap = None
             self._ordered = list(heapq.merge(*heaps))
         else:

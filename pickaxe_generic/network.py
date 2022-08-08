@@ -76,17 +76,23 @@ class Recipe:
     operator: _OpIndex
     reactants: tuple[_MolIndex, ...]
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other,Recipe) and self.operator == other.operator and self.reactants == other.reactants:
+            return True
+        return False
+
     def __lt__(self, other: "Recipe") -> bool:
-        max_self = max(self.reactants)
-        max_other = max(other.reactants)
-        if max_self < max_other:
-            return False
-        elif max_other < max_self:
-            return True
+        self_order = sorted(self.reactants,reverse=True)
+        other_order = sorted(other.reactants,reverse=True)
+        for val_self, val_other in zip(self_order, other_order):
+            if val_self < val_other:
+                return False
+            elif val_other < val_self:
+                return True
         if len(self.reactants) < len(other.reactants):
-            return True
-        elif len(other.reactants) < len(self.reactants):
             return False
+        elif len(other.reactants) < len(self.reactants):
+            return True
         if self.operator < other.operator:
             return False
         elif other.operator < self.operator:
