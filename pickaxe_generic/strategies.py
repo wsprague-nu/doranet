@@ -931,7 +931,7 @@ class RecipePriorityItem:
 
 def execute_recipe_ranking(
     job: RecipeRankingJob,
-    min_rank: Optional[RankValue],
+    min_val: Optional[RecipePriorityItem],
     recipes_tested: Collection[Recipe],
 ) -> "RecipeHeap":
     recipe_generator = (
@@ -950,31 +950,37 @@ def execute_recipe_ranking(
     )
 
     if job.recipe_ranker is None:
-        if min_rank is not None:
-            return RecipeHeap(job.heap_size)
-        elif job.recipe_filter is None:
+        if job.recipe_filter is None:
             return RecipeHeap.from_iter(
                 (
-                    RecipePriorityItem(
-                        None,
-                        recipe,
-                    )
-                    for recipe in (
-                        Recipe(
-                            _OpIndex(job.operator.i),
-                            tuple(reactant.i for reactant in reactants),
+                    recipe_item
+                    for recipe_item in (
+                        RecipePriorityItem(
+                            None,
+                            recipe,
                         )
-                        for reactants in iterproduct(*job.op_args)
+                        for recipe in (
+                            Recipe(
+                                _OpIndex(job.operator.i),
+                                tuple(reactant.i for reactant in reactants),
+                            )
+                            for reactants in iterproduct(*job.op_args)
+                        )
+                        if recipe not in recipes_tested
                     )
-                    if recipe not in recipes_tested
+                    if min_val is None or not (recipe_item < min_val)
                 ),
                 maxsize=job.heap_size,
             )
         return RecipeHeap.from_iter(
             (
-                RecipePriorityItem(None, recipe)
-                for recipe_explicit, recipe in recipe_generator
-                if job.recipe_filter(recipe_explicit)
+                recipe_item
+                for recipe_item in (
+                    RecipePriorityItem(None, recipe)
+                    for recipe_explicit, recipe in recipe_generator
+                    if job.recipe_filter(recipe_explicit)
+                )
+                if min_val is None or not (recipe_item < min_val)
             ),
             job.heap_size,
         )
@@ -984,19 +990,19 @@ def execute_recipe_ranking(
     # but difficult to implement
     if job.recipe_filter is None:
         rank_generator = (
-            (job.recipe_ranker(recipe_explicit), recipe)
+            RecipePriorityItem(job.recipe_ranker(recipe_explicit), recipe)
             for recipe_explicit, recipe in recipe_generator
         )
     else:
         rank_generator = (
-            (job.recipe_ranker(recipe_explicit), recipe)
+            RecipePriorityItem(job.recipe_ranker(recipe_explicit), recipe)
             for recipe_explicit, recipe in recipe_generator
             if job.recipe_filter(recipe_explicit)
         )
     priority_item_generator = (
-        RecipePriorityItem(rank, recipe)
-        for rank, recipe in rank_generator
-        if (min_rank is None) or (rank is not None and not rank < min_rank)
+        recipe_item
+        for recipe_item in rank_generator
+        if (min_val is None) or not (recipe_item < min_val)
     )
     return RecipeHeap.from_iter(priority_item_generator, maxsize=job.heap_size)
 
@@ -1267,9 +1273,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                         heap_size,
                         recipe_filter,
                     )
-                    cur_min = None
-                    if recipe_heap.min is not None:
-                        cur_min = recipe_heap.min.rank
+                    cur_min = recipe_heap.min
                     new_recipe_heap = execute_recipe_ranking(
                         recipejob, cur_min, recipes_tested
                     )
@@ -1285,6 +1289,9 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
             # perform beam expansion
             recipes_to_be_expanded = recipe_heap.popvals(beam_size)
+
+            if len(recipes_to_be_expanded) == 0:
+                break
 
             reaction_jobs = tuple(
                 assemble_reaction_job(
