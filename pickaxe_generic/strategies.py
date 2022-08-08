@@ -949,7 +949,7 @@ def execute_recipe_ranking(
         if min_rank is not None:
             return RecipeHeap(job.heap_size)
         elif job.recipe_filter is None:
-            return RecipeHeap.from_iter(
+            return RecipeHeap.from_iter((
                 RecipePriorityItem(
                     None,
                     recipe,
@@ -961,12 +961,12 @@ def execute_recipe_ranking(
                     )
                     for reactants in iterproduct(*job.op_args)
                 )
-                if recipe not in recipes_tested
+                if recipe not in recipes_tested),maxsize=job.heap_size
             )
         return RecipeHeap.from_iter(
-            RecipePriorityItem(None, recipe)
+            (RecipePriorityItem(None, recipe)
             for recipe_explicit, recipe in recipe_generator
-            if job.recipe_filter(recipe_explicit)
+            if job.recipe_filter(recipe_explicit)),job.heap_size
         )
 
     # ideally, pass the min_rank to recipe_ranker, but only if the heap is full;
