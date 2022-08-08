@@ -920,7 +920,11 @@ class RecipePriorityItem:
         return self.rank < other.rank
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, RecipePriorityItem) and self.rank == other.rank and self.recipe == other.recipe:
+        if (
+            isinstance(other, RecipePriorityItem)
+            and self.rank == other.rank
+            and self.recipe == other.recipe
+        ):
             return True
         return False
 
@@ -949,24 +953,30 @@ def execute_recipe_ranking(
         if min_rank is not None:
             return RecipeHeap(job.heap_size)
         elif job.recipe_filter is None:
-            return RecipeHeap.from_iter((
-                RecipePriorityItem(
-                    None,
-                    recipe,
-                )
-                for recipe in (
-                    Recipe(
-                        _OpIndex(job.operator.i),
-                        tuple(reactant.i for reactant in reactants),
+            return RecipeHeap.from_iter(
+                (
+                    RecipePriorityItem(
+                        None,
+                        recipe,
                     )
-                    for reactants in iterproduct(*job.op_args)
-                )
-                if recipe not in recipes_tested),maxsize=job.heap_size
+                    for recipe in (
+                        Recipe(
+                            _OpIndex(job.operator.i),
+                            tuple(reactant.i for reactant in reactants),
+                        )
+                        for reactants in iterproduct(*job.op_args)
+                    )
+                    if recipe not in recipes_tested
+                ),
+                maxsize=job.heap_size,
             )
         return RecipeHeap.from_iter(
-            (RecipePriorityItem(None, recipe)
-            for recipe_explicit, recipe in recipe_generator
-            if job.recipe_filter(recipe_explicit)),job.heap_size
+            (
+                RecipePriorityItem(None, recipe)
+                for recipe_explicit, recipe in recipe_generator
+                if job.recipe_filter(recipe_explicit)
+            ),
+            job.heap_size,
         )
 
     # ideally, pass the min_rank to recipe_ranker, but only if the heap is full;
@@ -1312,7 +1322,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for m_dat in zip(reactants_indices, rxn.reactants):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.values():
-                            if network.mol_meta(m_dat[0],key) != value:
+                            if network.mol_meta(m_dat[0], key) != value:
                                 updated_mols_set.add(m_dat[0])
                             network.mol_meta(m_dat[0], key, value)
 
@@ -1320,17 +1330,16 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for m_dat in zip(products_indices, rxn.products):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.values():
-                            if network.mol_meta(m_dat[0],key) != value:
+                            if network.mol_meta(m_dat[0], key) != value:
                                 updated_mols_set.add(m_dat[0])
                             network.mol_meta(m_dat[0], key, value)
 
                 # update operator metadata
                 if rxn.operator.meta is not None:
                     for key, value in rxn.operator.meta:
-                        if network.op_meta(rxn_implicit.operator,key) != value:
-                            updated_ops_set.add(m_dat[1])
+                        if network.op_meta(rxn_implicit.operator, key) != value:
+                            updated_ops_set.add(rxn_implicit.operator)
                         network.op_meta(rxn_implicit.operator, key, value)
-                        
 
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)

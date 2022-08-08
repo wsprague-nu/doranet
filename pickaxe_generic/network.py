@@ -77,13 +77,17 @@ class Recipe:
     reactants: tuple[_MolIndex, ...]
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other,Recipe) and self.operator == other.operator and self.reactants == other.reactants:
+        if (
+            isinstance(other, Recipe)
+            and self.operator == other.operator
+            and self.reactants == other.reactants
+        ):
             return True
         return False
 
     def __lt__(self, other: "Recipe") -> bool:
-        self_order = sorted(self.reactants,reverse=True)
-        other_order = sorted(other.reactants,reverse=True)
+        self_order = sorted(self.reactants, reverse=True)
+        other_order = sorted(other.reactants, reverse=True)
         for val_self, val_other in zip(self_order, other_order):
             if val_self < val_other:
                 return False
