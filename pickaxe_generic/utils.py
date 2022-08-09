@@ -11,15 +11,22 @@ Classes:
 from abc import ABC, abstractmethod
 from itertools import chain
 from itertools import product as iterproduct
+from re import X
+from types import NoneType
 from typing import (
+    Callable,
     Collection,
     Dict,
     Generator,
+    Generic,
     Iterable,
+    Iterator,
     List,
     Optional,
     Sequence,
     Set,
+    TypeVar,
+    overload,
 )
 
 from pickaxe_generic.containers import ObjectLibrary
@@ -230,3 +237,53 @@ class RxnTrackerDepthFirst(RxnTracker):
                 depth=max_depth,
             )
         )
+
+
+T = TypeVar("T")
+
+
+def logreduce(function: Callable[[T, T], T], iterable: Iterable[T]) -> T:
+    """
+    logreduce(function, iterable[, initial]) -> value
+
+    Apply a function of two arguments (satisfying the associative property)
+    cumulatively to the items of a sequence or iterable, from left to right, so
+    as to reduce the iterable to a single value.  For example, reduce(lambda x,
+    y: x+y, [1, 2, 3, 4, 5]) calculates (((1+2)+(3+4))+5).  If initial is
+    present, it is placed before the items of the iterable in the calculation,
+    and serves as a default when the iterable is empty.
+    """
+    i = iter(iterable)
+    try:
+        r_val, stop = _logreduce(function, i, 0)
+    except StopIteration:
+        raise TypeError("logreduce() of empty iterable with no initial value")
+    n = 0
+    try:
+        while not stop:
+            n += 1
+            new_val, stop = _logreduce(function, i, n - 1)
+            r_val = function(r_val, new_val)
+    except StopIteration:
+        ...
+    return r_val
+
+
+def _logreduce(
+    f: Callable[[T, T], T], i: Iterator[T], n: int
+) -> tuple[T, bool]:
+    if n == 0:
+        x = next(i)
+        try:
+            y = next(i)
+        except StopIteration:
+            return x, True
+        return f(x, y), False
+    x, stop = _logreduce(f, i, n - 1)
+    if stop:
+        return x, True
+    try:
+        y, stop = _logreduce(f, i, n - 1)
+    except StopIteration:
+        return x, True
+    return f(x, y), False
