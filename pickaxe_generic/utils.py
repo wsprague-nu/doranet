@@ -252,6 +252,9 @@ def logreduce(function: Callable[[T, T], T], iterable: Iterable[T]) -> T:
     y: x+y, [1, 2, 3, 4, 5]) calculates (((1+2)+(3+4))+5).  If initial is
     present, it is placed before the items of the iterable in the calculation,
     and serves as a default when the iterable is empty.
+
+    Memory: maximum of log2(n) objects of iterable stored vs 2 for reduce()
+    Speed: log2(n) calls to function() vs n for reduce()
     """
     i = iter(iterable)
     try:
