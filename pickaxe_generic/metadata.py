@@ -235,16 +235,14 @@ class OpRxnPropertyCompositor(PropertyCompositor):
 class RxnPropertyCompositor(PropertyCompositor):
     __slots__ = ("_calc",)
 
-    _calc: MolPropertyCalc
+    _calc: RxnPropertyCalc
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
-        mols = chain(rxn.reactants, rxn.products)
-        props = {
-            mol.item.uid: calc
-            for mol, calc in ((mol, self._calc(mol)) for mol in mols)
-            if calc is not None
-        }
-        single_state = MetaPropertyStateSingleProp(props, self._calc.resolver)
+        calc = self._calc(rxn)
+        if calc is None:
+            return MetaPropertyState({}, {}, {})
+        props = {rxn.uid: calc}
+        single_state = MetaPropertyStateSingleProp(calc, self._calc.resolver)
         return MetaPropertyState({self._calc.key: single_state}, {}, {})
 
     @property
@@ -406,38 +404,18 @@ def metalib_to_rxn_meta(
     for meta_key, rxn_dict in metalib.rxn_info.items():
         for rxn_id, key_val in rxn_dict.data.items():
             rxn_info[rxn_id][meta_key] = key_val
-    for rxn_all in rxns:
-        rxn = rxn_all[0]
-        op_data = DataPacketE(
-            rxn.operator.i,
-            rxn.operator.item,
-            _mmd(rxn.operator.meta, op_info[rxn.operator.item.uid]),
-        )
-        reactant_data = tuple(
-            DataPacketE(mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid]))
-            for mol in rxn.reactants
-        )
-        product_data = tuple(
-            DataPacketE(mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid]))
-            for mol in rxn.products
-        )
+    for rxn, passed_filter in rxns:
         yield (
             ReactionExplicit(
-                op_data,
-                reactant_data,
-                product_data,
+                rxn.operator,
+                rxn.reactants,
+                rxn.products,
                 _mmd(
                     rxn.reaction_meta,
-                    rxn_info[
-                        (
-                            rxn.operator.item.uid,
-                            tuple(mol.item.uid for mol in rxn.reactants),
-                            tuple(mol.item.uid for mol in rxn.products),
-                        )
-                    ],
+                    rxn_info[rxn.uid],
                 ),
             ),
-            rxn_all[1],
+            passed_filter,
         )
 
 
