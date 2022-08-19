@@ -242,12 +242,14 @@ class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
         if calc is None:
             return MetaPropertyState({}, {}, {})
         props = {rxn.uid: calc}
-        single_state = MetaPropertyStateSingleProp(props, self._calc.resolver)
-        return MetaPropertyState({self._calc.key: single_state}, {}, {})
+        single_state = MetaPropertyStateSingleProp(
+            props, self._calc.resolver  # type: ignore
+        )
+        return MetaPropertyState({}, {}, {self._calc.key: single_state})
 
     @property
     def keys(self) -> KeyOutput:
-        return KeyOutput(frozenset((self._calc.key,)), frozenset(), frozenset())
+        return KeyOutput(frozenset(), frozenset(), frozenset((self._calc.key,)))
 
 
 @dataclass
