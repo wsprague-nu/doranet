@@ -117,7 +117,14 @@ class KeyOutput:
     op_keys: frozenset[Hashable]
     rxn_keys: frozenset[Hashable]
 
-    def __and__(self, other: "KeyOutput") -> "KeyOutput":
+    def __or__(self, other: "KeyOutput") -> "KeyOutput":
+        return KeyOutput(
+            self.mol_keys | other.mol_keys,
+            self.op_keys | other.op_keys,
+            self.rxn_keys | other.rxn_keys,
+        )
+
+    def __xor__(self, other: "KeyOutput") -> "KeyOutput":
         new_mol_keys = self.mol_keys | other.mol_keys
         if len(new_mol_keys) > len(self.mol_keys) + len(other.mol_keys):
             raise KeyError(
@@ -149,6 +156,59 @@ class PropertyCompositor(ABC):
     @final
     def __and__(self, other: "PropertyCompositor") -> "PropertyCompositor":
         ...
+
+
+@dataclass(frozen=True)
+class PropertyFunctionCompositor(PropertyCompositor):
+    __slots__ = ("_func", "_comp1", "_comp2")
+
+    func: Callable[[Any, Any], Any]
+    comp1: PropertyCompositor
+    comp2: PropertyCompositor
+
+    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+        state1 = self.comp1(rxn)
+        state2 = self.comp2(rxn)
+
+        for key in state1.mol_info.keys() & state2.mol_info.keys():
+            propstate1 = state1.mol_info[key]
+            propstate2 = state2.mol_info[key]
+            propstate_reduced = MetaPropertyStateSingleProp(
+                {}, propstate2.resolver
+            )
+            for mol in propstate1.data.keys() & propstate2.data.keys():
+                propstate_reduced.data[mol] = self.func(
+                    propstate1.data[mol], propstate2.data[mol]
+                )
+            propstate1.overwrite(propstate2).overwrite(propstate_reduced)
+        for key in state1.op_info.keys() & state2.op_info.keys():
+            propstate1 = state1.op_info[key]
+            propstate2 = state2.op_info[key]
+            propstate_reduced = MetaPropertyStateSingleProp(
+                {}, propstate2.resolver
+            )
+            for op in propstate1.data.keys() & propstate2.data.keys():
+                propstate_reduced.data[op] = self.func(
+                    propstate1.data[op], propstate2.data[op]
+                )
+            propstate1.overwrite(propstate2).overwrite(propstate_reduced)
+        for key in state1.rxn_info.keys() & state2.rxn_info.keys():
+            propstate1 = state1.rxn_info[key]
+            propstate2 = state2.rxn_info[key]
+            propstate_reduced = MetaPropertyStateSingleProp(
+                {}, propstate2.resolver
+            )
+            for rxn_id in propstate1.data.keys() & propstate2.data.keys():
+                propstate_reduced.data[rxn_id] = self.func(
+                    propstate1.data[rxn_id], propstate2.data[rxn_id]
+                )
+            propstate1.overwrite(propstate2).overwrite(propstate_reduced)
+
+        return state1
+
+    @property
+    def keys(self) -> KeyOutput:
+        return self.comp1.keys | self.comp2.keys
 
 
 @dataclass(frozen=True)
@@ -259,6 +319,13 @@ class MetaPropertyStateSingleProp(Generic[_T]):
 
     data: dict[Identifier, _T]
     resolver: MetaDataResolverFunc[_T]
+
+    def overwrite(
+        self, other: "MetaPropertyStateSingleProp"[_T]
+    ) -> "MetaPropertyStateSingleProp"[_T]:
+        self.data.update(other.data)
+        self.resolver = other.resolver
+        return self
 
     def __or__(
         self, other: "MetaPropertyStateSingleProp"[_T]
