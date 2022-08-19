@@ -913,3 +913,9 @@ class DataPacket(Generic[DataUnitGen]):
     i: int
     item: Optional[DataUnitGen]
     meta: Optional[Mapping]
+
+
+@dataclass(frozen=True)
+class DataPacketE(DataPacket, Generic[DataUnitGen]):
+    __slots__ = ("item",)
+    item: DataUnitGen

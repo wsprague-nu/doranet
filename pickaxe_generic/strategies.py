@@ -40,6 +40,7 @@ from typing import (
 from pickaxe_generic.containers import ObjectLibrary
 from pickaxe_generic.datatypes import (
     DataPacket,
+    DataPacketE,
     Identifier,
     MolDatBase,
     OpDatBase,
@@ -874,8 +875,8 @@ class ReactionJob:
         "op_args",
     )
 
-    operator: DataPacket[OpDatBase]
-    op_args: tuple[DataPacket[MolDatBase], ...]
+    operator: DataPacketE[OpDatBase]
+    op_args: tuple[DataPacketE[MolDatBase], ...]
 
 
 def assemble_reaction_job(
@@ -889,7 +890,7 @@ def assemble_reaction_job(
     else:
         op_meta = None
 
-    op = DataPacket(op_index, op_data, op_meta)
+    op = DataPacketE(op_index, op_data, op_meta)
 
     mol_meta: Iterable[Optional[Mapping]]
     if keyset.molecule_keys:
@@ -898,7 +899,7 @@ def assemble_reaction_job(
         mol_meta = (None for _ in recipe.reactants)
 
     reactants = tuple(
-        DataPacket(i, network.mols[i], meta)
+        DataPacketE(i, network.mols[i], meta)
         for i, meta in zip(recipe.reactants, mol_meta)
     )
 
@@ -1140,14 +1141,14 @@ def execute_reaction(
         raise ValueError("ReactionJob has non-None item components!")
     product_packets = rxn_job.operator.item(reactants)  # type: ignore
     reactant_datapackets = tuple(
-        DataPacket(p.i, p.item, None) for p in rxn_job.op_args
+        DataPacketE(p.i, p.item, None) for p in rxn_job.op_args
     )
-    operator_datapacket = DataPacket(
+    operator_datapacket = DataPacketE(
         rxn_job.operator.i, rxn_job.operator.item, None
     )
     for rxn_products in product_packets:
         product_datapackets = tuple(
-            DataPacket(-1, product, None) for product in rxn_products
+            DataPacketE(-1, product, None) for product in rxn_products
         )
         rxn = ReactionExplicit(
             operator_datapacket,

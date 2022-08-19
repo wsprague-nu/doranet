@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
+from functools import cache
 from gzip import open as gzopen
 from pickle import dump, load
 from typing import (
@@ -17,6 +18,7 @@ from typing import (
 from pickaxe_generic.containers import DataUnitGen
 from pickaxe_generic.datatypes import (
     DataPacket,
+    DataPacketE,
     DataUnit,
     Identifier,
     MolDatBase,
@@ -46,10 +48,20 @@ class ReactionExplicit:
         "products",
         "reaction_meta",
     )
-    operator: DataPacket[OpDatBase]
-    reactants: tuple[DataPacket[MolDatBase], ...]
-    products: tuple[DataPacket[MolDatBase], ...]
+    operator: DataPacketE[OpDatBase]
+    reactants: tuple[DataPacketE[MolDatBase], ...]
+    products: tuple[DataPacketE[MolDatBase], ...]
     reaction_meta: Optional[Mapping]
+
+    @property
+    def uid(
+        self,
+    ) -> tuple[Identifier, tuple[Identifier, ...], tuple[Identifier, ...]]:
+        return (
+            self.operator.item.uid,
+            tuple(mol.item.uid for mol in self.reactants),
+            tuple(mol.item.uid for mol in self.products),
+        )
 
 
 @dataclass(frozen=True, order=True)
