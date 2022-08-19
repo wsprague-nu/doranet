@@ -152,10 +152,10 @@ class PropertyCompositor(ABC):
 
 
 @dataclass(frozen=True)
-class MolPropertyCompositor(PropertyCompositor):
+class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
     __slots__ = ("_calc",)
 
-    _calc: MolPropertyCalc
+    _calc: MolPropertyCalc[_T]
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
@@ -173,10 +173,10 @@ class MolPropertyCompositor(PropertyCompositor):
 
 
 @dataclass(frozen=True)
-class MolRxnPropertyCompositor(PropertyCompositor):
+class MolRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
     __slots__ = ("_calc",)
 
-    _calc: MolPropertyFromRxnCalc
+    _calc: MolPropertyFromRxnCalc[_T]
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
@@ -194,10 +194,10 @@ class MolRxnPropertyCompositor(PropertyCompositor):
 
 
 @dataclass(frozen=True)
-class OpPropertyCompositor(PropertyCompositor):
+class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
     __slots__ = ("_calc",)
 
-    _calc: OpPropertyCalc
+    _calc: OpPropertyCalc[_T]
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         calc = self._calc(rxn.operator)
@@ -213,10 +213,10 @@ class OpPropertyCompositor(PropertyCompositor):
 
 
 @dataclass(frozen=True)
-class OpRxnPropertyCompositor(PropertyCompositor):
+class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
     __slots__ = ("_calc",)
 
-    _calc: OpPropertyFromRxnCalc
+    _calc: OpPropertyFromRxnCalc[_T]
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         calc = self._calc(rxn.operator, rxn)
@@ -232,17 +232,17 @@ class OpRxnPropertyCompositor(PropertyCompositor):
 
 
 @dataclass(frozen=True)
-class RxnPropertyCompositor(PropertyCompositor):
+class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
     __slots__ = ("_calc",)
 
-    _calc: RxnPropertyCalc
+    _calc: RxnPropertyCalc[_T]
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         calc = self._calc(rxn)
         if calc is None:
             return MetaPropertyState({}, {}, {})
         props = {rxn.uid: calc}
-        single_state = MetaPropertyStateSingleProp(calc, self._calc.resolver)
+        single_state = MetaPropertyStateSingleProp(props, self._calc.resolver)
         return MetaPropertyState({self._calc.key: single_state}, {}, {})
 
     @property
