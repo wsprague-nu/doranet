@@ -160,7 +160,7 @@ class MolPropertyCompositor(PropertyCompositor):
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
         props = {
-            _druid(mol.item): calc
+            mol.item.uid: calc
             for mol, calc in ((mol, self._calc(mol)) for mol in mols)
             if calc is not None
         }
@@ -181,7 +181,7 @@ class MolRxnPropertyCompositor(PropertyCompositor):
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
         props = {
-            _druid(mol.item): calc
+            mol.item.uid: calc
             for mol, calc in ((mol, self._calc(mol, rxn)) for mol in mols)
             if calc is not None
         }
@@ -203,7 +203,7 @@ class OpPropertyCompositor(PropertyCompositor):
         calc = self._calc(rxn.operator)
         if calc is None:
             return MetaPropertyState({}, {}, {})
-        props = {_druid(rxn.operator.item): calc}
+        props = {rxn.operator.item.uid: calc}
         single_state = MetaPropertyStateSingleProp(props, self._calc.resolver)
         return MetaPropertyState({}, {self._calc.key: single_state}, {})
 
@@ -222,7 +222,7 @@ class OpRxnPropertyCompositor(PropertyCompositor):
         calc = self._calc(rxn.operator, rxn)
         if calc is None:
             return MetaPropertyState({}, {}, {})
-        props = {_druid(rxn.operator.item): calc}
+        props = {rxn.operator.item.uid: calc}
         single_state = MetaPropertyStateSingleProp(props, self._calc.resolver)
         return MetaPropertyState({}, {self._calc.key: single_state}, {})
 
@@ -240,7 +240,7 @@ class RxnPropertyCompositor(PropertyCompositor):
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
         props = {
-            _druid(mol.item): calc
+            mol.item.uid: calc
             for mol, calc in ((mol, self._calc(mol)) for mol in mols)
             if calc is not None
         }
@@ -391,12 +391,6 @@ def _mmd(
     return i1 | i2
 
 
-def _druid(i: Optional[DataUnit]) -> Identifier:
-    if i is None:
-        raise ValueError("Somehow a null item ended up in the reaction...")
-    return i.uid
-
-
 def metalib_to_rxn_meta(
     metalib: MetaPropertyState, rxns: Iterable[tuple[ReactionExplicit, bool]]
 ) -> Iterable[tuple[ReactionExplicit, bool]]:
@@ -417,18 +411,14 @@ def metalib_to_rxn_meta(
         op_data = DataPacketE(
             rxn.operator.i,
             rxn.operator.item,
-            _mmd(rxn.operator.meta, op_info[_druid(rxn.operator.item)]),
+            _mmd(rxn.operator.meta, op_info[rxn.operator.item.uid]),
         )
         reactant_data = tuple(
-            DataPacketE(
-                mol.i, mol.item, _mmd(mol.meta, mol_info[_druid(mol.item)])
-            )
+            DataPacketE(mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid]))
             for mol in rxn.reactants
         )
         product_data = tuple(
-            DataPacketE(
-                mol.i, mol.item, _mmd(mol.meta, mol_info[_druid(mol.item)])
-            )
+            DataPacketE(mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid]))
             for mol in rxn.products
         )
         yield (
@@ -440,9 +430,9 @@ def metalib_to_rxn_meta(
                     rxn.reaction_meta,
                     rxn_info[
                         (
-                            _druid(rxn.operator.item),
-                            tuple(_druid(mol.item) for mol in rxn.reactants),
-                            tuple(_druid(mol.item) for mol in rxn.products),
+                            rxn.operator.item.uid,
+                            tuple(mol.item.uid for mol in rxn.reactants),
+                            tuple(mol.item.uid for mol in rxn.products),
                         )
                     ],
                 ),
