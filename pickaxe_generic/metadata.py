@@ -124,21 +124,21 @@ class KeyOutput:
             self.rxn_keys | other.rxn_keys,
         )
 
-    def __xor__(self, other: "KeyOutput") -> "KeyOutput":
+    def __and__(self, other: "KeyOutput") -> "KeyOutput":
         new_mol_keys = self.mol_keys | other.mol_keys
         if len(new_mol_keys) > len(self.mol_keys) + len(other.mol_keys):
             raise KeyError(
-                f"Conflicting molecule metadata key outputs {self.mol_keys & other.mol_keys}; separate expressions with >> or combine using other operator"
+                f"Conflicting molecule metadata key outputs {self.mol_keys & other.mol_keys}; separate expressions with > or combine using other operator"
             )
         new_op_keys = self.op_keys | other.op_keys
         if len(new_op_keys) > len(self.op_keys) + len(other.op_keys):
             raise KeyError(
-                f"Conflicting operator metadata key outputs {self.op_keys & other.op_keys}; separate expressions with >> or combine using other operator"
+                f"Conflicting operator metadata key outputs {self.op_keys & other.op_keys}; separate expressions with > or combine using other operator"
             )
         new_rxn_keys = self.rxn_keys | other.rxn_keys
         if len(new_rxn_keys) > len(self.rxn_keys) + len(other.rxn_keys):
             raise KeyError(
-                f"Conflicting reaction metadata key outputs {self.rxn_keys & other.rxn_keys}; separate expressions with >> or combine using other operator"
+                f"Conflicting reaction metadata key outputs {self.rxn_keys & other.rxn_keys}; separate expressions with > or combine using other operator"
             )
         return KeyOutput(new_mol_keys, new_op_keys, new_rxn_keys)
 
@@ -155,20 +155,67 @@ class PropertyCompositor(ABC):
 
     @final
     def __and__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        ...
+        return MergePropertyCompositor(self, other)
+
+    @final
+    def __add__(self, other: "PropertyCompositor") -> "PropertyCompositor":
+        return FunctionPropertyCompositor(operator.add, self, other)
+
+    @final
+    def __sub__(self, other: "PropertyCompositor") -> "PropertyCompositor":
+        return FunctionPropertyCompositor(operator.sub, self, other)
+
+    @final
+    def __mul__(self, other: "PropertyCompositor") -> "PropertyCompositor":
+        return FunctionPropertyCompositor(operator.mul, self, other)
+
+    @final
+    def __truediv__(self, other: "PropertyCompositor") -> "PropertyCompositor":
+        return FunctionPropertyCompositor(operator.truediv, self, other)
+
+    @final
+    def __pow__(self, other: "PropertyCompositor") -> "PropertyCompositor":
+        return FunctionPropertyCompositor(operator.pow, self, other)
+
+
+class MergePropertyCompositor(PropertyCompositor):
+    __slots__ = ("_comp1", "_comp2")
+
+    _comp1: PropertyCompositor
+    _comp2: PropertyCompositor
+    _keys: KeyOutput
+
+    def __init__(
+        self, comp1: PropertyCompositor, comp2: PropertyCompositor
+    ) -> None:
+        self._comp1 = comp1
+        self._comp2 = comp2
+        self._keys = comp1.keys & comp2.keys
+
+    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+        state1 = self._comp1(rxn)
+        state2 = self._comp2(rxn)
+        state1.mol_info.update(state2.mol_info)
+        state1.op_info.update(state2.op_info)
+        state1.rxn_info.update(state2.rxn_info)
+        return state1
+
+    @property
+    def keys(self) -> KeyOutput:
+        return self._keys
 
 
 @dataclass(frozen=True)
-class PropertyFunctionCompositor(PropertyCompositor):
+class FunctionPropertyCompositor(PropertyCompositor):
     __slots__ = ("_func", "_comp1", "_comp2")
 
-    func: Callable[[Any, Any], Any]
-    comp1: PropertyCompositor
-    comp2: PropertyCompositor
+    _func: Callable[[Any, Any], Any]
+    _comp1: PropertyCompositor
+    _comp2: PropertyCompositor
 
     def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
-        state1 = self.comp1(rxn)
-        state2 = self.comp2(rxn)
+        state1 = self._comp1(rxn)
+        state2 = self._comp2(rxn)
 
         for key in state1.mol_info.keys() & state2.mol_info.keys():
             propstate1 = state1.mol_info[key]
@@ -177,7 +224,7 @@ class PropertyFunctionCompositor(PropertyCompositor):
                 {}, propstate2.resolver
             )
             for mol in propstate1.data.keys() & propstate2.data.keys():
-                propstate_reduced.data[mol] = self.func(
+                propstate_reduced.data[mol] = self._func(
                     propstate1.data[mol], propstate2.data[mol]
                 )
             propstate1.overwrite(propstate2).overwrite(propstate_reduced)
@@ -188,7 +235,7 @@ class PropertyFunctionCompositor(PropertyCompositor):
                 {}, propstate2.resolver
             )
             for op in propstate1.data.keys() & propstate2.data.keys():
-                propstate_reduced.data[op] = self.func(
+                propstate_reduced.data[op] = self._func(
                     propstate1.data[op], propstate2.data[op]
                 )
             propstate1.overwrite(propstate2).overwrite(propstate_reduced)
@@ -199,7 +246,7 @@ class PropertyFunctionCompositor(PropertyCompositor):
                 {}, propstate2.resolver
             )
             for rxn_id in propstate1.data.keys() & propstate2.data.keys():
-                propstate_reduced.data[rxn_id] = self.func(
+                propstate_reduced.data[rxn_id] = self._func(
                     propstate1.data[rxn_id], propstate2.data[rxn_id]
                 )
             propstate1.overwrite(propstate2).overwrite(propstate_reduced)
@@ -208,7 +255,7 @@ class PropertyFunctionCompositor(PropertyCompositor):
 
     @property
     def keys(self) -> KeyOutput:
-        return self.comp1.keys | self.comp2.keys
+        return self._comp1.keys | self._comp2.keys
 
 
 @dataclass(frozen=True)
