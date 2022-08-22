@@ -376,8 +376,8 @@ class PropertyCompositor(ABC):
     ) -> "RxnAnalysisStep":
         return as_rxn_analysis_step(self) >> as_rxn_analysis_step(other)
 
-    @abstractmethod
     @property
+    @abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         ...
 
@@ -600,15 +600,15 @@ class MetaPropertyStateSingleProp(Generic[_T]):
     resolver: MetaDataResolverFunc[_T]
 
     def overwrite(
-        self, other: "MetaPropertyStateSingleProp"[_T]
-    ) -> "MetaPropertyStateSingleProp"[_T]:
+        self, other: "MetaPropertyStateSingleProp[_T]"
+    ) -> "MetaPropertyStateSingleProp[_T]":
         self.data.update(other.data)
         self.resolver = other.resolver
         return self
 
     def __or__(
-        self, other: "MetaPropertyStateSingleProp"[_T]
-    ) -> "MetaPropertyStateSingleProp"[_T]:
+        self, other: "MetaPropertyStateSingleProp[_T]"
+    ) -> "MetaPropertyStateSingleProp[_T]":
         resolved_props: dict[Identifier, _T] = {}
         if len(self.data) == 0:
             return other
