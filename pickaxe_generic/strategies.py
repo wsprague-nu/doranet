@@ -1167,8 +1167,14 @@ def execute_reaction(
 
 def execute_reactions(
     rxn_jobs: Collection[ReactionJob],
+    rxn_analysis: Optional[RxnAnalysisStep] = None,
 ) -> Iterable[tuple[ReactionExplicit, bool]]:
-    return reduce(chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs))
+    rxn_generator = reduce(
+        chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
+    )
+    if rxn_analysis is None:
+        return rxn_generator
+    return rxn_analysis.execute(rxn_generator)
 
 
 class PriorityQueueStrategyBasic(PriorityQueueStrategy):
@@ -1319,7 +1325,9 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             )
 
             # execute reactions
-            for rxn, pass_filter in execute_reactions(reaction_jobs):
+            for rxn, pass_filter in execute_reactions(
+                reaction_jobs, rxn_analysis_task
+            ):
                 # add product mols to network
                 products_indices = tuple(
                     network.add_mol(mol.item, None, pass_filter)
