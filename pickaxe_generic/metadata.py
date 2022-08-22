@@ -173,7 +173,10 @@ class ReactionFilterBase(ABC):
     def __rshift__(
         self,
         other: Union[
-            "RxnAnalysisStep", "PropertyCompositor", "ReactionFilterBase"
+            "RxnAnalysisStep",
+            "PropertyCompositor",
+            "ReactionFilterBase",
+            LocalPropertyCalc,
         ],
     ) -> "RxnAnalysisStep":
         if isinstance(other, PropertyCompositor):
@@ -294,6 +297,11 @@ class PropertyCompositor(ABC):
             f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
         )
 
+    @abstractmethod
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        ...
+
 
 class MergePropertyCompositor(PropertyCompositor):
     __slots__ = ("_comp1", "_comp2")
@@ -320,6 +328,10 @@ class MergePropertyCompositor(PropertyCompositor):
     @property
     def keys(self) -> KeyOutput:
         return self._keys
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._comp1.meta_required + self._comp2.meta_required
 
 
 @dataclass(frozen=True)
@@ -374,6 +386,10 @@ class FunctionPropertyCompositor(PropertyCompositor):
     def keys(self) -> KeyOutput:
         return self._comp1.keys | self._comp2.keys
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._comp1.meta_required + self._comp2.meta_required
+
 
 @dataclass(frozen=True)
 class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
@@ -394,6 +410,10 @@ class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
     @property
     def keys(self) -> KeyOutput:
         return KeyOutput(frozenset((self._calc.key,)), frozenset(), frozenset())
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._calc.meta_required
 
 
 @dataclass(frozen=True)
@@ -416,6 +436,10 @@ class MolRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
     def keys(self) -> KeyOutput:
         return KeyOutput(frozenset((self._calc.key,)), frozenset(), frozenset())
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._calc.meta_required
+
 
 @dataclass(frozen=True)
 class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
@@ -435,6 +459,10 @@ class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
     def keys(self) -> KeyOutput:
         return KeyOutput(frozenset(), frozenset((self._calc.key,)), frozenset())
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._calc.meta_required
+
 
 @dataclass(frozen=True)
 class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
@@ -453,6 +481,10 @@ class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
     @property
     def keys(self) -> KeyOutput:
         return KeyOutput(frozenset(), frozenset((self._calc.key,)), frozenset())
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._calc.meta_required
 
 
 @dataclass(frozen=True)
@@ -474,6 +506,10 @@ class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
     @property
     def keys(self) -> KeyOutput:
         return KeyOutput(frozenset(), frozenset(), frozenset((self._calc.key,)))
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._calc.meta_required
 
 
 @dataclass
@@ -591,6 +627,11 @@ class RxnAnalysisStep(ABC):
             f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
         )
 
+    @abstractmethod
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        ...
+
 
 @dataclass(frozen=True)
 class RxnAnalysisStepCompound(RxnAnalysisStep):
@@ -606,17 +647,9 @@ class RxnAnalysisStepCompound(RxnAnalysisStep):
             rxn_out for rxn_out in self.step1.execute(rxns)
         )
 
-
-def SingleRxnAnalysisStep(
-    arg: Union["PropertyCompositor", ReactionFilterBase]
-) -> RxnAnalysisStep:
-    if isinstance(arg, PropertyCompositor):
-        return RxnAnalysisStepProp(arg)
-    elif isinstance(arg, ReactionFilterBase):
-        return RxnAnalysisStepFilter(arg)
-    raise TypeError(
-        f"Argument is of type {type(arg)}; must be LocalPropertyCalc or ReactionFilterBase"
-    )
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self.step1.meta_required + self.step2.meta_required
 
 
 def _mmd(
@@ -680,6 +713,10 @@ class RxnAnalysisStepProp(RxnAnalysisStep):
         )
         return metalib_to_rxn_meta(prop_map, rxn_list)
 
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._prop.meta_required
+
 
 class RxnAnalysisStepFilter(RxnAnalysisStep):
     __slots__ = ("_arg",)
@@ -695,6 +732,10 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
                 yield rxn, False
             else:
                 yield rxn, True
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._arg.meta_required
 
 
 class MetaUpdate(ABC):
@@ -732,3 +773,48 @@ class MetaUpdateMultiple(MetaUpdate):
             if new_reaction is not None:
                 cur_reaction = new_reaction
         return cur_reaction
+
+
+def _as_property_compositor(
+    arg: Union[PropertyCompositor, LocalPropertyCalc]
+) -> PropertyCompositor:
+    if isinstance(arg, PropertyCompositor):
+        return arg
+    elif isinstance(arg, MolPropertyCalc):
+        return MolPropertyCompositor(arg)
+    elif isinstance(arg, MolPropertyFromRxnCalc):
+        return MolRxnPropertyCompositor(arg)
+    elif isinstance(arg, OpPropertyCalc):
+        return OpPropertyCompositor(arg)
+    elif isinstance(arg, OpPropertyFromRxnCalc):
+        return OpRxnPropertyCompositor(arg)
+    elif isinstance(arg, RxnPropertyCalc):
+        return RxnPropertyCompositor(arg)
+    elif isinstance(arg, LocalPropertyCalc):
+        raise TypeError(
+            f"Argument is of type {type(arg)}, relevant PropertyCompositor has not been provided"
+        )
+    raise TypeError(
+        f"Argument is of type {type(arg)}, must be of type PropertyCompositor or LocalPropertyCalc"
+    )
+
+
+def _as_rxn_analysis_step(
+    arg: Union[
+        RxnAnalysisStep,
+        PropertyCompositor,
+        ReactionFilterBase,
+        LocalPropertyCalc,
+    ]
+) -> RxnAnalysisStep:
+    if isinstance(arg, PropertyCompositor):
+        return RxnAnalysisStepProp(arg)
+    elif isinstance(arg, ReactionFilterBase):
+        return RxnAnalysisStepFilter(arg)
+    elif isinstance(arg, LocalPropertyCalc):
+        return RxnAnalysisStepProp(_as_property_compositor(arg))
+    elif isinstance(arg, RxnAnalysisStep):
+        return arg
+    raise TypeError(
+        f"Argument is of type {type(arg)}, must be of type RxnAnalysisStep, PropertyCompositor, ReactionFilterBase, or LocalPropertyCalc"
+    )
