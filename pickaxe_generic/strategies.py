@@ -1354,7 +1354,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 # update reactant metadata
                 for m_dat in zip(reactants_indices, rxn.reactants):
                     if m_dat[1].meta is not None:
-                        for key, value in m_dat[1].meta.values():
+                        for key, value in m_dat[1].meta.items():
                             if network.mol_meta(m_dat[0], key) != value:
                                 network.mol_meta(m_dat[0], key, value)
                                 if key in total_keyset.molecule_keys:
@@ -1363,7 +1363,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 # update product metadata
                 for m_dat in zip(products_indices, rxn.products):
                     if m_dat[1].meta is not None:
-                        for key, value in m_dat[1].meta.values():
+                        for key, value in m_dat[1].meta.items():
                             if network.mol_meta(m_dat[0], key) != value:
                                 network.mol_meta(m_dat[0], key, value)
                                 if key in total_keyset.molecule_keys:
@@ -1371,7 +1371,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
                 # update operator metadata
                 if rxn.operator.meta is not None:
-                    for key, value in rxn.operator.meta:
+                    for key, value in rxn.operator.meta.items():
                         if network.op_meta(rxn_implicit.operator, key) != value:
                             network.op_meta(rxn_implicit.operator, key, value)
                             if key in total_keyset.operator_keys:
