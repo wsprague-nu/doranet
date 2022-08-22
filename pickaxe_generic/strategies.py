@@ -1223,6 +1223,9 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             recipe_keyset = recipe_keyset + recipe_filter.meta_required
         if recipe_ranker is not None:
             recipe_keyset = recipe_keyset + recipe_ranker.meta_required
+        if rxn_analysis_task is not None:
+            reaction_keyset = reaction_keyset + rxn_analysis_task.meta_required
+        total_keyset = recipe_keyset + reaction_keyset
         # if mol_filter_local is not None:
         #     mol_filter_local_keyset = (
         #         mol_filter_local_keyset + mol_filter_local.meta_required
@@ -1262,11 +1265,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             or len(updated_ops_set) != 0
             or len(recipe_heap) > 0
         ):
-            # raise error if operator metadata has been updated
-            if len(updated_ops_set) != 0:
-                raise NotImplementedError(
-                    "Updating necessary operator metadata is not yet supported"
-                )
+            for op_index in updated_ops_set:
+                compat_indices_table[op_index] = [
+                    0 for _ in range(len(compat_indices_table[op_index]))
+                ]
 
             # for each operator, create recipe batches
             for opIndex, _ in enumerate(network.ops):
