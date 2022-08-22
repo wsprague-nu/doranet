@@ -433,16 +433,22 @@ class ChemNetworkBasic(ChemNetwork):
 
     def mol_meta(self, index: _MolIndex, key: Hashable, value=None):
         if value is None:
+            if key not in self._mol_meta[index]:
+                return None
             return self._mol_meta[index][key]
         self._mol_meta[index][key] = value
 
     def op_meta(self, index: _OpIndex, key: Hashable, value=None):
         if value is None:
+            if key not in self._op_meta[index]:
+                return None
             return self._op_meta[index][key]
         self._op_meta[index][key] = value
 
     def rxn_meta(self, index: _RxnIndex, key: Hashable, value=None):
         if value is None:
+            if key not in self._rxn_meta[index]:
+                return None
             return self._rxn_meta[index][key]
         self._rxn_meta[index][key] = value
 
