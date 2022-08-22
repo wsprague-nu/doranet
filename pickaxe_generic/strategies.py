@@ -59,7 +59,11 @@ from pickaxe_generic.filters import (
     RecipeRanker,
     ReplaceBlacklist,
 )
-from pickaxe_generic.metadata import ReactionFilterBase
+from pickaxe_generic.metadata import (
+    PropertyCompositor,
+    ReactionFilterBase,
+    RxnAnalysisStep,
+)
 from pickaxe_generic.network import (
     ChemNetwork,
     Reaction,
@@ -1189,7 +1193,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         # mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
-        # mc_local: Optional[MetaDataCalculatorLocal] = None,
+        mc_local: Optional[RxnAnalysisStep] = None,
         # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
@@ -1200,7 +1204,6 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
         # set keysets so that updated reactions may occur and parameters may be
         # passed to parallel processes
-        mol_filter_local_keyset: MetaKeyPacket = MetaKeyPacket()
         recipe_keyset: MetaKeyPacket = MetaKeyPacket()
         reaction_keyset: MetaKeyPacket = MetaKeyPacket()
         if recipe_filter is not None:
@@ -1217,9 +1220,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         #     recipe_keyset = recipe_keyset + recipe_filter.meta_required
         # if recipe_ranker is not None:
         #     recipe_keyset = recipe_keyset + recipe_ranker.meta_required
-        # if mc_local is not None:
-        #     reaction_keyset = mc_local.meta_required
-        #     recipe_keyset = recipe_keyset + reaction_keyset
+        #if mc_local is not None:
+        #    reaction_keyset = mc_local.meta_required
         # total_keyset = mol_filter_local_keyset + recipe_keyset + reaction_keyset
 
         # initialize loop variables
