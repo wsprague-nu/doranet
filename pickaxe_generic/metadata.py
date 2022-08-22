@@ -816,10 +816,10 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
         self, rxns: Iterable[tuple[ReactionExplicit, bool]]
     ) -> Iterable[tuple[ReactionExplicit, bool]]:
         for rxn, pass_filter in rxns:
-            if not pass_filter or not self._arg(rxn):
+            if not pass_filter:
                 yield rxn, False
             else:
-                yield rxn, True
+                yield rxn, self._arg(rxn)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
