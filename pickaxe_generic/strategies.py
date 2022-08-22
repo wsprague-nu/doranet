@@ -1220,7 +1220,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         #     recipe_keyset = recipe_keyset + recipe_filter.meta_required
         # if recipe_ranker is not None:
         #     recipe_keyset = recipe_keyset + recipe_ranker.meta_required
-        #if mc_local is not None:
+        # if mc_local is not None:
         #    reaction_keyset = mc_local.meta_required
         # total_keyset = mol_filter_local_keyset + recipe_keyset + reaction_keyset
 
