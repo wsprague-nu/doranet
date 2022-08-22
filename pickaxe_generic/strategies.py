@@ -1348,23 +1348,26 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.values():
                             if network.mol_meta(m_dat[0], key) != value:
-                                updated_mols_set.add(m_dat[0])
-                            network.mol_meta(m_dat[0], key, value)
+                                network.mol_meta(m_dat[0], key, value)
+                                if key in total_keyset.molecule_keys:
+                                    updated_mols_set.add(m_dat[0])
 
                 # update product metadata
                 for m_dat in zip(products_indices, rxn.products):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.values():
                             if network.mol_meta(m_dat[0], key) != value:
-                                updated_mols_set.add(m_dat[0])
-                            network.mol_meta(m_dat[0], key, value)
+                                network.mol_meta(m_dat[0], key, value)
+                                if key in total_keyset.molecule_keys:
+                                    updated_mols_set.add(m_dat[0])
 
                 # update operator metadata
                 if rxn.operator.meta is not None:
                     for key, value in rxn.operator.meta:
                         if network.op_meta(rxn_implicit.operator, key) != value:
-                            updated_ops_set.add(rxn_implicit.operator)
-                        network.op_meta(rxn_implicit.operator, key, value)
+                            network.op_meta(rxn_implicit.operator, key, value)
+                            if key in total_keyset.operator_keys:
+                                updated_ops_set.add(rxn_implicit.operator)
 
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)
