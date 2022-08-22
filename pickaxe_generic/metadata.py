@@ -752,14 +752,20 @@ def metalib_to_rxn_meta(
     mol_info: dict[Identifier, dict[Hashable, Any]] = {}
     for meta_key, mol_dict in metalib.mol_info.items():
         for mol_id, key_val in mol_dict.data.items():
+            if mol_id not in mol_info:
+                mol_info[mol_id] = {}
             mol_info[mol_id][meta_key] = key_val
     op_info: dict[Identifier, dict[Hashable, Any]] = {}
     for meta_key, op_dict in metalib.op_info.items():
         for op_id, key_val in op_dict.data.items():
+            if op_id not in op_info:
+                op_info[op_id] = {}
             op_info[op_id][meta_key] = key_val
     rxn_info: dict[Identifier, dict[Hashable, Any]] = {}
     for meta_key, rxn_dict in metalib.rxn_info.items():
         for rxn_id, key_val in rxn_dict.data.items():
+            if rxn_id not in rxn_info:
+                rxn_info[rxn_id] = {}
             rxn_info[rxn_id][meta_key] = key_val
     for rxn, passed_filter in rxns:
         yield (
