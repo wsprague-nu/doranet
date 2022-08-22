@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generator,
@@ -375,90 +376,6 @@ class RecipeRanker(Protocol):
     @property
     def meta_required(self) -> MetaKeyPacket:
         return MetaKeyPacket()
-
-
-class ReactionFilterBase(ABC):
-    __slots__ = ()
-
-    @abstractmethod
-    def __call__(self, recipe: ReactionExplicit) -> bool:
-        ...
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
-
-    @final
-    def __and__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
-        return ReactionFilterAnd(self, other)
-
-    @final
-    def __invert__(self) -> "ReactionFilterBase":
-        return ReactionFilterInv(self)
-
-    @final
-    def __or__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
-        return ReactionFilterOr(self, other)
-
-    @final
-    def __xor__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
-        return ReactionFilterXor(self, other)
-
-
-@dataclass(frozen=True)
-class ReactionFilterAnd(ReactionFilterBase):
-    __slots__ = ("_filter1", "_filter2")
-
-    _filter1: ReactionFilterBase
-    _filter2: ReactionFilterBase
-
-    def __call__(self, recipe: ReactionExplicit) -> bool:
-        return self._filter1(recipe) and self._filter2(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class ReactionFilterInv(ReactionFilterBase):
-    __slots__ = ("_filter",)
-    _filter: ReactionFilterBase
-
-    def __call__(self, recipe: ReactionExplicit) -> bool:
-        return not self._filter(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter.meta_required
-
-
-@dataclass(frozen=True)
-class ReactionFilterOr(ReactionFilterBase):
-    __slots__ = ("_filter1", "_filter2")
-    _filter1: ReactionFilterBase
-    _filter2: ReactionFilterBase
-
-    def __call__(self, recipe: ReactionExplicit) -> bool:
-        return self._filter1(recipe) or self._filter2(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class ReactionFilterXor(ReactionFilterBase):
-    __slots__ = ("_filter1", "_filter2")
-    _filter1: ReactionFilterBase
-    _filter2: ReactionFilterBase
-
-    def __call__(self, recipe: ReactionExplicit) -> bool:
-        return self._filter1(recipe) != self._filter2(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
 
 
 class MetaDataCalculatorLocal(Protocol):

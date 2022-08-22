@@ -29,7 +29,6 @@ from pickaxe_generic.datatypes import (
     MolDatBase,
     OpDatBase,
 )
-from pickaxe_generic.filters import ReactionFilterBase
 from pickaxe_generic.network import ChemNetwork, ReactionExplicit
 from pickaxe_generic.utils import logreduce
 
@@ -141,6 +140,107 @@ class KeyOutput:
                 f"Conflicting reaction metadata key outputs {self.rxn_keys & other.rxn_keys}; separate expressions with >> or combine using other operator"
             )
         return KeyOutput(new_mol_keys, new_op_keys, new_rxn_keys)
+
+
+class ReactionFilterBase(ABC):
+    __slots__ = ()
+
+    @abstractmethod
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        ...
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return MetaKeyPacket()
+
+    @final
+    def __and__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterAnd(self, other)
+
+    @final
+    def __invert__(self) -> "ReactionFilterBase":
+        return ReactionFilterInv(self)
+
+    @final
+    def __or__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterOr(self, other)
+
+    @final
+    def __xor__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
+        return ReactionFilterXor(self, other)
+
+    @final
+    def __rshift__(
+        self,
+        other: Union[
+            "RxnAnalysisStep", "PropertyCompositor", "ReactionFilterBase"
+        ],
+    ) -> "RxnAnalysisStep":
+        if isinstance(other, PropertyCompositor):
+            return RxnAnalysisStepFilter(self) >> RxnAnalysisStepProp(other)
+        elif isinstance(other, ReactionFilterBase):
+            return RxnAnalysisStepFilter(self) >> RxnAnalysisStepFilter(other)
+        elif isinstance(other, RxnAnalysisStep):
+            return RxnAnalysisStepFilter(self) >> other
+        raise TypeError(
+            f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
+        )
+
+
+@dataclass(frozen=True)
+class ReactionFilterAnd(ReactionFilterBase):
+    __slots__ = ("_filter1", "_filter2")
+
+    _filter1: ReactionFilterBase
+    _filter2: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return self._filter1(recipe) and self._filter2(recipe)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
+
+@dataclass(frozen=True)
+class ReactionFilterInv(ReactionFilterBase):
+    __slots__ = ("_filter",)
+    _filter: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return not self._filter(recipe)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter.meta_required
+
+
+@dataclass(frozen=True)
+class ReactionFilterOr(ReactionFilterBase):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: ReactionFilterBase
+    _filter2: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return self._filter1(recipe) or self._filter2(recipe)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
+
+
+@dataclass(frozen=True)
+class ReactionFilterXor(ReactionFilterBase):
+    __slots__ = ("_filter1", "_filter2")
+    _filter1: ReactionFilterBase
+    _filter2: ReactionFilterBase
+
+    def __call__(self, recipe: ReactionExplicit) -> bool:
+        return self._filter1(recipe) != self._filter2(recipe)
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
 
 
 class PropertyCompositor(ABC):
@@ -477,8 +577,19 @@ class RxnAnalysisStep(ABC):
         ...
 
     @final
-    def __rshift__(self, other: "RxnAnalysisStep") -> "RxnAnalysisStepCompound":
-        return RxnAnalysisStepCompound(self, other)
+    def __rshift__(
+        self,
+        other: Union["RxnAnalysisStep", PropertyCompositor, ReactionFilterBase],
+    ) -> "RxnAnalysisStepCompound":
+        if isinstance(other, PropertyCompositor):
+            return self >> RxnAnalysisStepProp(other)
+        elif isinstance(other, ReactionFilterBase):
+            return self >> RxnAnalysisStepFilter(other)
+        elif isinstance(other, RxnAnalysisStep):
+            return RxnAnalysisStepCompound(self, other)
+        raise TypeError(
+            f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
+        )
 
 
 @dataclass(frozen=True)

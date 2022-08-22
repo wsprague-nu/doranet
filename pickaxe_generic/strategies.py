@@ -55,11 +55,11 @@ from pickaxe_generic.filters import (
     MolFilterMetaVal,
     RankValue,
     ReactionFilter,
-    ReactionFilterBase,
     RecipeFilter,
     RecipeRanker,
     ReplaceBlacklist,
 )
+from pickaxe_generic.metadata import ReactionFilterBase
 from pickaxe_generic.network import (
     ChemNetwork,
     Reaction,
