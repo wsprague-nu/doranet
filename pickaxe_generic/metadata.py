@@ -48,18 +48,18 @@ MetaDataResolverFunc = Callable[[_T, _T], _T]
 
 
 class LocalPropertyCalc(ABC, Generic[_T]):
-    @abstractmethod
     @property
+    @abstractmethod
     def key(self) -> Hashable:
         ...
 
-    @abstractmethod
     @property
+    @abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         ...
 
-    @abstractmethod
     @property
+    @abstractmethod
     def resolver(self) -> MetaDataResolverFunc[_T]:
         ...
 
