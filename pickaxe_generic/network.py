@@ -700,9 +700,9 @@ class ChemNetworkBasic(ChemNetwork):
 
         # add rxn metadata to table
         if meta is None:
-            self._op_meta.append({})
+            self._rxn_meta.append({})
         else:
-            self._op_meta.append(dict(meta))
+            self._rxn_meta.append(dict(meta))
 
         return rxn_index
 
