@@ -773,9 +773,23 @@ def metalib_to_rxn_meta(
     for rxn, passed_filter in rxns:
         yield (
             ReactionExplicit(
-                rxn.operator,
-                rxn.reactants,
-                rxn.products,
+                DataPacketE(
+                    rxn.operator.i,
+                    rxn.operator.item,
+                    _mmd(rxn.operator.meta, op_info[rxn.operator.item.uid]),
+                ),
+                tuple(
+                    DataPacketE(
+                        mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid])
+                    )
+                    for mol in rxn.reactants
+                ),
+                tuple(
+                    DataPacketE(
+                        mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid])
+                    )
+                    for mol in rxn.products
+                ),
                 _mmd(
                     rxn.reaction_meta,
                     rxn_info[rxn.uid],
