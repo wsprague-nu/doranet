@@ -707,8 +707,8 @@ class RxnAnalysisStep(ABC):
             return RxnAnalysisStepCompound(self, other)
         return as_rxn_analysis_step(self) >> as_rxn_analysis_step(other)
 
-    @abstractmethod
     @property
+    @abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         ...
 
