@@ -125,7 +125,7 @@ class LocalPropertyCalc(ABC, Generic[_T]):
 class MolPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
-        self, data: DataPacket[MolDatBase], prev_value: Optional[_T] = None
+        self, data: DataPacketE[MolDatBase], prev_value: Optional[_T] = None
     ) -> Optional[_T]:
         ...
 
@@ -134,7 +134,7 @@ class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
         self,
-        data: DataPacket[MolDatBase],
+        data: DataPacketE[MolDatBase],
         rxn: ReactionExplicit,
         prev_value: Optional[_T] = None,
     ) -> Optional[_T]:
@@ -144,7 +144,7 @@ class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
 class OpPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
-        self, data: DataPacket[OpDatBase], prev_value: Optional[_T] = None
+        self, data: DataPacketE[OpDatBase], prev_value: Optional[_T] = None
     ) -> Optional[_T]:
         ...
 
@@ -153,7 +153,7 @@ class OpPropertyFromRxnCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
         self,
-        data: DataPacket[OpDatBase],
+        data: DataPacketE[OpDatBase],
         rxn: ReactionExplicit,
         prev_value: Optional[_T] = None,
     ) -> Optional[_T]:
