@@ -63,6 +63,64 @@ class LocalPropertyCalc(ABC, Generic[_T]):
     def resolver(self) -> MetaDataResolverFunc[_T]:
         ...
 
+    @final
+    def __and__(
+        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+    ) -> "PropertyCompositor":
+        return MergePropertyCompositor(
+            _as_property_compositor(self), _as_property_compositor(other)
+        )
+
+    @final
+    def __add__(
+        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.add,
+            _as_property_compositor(self),
+            _as_property_compositor(other),
+        )
+
+    @final
+    def __sub__(
+        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.sub,
+            _as_property_compositor(self),
+            _as_property_compositor(other),
+        )
+
+    @final
+    def __mul__(
+        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.mul,
+            _as_property_compositor(self),
+            _as_property_compositor(other),
+        )
+
+    @final
+    def __truediv__(
+        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.truediv,
+            _as_property_compositor(self),
+            _as_property_compositor(other),
+        )
+
+    @final
+    def __pow__(
+        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.pow,
+            _as_property_compositor(self),
+            _as_property_compositor(other),
+        )
+
 
 class MolPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
@@ -179,15 +237,7 @@ class ReactionFilterBase(ABC):
             LocalPropertyCalc,
         ],
     ) -> "RxnAnalysisStep":
-        if isinstance(other, PropertyCompositor):
-            return RxnAnalysisStepFilter(self) >> RxnAnalysisStepProp(other)
-        elif isinstance(other, ReactionFilterBase):
-            return RxnAnalysisStepFilter(self) >> RxnAnalysisStepFilter(other)
-        elif isinstance(other, RxnAnalysisStep):
-            return RxnAnalysisStepFilter(self) >> other
-        raise TypeError(
-            f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
-        )
+        return _as_rxn_analysis_step(self) >> _as_rxn_analysis_step(other)
 
 
 @dataclass(frozen=True)
@@ -257,45 +307,62 @@ class PropertyCompositor(ABC):
         ...
 
     @final
-    def __and__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        return MergePropertyCompositor(self, other)
+    def __and__(
+        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+    ) -> "PropertyCompositor":
+        return MergePropertyCompositor(self, _as_property_compositor(other))
 
     @final
-    def __add__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        return FunctionPropertyCompositor(operator.add, self, other)
+    def __add__(
+        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.add, self, _as_property_compositor(other)
+        )
 
     @final
-    def __sub__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        return FunctionPropertyCompositor(operator.sub, self, other)
+    def __sub__(
+        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.sub, self, _as_property_compositor(other)
+        )
 
     @final
-    def __mul__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        return FunctionPropertyCompositor(operator.mul, self, other)
+    def __mul__(
+        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.mul, self, _as_property_compositor(other)
+        )
 
     @final
-    def __truediv__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        return FunctionPropertyCompositor(operator.truediv, self, other)
+    def __truediv__(
+        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.truediv, self, _as_property_compositor(other)
+        )
 
     @final
-    def __pow__(self, other: "PropertyCompositor") -> "PropertyCompositor":
-        return FunctionPropertyCompositor(operator.pow, self, other)
+    def __pow__(
+        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+    ) -> "PropertyCompositor":
+        return FunctionPropertyCompositor(
+            operator.pow, self, _as_property_compositor(other)
+        )
 
     @final
     def __rshift__(
         self,
         other: Union[
-            "RxnAnalysisStep", "PropertyCompositor", ReactionFilterBase
+            "RxnAnalysisStep",
+            "PropertyCompositor",
+            ReactionFilterBase,
+            LocalPropertyCalc,
         ],
     ) -> "RxnAnalysisStep":
-        if isinstance(other, PropertyCompositor):
-            return RxnAnalysisStepProp(self) >> RxnAnalysisStepProp(other)
-        elif isinstance(other, ReactionFilterBase):
-            return RxnAnalysisStepProp(self) >> RxnAnalysisStepFilter(other)
-        elif isinstance(other, RxnAnalysisStep):
-            return RxnAnalysisStepProp(self) >> other
-        raise TypeError(
-            f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
-        )
+        return _as_rxn_analysis_step(self) >> _as_rxn_analysis_step(other)
 
     @abstractmethod
     @property
@@ -615,17 +682,18 @@ class RxnAnalysisStep(ABC):
     @final
     def __rshift__(
         self,
-        other: Union["RxnAnalysisStep", PropertyCompositor, ReactionFilterBase],
-    ) -> "RxnAnalysisStepCompound":
-        if isinstance(other, PropertyCompositor):
-            return self >> RxnAnalysisStepProp(other)
-        elif isinstance(other, ReactionFilterBase):
-            return self >> RxnAnalysisStepFilter(other)
-        elif isinstance(other, RxnAnalysisStep):
+        other: Union[
+            "RxnAnalysisStep",
+            PropertyCompositor,
+            ReactionFilterBase,
+            LocalPropertyCalc,
+        ],
+    ) -> "RxnAnalysisStep":
+        if isinstance(self, RxnAnalysisStep) and isinstance(
+            other, RxnAnalysisStep
+        ):
             return RxnAnalysisStepCompound(self, other)
-        raise TypeError(
-            f"Argument is of type {type(other)}, must be of type RxnAnalysisStep, PropertyCompositor, or ReactionFilterBase"
-        )
+        return _as_rxn_analysis_step(self) >> _as_rxn_analysis_step(other)
 
     @abstractmethod
     @property
@@ -817,4 +885,14 @@ def _as_rxn_analysis_step(
         return arg
     raise TypeError(
         f"Argument is of type {type(arg)}, must be of type RxnAnalysisStep, PropertyCompositor, ReactionFilterBase, or LocalPropertyCalc"
+    )
+
+
+def _compose_property_function(
+    func: Callable[[Any, Any], Any],
+    comp1: PropertyCompositor,
+    comp2: PropertyCompositor,
+) -> PropertyCompositor:
+    return FunctionPropertyCompositor(
+        func, _as_property_compositor(comp1), _as_property_compositor(comp2)
     )
