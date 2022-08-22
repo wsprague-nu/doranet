@@ -780,8 +780,7 @@ def metalib_to_rxn_meta(
 class RxnAnalysisStepProp(RxnAnalysisStep):
     __slots__ = ("_prop",)
 
-    def __init__(self, arg: PropertyCompositor) -> None:
-        self._prop = arg
+    _prop: PropertyCompositor
 
     def execute(
         self, rxns: Iterable[tuple[ReactionExplicit, bool]]
