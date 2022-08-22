@@ -237,7 +237,7 @@ class ReactionFilterBase(ABC):
             LocalPropertyCalc,
         ],
     ) -> "RxnAnalysisStep":
-        return _as_rxn_analysis_step(self) >> _as_rxn_analysis_step(other)
+        return as_rxn_analysis_step(self) >> as_rxn_analysis_step(other)
 
 
 @dataclass(frozen=True)
@@ -362,7 +362,7 @@ class PropertyCompositor(ABC):
             LocalPropertyCalc,
         ],
     ) -> "RxnAnalysisStep":
-        return _as_rxn_analysis_step(self) >> _as_rxn_analysis_step(other)
+        return as_rxn_analysis_step(self) >> as_rxn_analysis_step(other)
 
     @abstractmethod
     @property
@@ -693,7 +693,7 @@ class RxnAnalysisStep(ABC):
             other, RxnAnalysisStep
         ):
             return RxnAnalysisStepCompound(self, other)
-        return _as_rxn_analysis_step(self) >> _as_rxn_analysis_step(other)
+        return as_rxn_analysis_step(self) >> as_rxn_analysis_step(other)
 
     @abstractmethod
     @property
@@ -867,7 +867,7 @@ def _as_property_compositor(
     )
 
 
-def _as_rxn_analysis_step(
+def as_rxn_analysis_step(
     arg: Union[
         RxnAnalysisStep,
         PropertyCompositor,

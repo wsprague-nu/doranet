@@ -60,9 +60,11 @@ from pickaxe_generic.filters import (
     ReplaceBlacklist,
 )
 from pickaxe_generic.metadata import (
+    LocalPropertyCalc,
     PropertyCompositor,
     ReactionFilterBase,
     RxnAnalysisStep,
+    as_rxn_analysis_step,
 )
 from pickaxe_generic.network import (
     ChemNetwork,
@@ -1193,9 +1195,20 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         # mol_filter: Optional[MolFilter] = None,
         recipe_filter: Optional[RecipeFilter] = None,
         recipe_ranker: Optional[RecipeRanker] = None,
-        mc_local: Optional[RxnAnalysisStep] = None,
+        mc_local: Optional[
+            Union[
+                RxnAnalysisStep,
+                PropertyCompositor,
+                ReactionFilterBase,
+                LocalPropertyCalc,
+            ]
+        ] = None,
         # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
+
+        rxn_analysis_task: Optional[RxnAnalysisStep] = None
+        if mc_local is not None:
+            rxn_analysis_task = as_rxn_analysis_step(mc_local)
 
         if heap_size is not None and beam_size is not None:
             ValueError(
