@@ -36,8 +36,8 @@ from pickaxe_generic.utils import logreduce
 class MetaSink(Protocol):
     __slots__ = ()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         ...
 
@@ -120,6 +120,18 @@ class LocalPropertyCalc(ABC, Generic[_T]):
             _as_property_compositor(self),
             _as_property_compositor(other),
         )
+
+    @final
+    def __rshift__(
+        self,
+        other: Union[
+            "RxnAnalysisStep",
+            "PropertyCompositor",
+            "ReactionFilterBase",
+            "LocalPropertyCalc",
+        ],
+    ) -> "RxnAnalysisStep":
+        return as_rxn_analysis_step(self) >> as_rxn_analysis_step(other)
 
 
 class MolPropertyCalc(LocalPropertyCalc[_T]):
