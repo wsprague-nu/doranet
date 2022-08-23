@@ -61,6 +61,8 @@ from pickaxe_generic.filters import (
 )
 from pickaxe_generic.metadata import (
     LocalPropertyCalc,
+    MetaDataResolverFunc,
+    MetaUpdateResolver,
     PropertyCompositor,
     ReactionFilterBase,
     RxnAnalysisStep,
@@ -1147,10 +1149,10 @@ def execute_reaction(
         raise ValueError("ReactionJob has non-None item components!")
     product_packets = rxn_job.operator.item(reactants)  # type: ignore
     reactant_datapackets = tuple(
-        DataPacketE(p.i, p.item, None) for p in rxn_job.op_args
+        DataPacketE(p.i, p.item, p.meta) for p in rxn_job.op_args
     )
     operator_datapacket = DataPacketE(
-        rxn_job.operator.i, rxn_job.operator.item, None
+        rxn_job.operator.i, rxn_job.operator.item, rxn_job.operator.meta
     )
     for rxn_products in product_packets:
         product_datapackets = tuple(
@@ -1209,12 +1211,15 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 LocalPropertyCalc,
             ]
         ] = None,
+        mc_update: Optional[MetaUpdateResolver] = None,
         # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
         rxn_analysis_task: Optional[RxnAnalysisStep] = None
         if mc_local is not None:
             rxn_analysis_task = as_rxn_analysis_step(mc_local)
+        if mc_update is None:
+            mc_update = MetaUpdateResolver({}, {}, {})
 
         if heap_size is not None and beam_size is not None:
             ValueError(
@@ -1346,7 +1351,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 )
 
                 # add reaction to network
-                network.add_rxn(rxn_implicit, meta=rxn.reaction_meta)
+                rxn_index = network.add_rxn(rxn_implicit)
 
                 updated_mols_set = set()
                 updated_ops_set = set()
@@ -1355,6 +1360,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for m_dat in zip(reactants_indices, rxn.reactants):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
+                            if key in mc_update.mol_updates:
+                                value = mc_update.mol_updates[key](
+                                    value, network.mol_meta(m_dat[0], key)
+                                )
                             if network.mol_meta(m_dat[0], key) != value:
                                 network.mol_meta(m_dat[0], key, value)
                                 if key in total_keyset.molecule_keys:
@@ -1364,6 +1373,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 for m_dat in zip(products_indices, rxn.products):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
+                            if key in mc_update.mol_updates:
+                                value = mc_update.mol_updates[key](
+                                    value, network.mol_meta(m_dat[0], key)
+                                )
                             if network.mol_meta(m_dat[0], key) != value:
                                 network.mol_meta(m_dat[0], key, value)
                                 if key in total_keyset.molecule_keys:
@@ -1372,10 +1385,25 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 # update operator metadata
                 if rxn.operator.meta is not None:
                     for key, value in rxn.operator.meta.items():
+                        if key in mc_update.op_updates:
+                            value = mc_update.op_updates[key](
+                                value,
+                                network.op_meta(rxn_implicit.operator, key),
+                            )
                         if network.op_meta(rxn_implicit.operator, key) != value:
                             network.op_meta(rxn_implicit.operator, key, value)
                             if key in total_keyset.operator_keys:
                                 updated_ops_set.add(rxn_implicit.operator)
+
+                # update reaction metadata
+                if rxn.reaction_meta is not None:
+                    for key, value in rxn.reaction_meta.items():
+                        if key in mc_update.rxn_updates:
+                            value = mc_update.rxn_updates[key](
+                                value, network.rxn_meta(rxn_index, key)
+                            )
+                        if network.rxn_meta(rxn_index, key) != value:
+                            network.rxn_meta(rxn_index, key, value)
 
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)

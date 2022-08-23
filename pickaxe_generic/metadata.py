@@ -840,43 +840,6 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
         return self._arg.meta_required
 
 
-class MetaUpdate(ABC):
-    @abstractmethod
-    def __call__(
-        self, reaction: ReactionExplicit, network: ChemNetwork
-    ) -> Optional[ReactionExplicit]:
-        ...
-
-    @final
-    def __add__(self, other: "MetaUpdate") -> "MetaUpdate":
-        return MetaUpdateMultiple((self, other))
-
-
-@final
-class MetaUpdateMultiple(MetaUpdate):
-    __slots__ = "_composed_updates"
-    _composed_updates: tuple[MetaUpdate, ...]
-
-    def __init__(self, update_list: Collection[MetaUpdate]) -> None:
-        updates: list[MetaUpdate] = []
-        for update in update_list:
-            if isinstance(update, MetaUpdateMultiple):
-                updates.extend(update._composed_updates)
-            else:
-                updates.append(update)
-        self._composed_updates = tuple(updates)
-
-    def __call__(
-        self, reaction: ReactionExplicit, network: ChemNetwork
-    ) -> ReactionExplicit:
-        cur_reaction = reaction
-        for update in self._composed_updates:
-            new_reaction = update(cur_reaction, network)
-            if new_reaction is not None:
-                cur_reaction = new_reaction
-        return cur_reaction
-
-
 def _as_property_compositor(
     arg: Union[PropertyCompositor, LocalPropertyCalc]
 ) -> PropertyCompositor:
@@ -930,3 +893,12 @@ def _compose_property_function(
     return FunctionPropertyCompositor(
         func, _as_property_compositor(comp1), _as_property_compositor(comp2)
     )
+
+
+@dataclass(frozen=True)
+class MetaUpdateResolver:
+    __slots__ = ("mol_updates", "op_updates", "rxn_updates")
+
+    mol_updates: Mapping[Hashable, MetaDataResolverFunc]
+    op_updates: Mapping[Hashable, MetaDataResolverFunc]
+    rxn_updates: Mapping[Hashable, MetaDataResolverFunc]
