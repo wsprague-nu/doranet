@@ -1361,9 +1361,11 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:
-                                value = mc_update.mol_updates[key](
-                                    value, network.mol_meta(m_dat[0], key)
-                                )
+                                cur_val = network.mol_meta(m_dat[0], key)
+                                if cur_val is not None:
+                                    value = mc_update.mol_updates[key](
+                                        value, cur_val
+                                    )
                             if network.mol_meta(m_dat[0], key) != value:
                                 network.mol_meta(m_dat[0], key, value)
                                 if key in total_keyset.molecule_keys:
@@ -1374,9 +1376,11 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:
-                                value = mc_update.mol_updates[key](
-                                    value, network.mol_meta(m_dat[0], key)
-                                )
+                                cur_val = network.mol_meta(m_dat[0], key)
+                                if cur_val is not None:
+                                    value = mc_update.mol_updates[key](
+                                        value, cur_val
+                                    )
                             if network.mol_meta(m_dat[0], key) != value:
                                 network.mol_meta(m_dat[0], key, value)
                                 if key in total_keyset.molecule_keys:
@@ -1386,10 +1390,14 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 if rxn.operator.meta is not None:
                     for key, value in rxn.operator.meta.items():
                         if key in mc_update.op_updates:
-                            value = mc_update.op_updates[key](
-                                value,
-                                network.op_meta(rxn_implicit.operator, key),
+                            cur_val = network.op_meta(
+                                rxn_implicit.operator, key
                             )
+                            if cur_val is not None:
+                                value = mc_update.op_updates[key](
+                                    value,
+                                    network.op_meta(rxn_implicit.operator, key),
+                                )
                         if network.op_meta(rxn_implicit.operator, key) != value:
                             network.op_meta(rxn_implicit.operator, key, value)
                             if key in total_keyset.operator_keys:
@@ -1399,9 +1407,11 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 if rxn.reaction_meta is not None:
                     for key, value in rxn.reaction_meta.items():
                         if key in mc_update.rxn_updates:
-                            value = mc_update.rxn_updates[key](
-                                value, network.rxn_meta(rxn_index, key)
-                            )
+                            cur_val = network.rxn_meta(rxn_index, key)
+                            if cur_val is not None:
+                                value = mc_update.rxn_updates[key](
+                                    value, cur_val
+                                )
                         if network.rxn_meta(rxn_index, key) != value:
                             network.rxn_meta(rxn_index, key, value)
 
