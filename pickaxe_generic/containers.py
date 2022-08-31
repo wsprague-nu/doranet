@@ -17,20 +17,11 @@ from typing import (
     Iterable,
     Iterator,
     Optional,
-    TypeVar,
     Union,
     final,
-    overload,
 )
 
-from pickaxe_generic.datatypes import (
-    DataUnit,
-    DataUnitGen,
-    Identifier,
-    MolDatBase,
-    OpDatBase,
-    RxnDatBase,
-)
+from pickaxe_generic.datatypes import DataUnitGen, Identifier
 
 
 class ObjectLibrary(ABC, Generic[DataUnitGen]):
