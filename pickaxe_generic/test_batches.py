@@ -46,7 +46,9 @@ for smarts in op_kekule_smarts:
 strategy = PriorityQueueStrategyBasic(network)
 
 strategy.expand(
-    max_recipes=10, heap_size=10, beam_size=2, recipe_filter=CoreactantFilter(coreagents)
+    max_recipes=None,
+    heap_size=5,
+    recipe_filter=CoreactantFilter(coreagents),
 )
 
 print(network)
