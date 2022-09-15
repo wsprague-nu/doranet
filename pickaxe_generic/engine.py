@@ -39,6 +39,8 @@ from pickaxe_generic.datatypes import (
 )
 from pickaxe_generic.strategies import CartesianStrategy
 
+from . import interfaces
+
 
 def create_engine(speed: int = 5) -> "NetworkEngine":
     """
@@ -58,76 +60,7 @@ def create_engine(speed: int = 5) -> "NetworkEngine":
     return NetworkEngineBasic(speed=speed)
 
 
-class NetworkEngine(ABC):
-    """
-    Interface representing an object which serves up other objects based on
-    configuration parameters.
-
-    Classes implementing this interface determine which type of network objects
-    are constructed based on configuration options.
-    """
-
-    @property
-    @abstractmethod
-    def speed(self) -> int:
-        """
-        Defined speed of engine configuration.
-        """
-
-    @abstractmethod
-    def Mol(
-        self,
-        molecule: Union[RDKitMol, str, bytes],
-        sanitize: bool = True,
-        neutralize: bool = False,
-    ) -> MolDatRDKit:
-        """
-        Initializes a MolDatRDKit object of relevant type.
-        """
-
-    @abstractmethod
-    def Op(self, operator: Union[RDKitRxn, str, bytes]) -> OpDatRDKit:
-        """
-        Initializes an OpDatRDKit object of relevant type.
-        """
-
-    @abstractmethod
-    def Rxn(
-        self,
-        operator: Optional[Identifier] = None,
-        reactants: Optional[Iterable[Identifier]] = None,
-        products: Optional[Iterable[Identifier]] = None,
-        reaction: Optional[bytes] = None,
-    ) -> RxnDatBase:
-        """
-        Initializes a RxnDatBase object of relevant type.
-        """
-
-    @abstractmethod
-    def Libs(
-        self,
-    ) -> Tuple[
-        ObjectLibrary[MolDatBase],
-        ObjectLibrary[OpDatBase],
-        ObjectLibrary[RxnDatBase],
-    ]:
-        """
-        Initializes the three basic ObjectLibraries necessary to run a Strategy.
-        """
-
-    @abstractmethod
-    def CartesianStrategy(
-        self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
-    ) -> CartesianStrategy:
-        """
-        Initializes a CartesianStrategy of relevant type.
-        """
-
-
-class NetworkEngineBasic(NetworkEngine):
+class NetworkEngineBasic(interfaces.NetworkEngine):
     """
     Implements NetworkEngine class for different speed efficiencies.  Default
     for module.

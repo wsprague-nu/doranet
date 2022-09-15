@@ -19,6 +19,8 @@ Classes:
 from __future__ import annotations
 
 import builtins
+import collections.abc
+import typing
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from io import BytesIO
@@ -48,8 +50,7 @@ from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
 from rdkit.Chem.rdmolops import AssignStereochemistry, Kekulize, SanitizeMol
 
-if TYPE_CHECKING:
-    from pickaxe_generic.engine import NetworkEngine
+from . import interfaces
 
 # some code to make loads more safe to arbitrary code execution
 # necessary since external data from a database may be input
@@ -87,11 +88,8 @@ def loads(string_in: bytes) -> Any:
     #     """
 
 
-DataUnitGen = TypeVar("DataUnitGen", bound=DataUnit)
-
-
 @final
-class MolDatBasicV1(MolDatRDKit):
+class MolDatBasicV1(interfaces.MolDatRDKit):
     """
     Version of MolDatRDKit which caches only SMILES and blob.
 
@@ -132,14 +130,11 @@ class MolDatBasicV1(MolDatRDKit):
         return self._smiles
 
     @property
-    def uid(self) -> Identifier:
+    def uid(self) -> interfaces.Identifier:
         return self._smiles
 
     def __repr__(self) -> str:
         return f"MolDatBasic('{self.smiles}')"
-
-    def __getstate__(self) -> bytes:
-        return self.blob
 
     def __setstate__(self, arg: bytes) -> None:
         self._blob = arg
@@ -147,7 +142,7 @@ class MolDatBasicV1(MolDatRDKit):
 
 
 @final
-class MolDatBasicV2(MolDatRDKit):
+class MolDatBasicV2(interfaces.MolDatRDKit):
     """
     Version of MolDatRDKit which caches all values.
 
@@ -203,101 +198,8 @@ class MolDatBasicV2(MolDatRDKit):
         return f'MolDatBasic("{self.smiles}")'
 
 
-class OpDatBase(DataUnit):
-    """
-    Interface representing operator data.
-
-    Classes implementing this interface manage information about a single
-    operator which acts on MolDatBase and can generate RxnDatBase objects.
-
-    Methods
-    -------
-    compat
-    __call__
-    __len__
-    """
-
-    __slots__ = ()
-
-    @abstractmethod
-    def compat(self, mol: MolDatBase, arg: int) -> bool:
-        """
-        Determine compatibility of MolDat object with operator argument.
-
-        Parameters
-        ----------
-        mol : MolDatBase
-            MolDat object which is to be compared.
-        arg : int
-            Index of argument which is to be compared.
-
-        Returns
-        -------
-        bool
-            True if MolDat may be passed as argument arg to operator.
-        """
-
-    @abstractmethod
-    def __call__(
-        self, reactants: Sequence[MolDatBase]
-    ) -> Iterable[Iterable[MolDatBase]]:
-        """
-        React a sequence of MolDat objects using internal operator.
-
-        Return a sequence of RxnDat objects which contain metadata about
-        potential results.
-
-        Parameters
-        ----------
-        reactants : Sequence[MolDatBase]
-            Reactants which match the arguments in the operator.
-
-        Returns
-        -------
-        Iterable[RxnDatBase]
-            Iterable of reactions which are produced by applying the operator.
-        """
-
-    @abstractmethod
-    def __len__(self) -> int:
-        """Return number of arguments in operator."""
-
-
-class OpDatRDKit(OpDatBase):
-    """
-    Interface representing an RDKit SMARTS operator.
-
-    Agents are treated as arguments following reagent arguments.  Classes
-    implementing this interface manage information about a single
-    rdkit-compatible SMARTS operator.
-
-    Attributes
-    ----------
-    smarts : str
-        SMARTS string representing operator.
-    rdkitrxn : RDKitRxn
-        RDKit reaction object.
-    """
-
-    __slots__ = ()
-
-    @abstractmethod
-    def __init__(self, operator: RDKitMol | str | bytes):
-        pass
-
-    @property
-    @abstractmethod
-    def smarts(self) -> str:
-        """Return SMARTS string encoding operator information."""
-
-    @property
-    @abstractmethod
-    def rdkitrxn(self) -> RDKitRxn:
-        """Return RDKit reaction object."""
-
-
 @final
-class OpDatBasic(OpDatRDKit):
+class OpDatBasic(interfaces.OpDatRDKit):
     """
     Minimal class implementing the OpDatRDKit interface.
 
@@ -334,7 +236,7 @@ class OpDatBasic(OpDatRDKit):
 
     _rdkitrxn: RDKitRxn
     _templates: Optional[Tuple[RDKitMol, ...]]
-    _engine: NetworkEngine
+    _engine: interfaces.NetworkEngine
 
     _blob: Optional[bytes]
     _smarts: Optional[str]
@@ -344,7 +246,7 @@ class OpDatBasic(OpDatRDKit):
     def __init__(
         self,
         operator: RDKitMol | str | bytes,
-        engine: NetworkEngine,
+        engine: interfaces.NetworkEngine,
         kekulize_before_operation: bool = False,
     ) -> None:
         if isinstance(operator, RDKitRxn):
@@ -387,10 +289,10 @@ class OpDatBasic(OpDatRDKit):
             self._smarts = ReactionToSmarts(self._rdkitrxn)
         return self._smarts
 
-    def compat(self, mol: MolDatBase, arg: int) -> bool:
+    def compat(self, mol: interfaces.MolDatBase, arg: int) -> bool:
         if self._templates is None:
             self._templates = self._build_templates()
-        if isinstance(mol, MolDatRDKit):
+        if isinstance(mol, interfaces.MolDatRDKit):
             tempmol = mol.rdkitmol
             if self._kekulize:
                 tempmol = BuildMol(tempmol)
@@ -412,12 +314,12 @@ class OpDatBasic(OpDatRDKit):
             raise err
 
     def __call__(
-        self, reactants: Sequence[MolDatBase]
-    ) -> Tuple[Tuple[MolDatBase, ...], ...]:
+        self, reactants: Sequence[interfaces.MolDatBase]
+    ) -> Tuple[Tuple[interfaces.MolDatBase, ...], ...]:
         rdkitmols: List[RDKitMol] = [
             reactant.rdkitmol
             for reactant in reactants
-            if isinstance(reactant, MolDatRDKit)
+            if isinstance(reactant, interfaces.MolDatRDKit)
         ]
         if self._kekulize:
             rdkitmols = [BuildMol(rdkitmol) for rdkitmol in rdkitmols]
@@ -457,54 +359,8 @@ class OpDatBasic(OpDatRDKit):
         return sval
 
 
-class RxnDatBase(DataUnit):
-    """
-    Interface representing reaction data.
-
-    Class implementing this interface manage information about a single reaction
-    between several molecules to produce several molecules, with an associated
-    operator.
-
-    Attributes
-    ----------
-    operator : Identifier
-        Operator object ID.
-    products : Iterable[Identifier]
-        Products of reaction IDs.
-    reactants : Iterable[Identifier]
-        Reactants involved in reaction IDs.
-    """
-
-    __slots__ = ()
-
-    @abstractmethod
-    def __init__(
-        self,
-        operator: Optional[Identifier] = None,
-        reactants: Optional[Iterable[Identifier]] = None,
-        products: Optional[Iterable[Identifier]] = None,
-        reaction: Optional[bytes] = None,
-    ) -> None:
-        pass
-
-    @property
-    @abstractmethod
-    def operator(self) -> Identifier:
-        """Return ID of operator involved in reaction."""
-
-    @property
-    @abstractmethod
-    def products(self) -> Iterable[Identifier]:
-        """Return IDs of products involved in reaction."""
-
-    @property
-    @abstractmethod
-    def reactants(self) -> Iterable[Identifier]:
-        """Return IDs of reactants involved in reaction."""
-
-
-@final
-class RxnDatBasic(RxnDatBase):
+@typing.final
+class RxnDatBasic(interfaces.RxnDatBase):
     """
     Minimal class implementing the RxnDatBase interface.
 
@@ -537,25 +393,35 @@ class RxnDatBasic(RxnDatBase):
 
     __slots__ = ("_blob", "_operator", "_products", "_reactants", "_uid")
 
-    _operator: Identifier
-    _products: FrozenSet[Identifier]
-    _reactants: FrozenSet[Identifier]
+    _operator: interfaces.Identifier
+    _products: frozenset[interfaces.Identifier]
+    _reactants: frozenset[interfaces.Identifier]
 
-    _blob: Optional[bytes]
-    _uid: Optional[
-        Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]
+    _blob: typing.Optional[bytes]
+    _uid: typing.Optional[
+        tuple[
+            interfaces.Identifier,
+            tuple[interfaces.Identifier, ...],
+            tuple[interfaces.Identifier, ...],
+        ]
     ]
 
     def __init__(
         self,
-        operator: Optional[Identifier] = None,
-        reactants: Optional[Iterable[Identifier]] = None,
-        products: Optional[Iterable[Identifier]] = None,
-        reaction: Optional[bytes] = None,
+        operator: typing.Optional[interfaces.Identifier] = None,
+        reactants: typing.Optional[
+            collections.abc.Iterable[interfaces.Identifier]
+        ] = None,
+        products: typing.Optional[
+            collections.abc.Iterable[interfaces.Identifier]
+        ] = None,
+        reaction: typing.Optional[bytes] = None,
     ) -> None:
         if reaction is not None:
-            data: Tuple[
-                Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]
+            data: tuple[
+                interfaces.Identifier,
+                tuple[interfaces.Identifier, ...],
+                tuple[interfaces.Identifier, ...],
             ] = loads(reaction)
             self._operator = data[0]
             self._products = frozenset(data[1])
@@ -582,21 +448,25 @@ class RxnDatBasic(RxnDatBase):
         return self._blob
 
     @property
-    def operator(self) -> Identifier:
+    def operator(self) -> interfaces.Identifier:
         return self._operator
 
     @property
-    def products(self) -> FrozenSet[Identifier]:
+    def products(self) -> frozenset[interfaces.Identifier]:
         return self._products
 
     @property
-    def reactants(self) -> FrozenSet[Identifier]:
+    def reactants(self) -> frozenset[interfaces.Identifier]:
         return self._reactants
 
     @property
     def uid(
         self,
-    ) -> Tuple[Identifier, Tuple[Identifier, ...], Tuple[Identifier, ...]]:
+    ) -> tuple[
+        interfaces.Identifier,
+        tuple[interfaces.Identifier, ...],
+        tuple[interfaces.Identifier, ...],
+    ]:
         if self._uid is None:
             self._uid = (
                 self._operator,
@@ -634,14 +504,14 @@ class MetaKeyPacket:
 
 
 @dataclass(frozen=True)
-class DataPacket(Generic[DataUnitGen]):
+class DataPacket(Generic[interfaces.T_data]):
     __slots__ = ("i", "item", "meta")
     i: int
-    item: Optional[DataUnitGen]
+    item: Optional[interfaces.T_data]
     meta: Optional[Mapping]
 
 
 @dataclass(frozen=True)
-class DataPacketE(DataPacket, Generic[DataUnitGen]):
+class DataPacketE(DataPacket, Generic[interfaces.T_data]):
     __slots__ = ("item",)
-    item: DataUnitGen
+    item: interfaces.T_data

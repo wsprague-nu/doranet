@@ -191,67 +191,6 @@ def _chunk_generator(
         yield chain((first_el,), chunk_it)
 
 
-class ExpansionStrategy(ABC):
-    """
-    Interface representing a network expansion strategy.
-
-    Classes implementing this interface use information from a molecule and
-    operator library to generate new reactions, which are then output to a
-    reaction library.
-    """
-
-    __slots__ = ()
-
-    @abstractmethod
-    def __init__(
-        self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
-    ) -> None:
-        pass
-
-    @abstractmethod
-    def expand(
-        self,
-        max_rxns: Optional[int] = None,
-        max_mols: Optional[int] = None,
-        num_gens: Optional[int] = None,
-        custom_filter: Optional[
-            Callable[
-                [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
-            ]
-        ] = None,
-        custom_uid_prefilter: Optional[
-            Callable[[Identifier, Sequence[Identifier]], bool]
-        ] = None,
-    ) -> None:
-        """
-        Expand molecule library.
-
-        Parameters
-        ----------
-        max_rxns : Optional[int] (default: None)
-            Limit of new reactions to add.  If None, no limit.
-        max_mols : Optional[int] (default: None)
-            Limit of new molecules to add.  If None, no limit.
-        num_gens : Optional[int] (default: None)
-            Maximum generations of reactions to enumerate.  If None, no limit.
-        custom_filter: Optional[Callable[[OpDatBase, Sequence[MolDatBase],
-                       Sequence[MolDatBase]], bool]] (default: None)
-            Filter which selects which reactions to retain.
-        custom_uid_prefilter: Optional[Callable[[Identifier,
-                              Sequence[Identifier]], bool]]
-            Filter which selects which operator UID and reactant UIDs to retain.
-        """
-
-    @abstractmethod
-    def refresh(self) -> None:
-        """
-        Refresh active molecules and operators from attached libraries.
-        """
-
-
 @final
 class CartesianStrategy(ExpansionStrategy):
     """

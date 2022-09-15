@@ -21,106 +21,11 @@ from typing import (
     final,
 )
 
-from pickaxe_generic.datatypes import DataUnitGen, Identifier
-
-
-class ObjectLibrary(ABC, Generic[DataUnitGen]):
-    """
-    Interface representing library of data.
-
-    Classes implementing this interface manage multiple instances of a hashable
-    object, and may have responsibility for synchronization with external
-    databases which may also manage this information (be volatile).  Contained
-    objects must have a "uid" attribute which contains a hashable unique id.
-
-    Current implementations assume that this library will never shrink or remove
-    entries.
-    """
-
-    __slots__ = ()
-
-    @abstractmethod
-    def add(self, obj: Union[Iterable[DataUnitGen], DataUnitGen]) -> None:
-        """
-        Add an object or multiple objects to the library.
-
-        This function does not add the new item if it has the same UID as an
-        item already in the library.
-
-        Parameters
-        ----------
-        obj : Union[Iterable[DataUnit], DataUnit]
-            Object(s) to be added.
-        """
-
-    @abstractmethod
-    def ids(self) -> Iterable[Identifier]:
-        """
-        Return a set of keys used in the library.
-
-        Returns
-        -------
-        Iterable[Identifier]
-            Ids of objects in the library.
-        """
-
-    @abstractmethod
-    def __contains__(self, item: DataUnitGen) -> bool:
-        """
-        Check if ObjectLibrary contains an object where object.uid == item.uid.
-
-        Parameters
-        ----------
-        item : DataUnit
-            Item to be checked against internal object list.
-
-        Returns
-        -------
-        bool
-            True if ObjectLibrary contains object with same UID.
-        """
-
-    @abstractmethod
-    def __getitem__(self, item: Identifier) -> DataUnitGen:
-        """
-        Return object where object.uid == item returns True.
-
-        Parameters
-        ----------
-        item : Identifier
-            Item to be checked against internal object list.
-
-        Returns
-        -------
-        DataUnit
-            Object where uid attribute is equal to item.
-        """
-
-    @abstractmethod
-    def __iter__(self) -> Iterator[DataUnitGen]:
-        """
-        Return an iterator over the objects contained in the ObjectLibrary.
-
-        Returns
-        -------
-        Iterator[DataUnitGen]
-            Iterator over objects contained in the ObjectLibrary.
-        """
-
-    @abstractmethod
-    def __len__(self) -> int:
-        """
-        Return the number of items contained in the ObjectLibrary.
-
-        Returns
-        -------
-        int
-            Number of items in ObjectLibrary.
-        """
+from . import interfaces
 
 
 @final
-class ObjectLibraryBasic(ObjectLibrary, Generic[DataUnitGen]):
+class ObjectLibraryBasic(interfaces.ObjectLibrary, Generic[interfaces.T_data]):
     """
     Minimal class implementing the ObjectLibrary interface.
 
@@ -134,11 +39,13 @@ class ObjectLibraryBasic(ObjectLibrary, Generic[DataUnitGen]):
 
     __slots__ = ("_lookup",)
 
-    _lookup: Dict[Identifier, DataUnitGen]
+    _lookup: Dict[interfaces.Identifier, interfaces.T_data]
 
     def __init__(
         self,
-        objects: Optional[Union[Iterable[DataUnitGen], DataUnitGen]] = None,
+        objects: Optional[
+            Union[Iterable[interfaces.T_data], interfaces.T_data]
+        ] = None,
     ) -> None:
         self._lookup = {}
         if isinstance(objects, Iterable):
@@ -147,23 +54,25 @@ class ObjectLibraryBasic(ObjectLibrary, Generic[DataUnitGen]):
         elif objects is not None:
             self._lookup[objects.uid] = objects
 
-    def add(self, obj: Union[Iterable[DataUnitGen], DataUnitGen]) -> None:
+    def add(
+        self, obj: Union[Iterable[interfaces.T_data], interfaces.T_data]
+    ) -> None:
         if isinstance(obj, Iterable):
             for item in obj:
                 self._lookup[item.uid] = item
         else:
             self._lookup[obj.uid] = obj
 
-    def ids(self) -> Generator[Identifier, None, None]:
+    def ids(self) -> Generator[interfaces.Identifier, None, None]:
         return (key for key in self._lookup)
 
-    def __contains__(self, item: DataUnitGen) -> bool:
+    def __contains__(self, item: interfaces.T_data) -> bool:
         return item.uid in self._lookup
 
-    def __getitem__(self, item: Identifier) -> DataUnitGen:
+    def __getitem__(self, item: interfaces.Identifier) -> interfaces.T_data:
         return self._lookup[item]
 
-    def __iter__(self) -> Iterator[DataUnitGen]:
+    def __iter__(self) -> Iterator[interfaces.T_data]:
         return iter(self._lookup.values())
 
     def __len__(self) -> int:
@@ -171,7 +80,7 @@ class ObjectLibraryBasic(ObjectLibrary, Generic[DataUnitGen]):
 
 
 @final
-class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
+class ObjectLibraryKeyVal(interfaces.ObjectLibrary, Generic[interfaces.T_data]):
     """
     Minimal class implementing the ObjectLibrary interface.
 
@@ -191,12 +100,14 @@ class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
         "_lookup",
     )
 
-    _lookup: Dict[Identifier, bytes]
+    _lookup: Dict[interfaces.Identifier, bytes]
 
     def __init__(
         self,
-        objects: Optional[Union[Iterable[DataUnitGen], DataUnitGen]] = None,
-        initializer: Optional[Callable[[bytes], DataUnitGen]] = None,
+        objects: Optional[
+            Union[Iterable[interfaces.T_data], interfaces.T_data]
+        ] = None,
+        initializer: Optional[Callable[[bytes], interfaces.T_data]] = None,
     ) -> None:
         if initializer is None:
             raise ValueError("initializer must be specified")
@@ -208,23 +119,25 @@ class ObjectLibraryKeyVal(ObjectLibrary, Generic[DataUnitGen]):
         elif objects is not None:
             self._lookup[objects.uid] = objects.blob
 
-    def add(self, obj: Union[Iterable[DataUnitGen], DataUnitGen]) -> None:
+    def add(
+        self, obj: Union[Iterable[interfaces.T_data], interfaces.T_data]
+    ) -> None:
         if isinstance(obj, Iterable):
             for item in obj:
                 self._lookup[item.uid] = item.blob
         else:
             self._lookup[obj.uid] = obj.blob
 
-    def ids(self) -> Generator[Identifier, None, None]:
+    def ids(self) -> Generator[interfaces.Identifier, None, None]:
         return (key for key in self._lookup)
 
-    def __contains__(self, item: DataUnitGen) -> bool:
+    def __contains__(self, item: interfaces.T_data) -> bool:
         return item.uid in self._lookup
 
-    def __getitem__(self, item: Identifier) -> DataUnitGen:
+    def __getitem__(self, item: interfaces.Identifier) -> interfaces.T_data:
         return self._initializer(self._lookup[item])
 
-    def __iter__(self) -> Iterator[DataUnitGen]:
+    def __iter__(self) -> Iterator[interfaces.T_data]:
         return (self._initializer(value) for value in self._lookup.values())
 
     def __len__(self) -> int:

@@ -15,15 +15,9 @@ from typing import (
     overload,
 )
 
-from pickaxe_generic.containers import DataUnitGen
-from pickaxe_generic.datatypes import (
-    DataPacket,
-    DataPacketE,
-    DataUnit,
-    Identifier,
-    MolDatBase,
-    OpDatBase,
-)
+from pickaxe_generic.datatypes import DataPacket, DataPacketE
+
+from . import interfaces
 
 _MolIndex = NewType("_MolIndex", int)
 _OpIndex = NewType("_OpIndex", int)
@@ -128,7 +122,7 @@ def recipe_from_explicit(recipe_explicit: RecipeExplicit) -> Recipe:
     )
 
 
-class ValueQueryData(Protocol, Generic[DataUnitGen, _I_T]):
+class ValueQueryData(Protocol[interfaces.T_data, _I_T]):
     @abstractmethod
     def __contains__(self, item: Union[Identifier, DataUnitGen]) -> bool:
         ...
@@ -197,7 +191,7 @@ class ValueQueryAssoc(Protocol, Generic[_ID_T, _I_T]):
 
 
 @dataclass(frozen=True)
-class _ValueQueryData(Generic[DataUnitGen, _I_T]):
+class _ValueQueryData(Generic[interfaces.T_data, _I_T]):
     __slots__ = ("_list", "_map")
     _list: Sequence[DataUnitGen]
     _map: Mapping[Identifier, _I_T]
