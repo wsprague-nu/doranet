@@ -32,59 +32,6 @@ from typing import (
 from . import interfaces
 
 
-class RxnTrackerSingle(interfaces.RxnTracker):
-    """Implements RxnTracker interface; only compatible with reactions
-    involving a single reactant and product.  DEVELOPMENT ONLY"""
-
-    _mol_lookup: Dict[interfaces.Identifier, list[interfaces.Identifier]]
-
-    def __init__(
-        self, rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase]
-    ) -> None:
-        self._mol_lookup = {}
-        self._rxn_lib = rxn_lib
-        for rxnid in rxn_lib.ids():
-            product_mol = sorted(rxn_lib[rxnid].products)[0]
-            if product_mol not in self._mol_lookup:
-                self._mol_lookup[product_mol] = []
-            self._mol_lookup[product_mol].append(rxnid)
-
-    def _getchains(
-        self,
-        cur_mol: interfaces.Identifier,
-        cur_mols: Optional[Set[interfaces.Identifier]] = None,
-    ):
-        if cur_mols is None:
-            cur_mols = {cur_mol}
-        noReactions = True
-        if cur_mol not in self._mol_lookup:
-            yield list()
-        else:
-            for rxnid in self._mol_lookup[cur_mol]:
-                reactant = sorted(self._rxn_lib[rxnid].reactants)[0]
-                if reactant in cur_mols:
-                    continue
-                noReactions = False
-                for rxnpath in self._getchains(
-                    reactant, cur_mols.union({reactant})
-                ):
-                    rxnpath.append(rxnid)
-                    yield rxnpath
-            if noReactions:
-                yield list()
-
-    def getParentChains(
-        self,
-        target: interfaces.Identifier,
-        reagent_table: Sequence[interfaces.Identifier] = None,
-        fail_on_unknown_reagent: bool = None,
-        max_depth: Optional[int] = None,
-    ) -> Iterable[Iterable[Iterable[interfaces.RxnDatBase]]]:
-        if reagent_table is not None or fail_on_unknown_reagent is not None:
-            raise NotImplementedError("Arguments besides target not supported.")
-        return ([path] for path in self._getchains(target))
-
-
 class RxnTrackerDepthFirst(interfaces.RxnTracker):
     """Implements RxnTracker interface; stores lookups as a hash table within
     the object.  Will eventually deprecate this functionality when the
