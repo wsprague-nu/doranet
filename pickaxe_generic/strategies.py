@@ -39,14 +39,12 @@ from typing import (
 
 from pickaxe_generic.metadata import (
     LocalPropertyCalc,
-    MetaDataResolverFunc,
     MetaUpdateResolver,
     PropertyCompositor,
     ReactionFilterBase,
     RxnAnalysisStep,
     as_rxn_analysis_step,
 )
-from pickaxe_generic.network import Recipe
 
 from . import interfaces
 
@@ -819,7 +817,7 @@ class ReactionJob:
 
 
 def assemble_reaction_job(
-    recipe: Recipe,
+    recipe: interfaces.Recipe,
     network: interfaces.ChemNetwork,
     keyset: interfaces.MetaKeyPacket,
 ) -> ReactionJob:
@@ -850,7 +848,7 @@ def assemble_reaction_job(
 @dataclass(frozen=True)
 class RecipePriorityItem:
     rank: Optional[interfaces.RankValue]
-    recipe: Recipe
+    recipe: interfaces.Recipe
 
     def __lt__(self, other: "RecipePriorityItem") -> bool:
         if other.rank is None:
@@ -874,14 +872,14 @@ class RecipePriorityItem:
 def execute_recipe_ranking(
     job: RecipeRankingJob,
     min_val: Optional[RecipePriorityItem],
-    recipes_tested: Collection[Recipe],
+    recipes_tested: Collection[interfaces.Recipe],
 ) -> "RecipeHeap":
     recipe_generator = (
         (interfaces.RecipeExplicit(job.operator, reactants_data), recipe)
         for reactants_data, recipe in (
             (
                 reactants_data,
-                Recipe(
+                interfaces.Recipe(
                     interfaces.OpIndex(job.operator.i),
                     tuple(reactant.i for reactant in reactants_data),
                 ),
@@ -902,7 +900,7 @@ def execute_recipe_ranking(
                             recipe,
                         )
                         for recipe in (
-                            Recipe(
+                            interfaces.Recipe(
                                 interfaces.OpIndex(job.operator.i),
                                 tuple(reactant.i for reactant in reactants),
                             )
@@ -1194,7 +1192,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         updated_mols_set: set[interfaces.MolIndex] = set()
         updated_ops_set: set[interfaces.OpIndex] = set()
         recipe_heap: RecipeHeap = RecipeHeap(maxsize=heap_size)
-        recipes_tested: set[Recipe] = set()
+        recipes_tested: set[interfaces.Recipe] = set()
 
         while (max_recipes is None or len(recipes_tested) < max_recipes) and (
             any(

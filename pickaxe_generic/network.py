@@ -33,42 +33,10 @@ class MolSlot:
     molecule_meta: Optional[Mapping]
 
 
-@dataclass(frozen=True)
-class Recipe:
-    __slots__ = ("operator", "reactants")
-    operator: interfaces.OpIndex
-    reactants: tuple[interfaces.MolIndex, ...]
-
-    def __eq__(self, other: object) -> bool:
-        if (
-            isinstance(other, Recipe)
-            and self.operator == other.operator
-            and self.reactants == other.reactants
-        ):
-            return True
-        return False
-
-    def __lt__(self, other: "Recipe") -> bool:
-        self_order = sorted(self.reactants, reverse=True)
-        other_order = sorted(other.reactants, reverse=True)
-        for val_self, val_other in zip(self_order, other_order):
-            if val_self < val_other:
-                return False
-            elif val_other < val_self:
-                return True
-        if len(self.reactants) < len(other.reactants):
-            return False
-        elif len(other.reactants) < len(self.reactants):
-            return True
-        if self.operator < other.operator:
-            return False
-        elif other.operator < self.operator:
-            return True
-        return other.reactants < self.reactants
-
-
-def recipe_from_explicit(recipe_explicit: interfaces.RecipeExplicit) -> Recipe:
-    return Recipe(
+def recipe_from_explicit(
+    recipe_explicit: interfaces.RecipeExplicit,
+) -> interfaces.Recipe:
+    return interfaces.Recipe(
         interfaces.OpIndex(recipe_explicit.operator.i),
         tuple(
             interfaces.MolIndex(data.i) for data in recipe_explicit.reactants
