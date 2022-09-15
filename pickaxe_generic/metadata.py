@@ -20,17 +20,7 @@ from typing import (
     final,
 )
 
-from pickaxe_generic.datatypes import (
-    DataPacket,
-    DataPacketE,
-    DataUnit,
-    Identifier,
-    MetaKeyPacket,
-    MolDatBase,
-    OpDatBase,
-)
-from pickaxe_generic.network import ChemNetwork, ReactionExplicit
-from pickaxe_generic.utils import logreduce
+from . import interfaces, utils
 
 
 class MetaSink(Protocol):
@@ -38,7 +28,7 @@ class MetaSink(Protocol):
 
     @property
     @abstractmethod
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         ...
 
 
@@ -55,7 +45,7 @@ class LocalPropertyCalc(ABC, Generic[_T]):
 
     @property
     @abstractmethod
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         ...
 
     @property
@@ -137,7 +127,9 @@ class LocalPropertyCalc(ABC, Generic[_T]):
 class MolPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
-        self, data: DataPacketE[MolDatBase], prev_value: Optional[_T] = None
+        self,
+        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        prev_value: Optional[_T] = None,
     ) -> Optional[_T]:
         ...
 
@@ -146,8 +138,8 @@ class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
         self,
-        data: DataPacketE[MolDatBase],
-        rxn: ReactionExplicit,
+        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        rxn: interfaces.ReactionExplicit,
         prev_value: Optional[_T] = None,
     ) -> Optional[_T]:
         ...
@@ -156,7 +148,9 @@ class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
 class OpPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
-        self, data: DataPacketE[OpDatBase], prev_value: Optional[_T] = None
+        self,
+        data: interfaces.DataPacketE[interfaces.OpDatBase],
+        prev_value: Optional[_T] = None,
     ) -> Optional[_T]:
         ...
 
@@ -165,8 +159,8 @@ class OpPropertyFromRxnCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
         self,
-        data: DataPacketE[OpDatBase],
-        rxn: ReactionExplicit,
+        data: interfaces.DataPacketE[interfaces.OpDatBase],
+        rxn: interfaces.ReactionExplicit,
         prev_value: Optional[_T] = None,
     ) -> Optional[_T]:
         ...
@@ -175,7 +169,7 @@ class OpPropertyFromRxnCalc(LocalPropertyCalc[_T]):
 class RxnPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
-        self, data: ReactionExplicit, prev_value: Optional[_T] = None
+        self, data: interfaces.ReactionExplicit, prev_value: Optional[_T] = None
     ) -> Optional[_T]:
         ...
 
@@ -216,12 +210,12 @@ class ReactionFilterBase(ABC):
     __slots__ = ()
 
     @abstractmethod
-    def __call__(self, recipe: ReactionExplicit) -> bool:
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         ...
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
 
     @final
     def __and__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
@@ -259,11 +253,11 @@ class ReactionFilterAnd(ReactionFilterBase):
     _filter1: ReactionFilterBase
     _filter2: ReactionFilterBase
 
-    def __call__(self, recipe: ReactionExplicit) -> bool:
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         return self._filter1(recipe) and self._filter2(recipe)
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._filter1.meta_required + self._filter2.meta_required
 
 
@@ -272,11 +266,11 @@ class ReactionFilterInv(ReactionFilterBase):
     __slots__ = ("_filter",)
     _filter: ReactionFilterBase
 
-    def __call__(self, recipe: ReactionExplicit) -> bool:
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         return not self._filter(recipe)
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._filter.meta_required
 
 
@@ -286,11 +280,11 @@ class ReactionFilterOr(ReactionFilterBase):
     _filter1: ReactionFilterBase
     _filter2: ReactionFilterBase
 
-    def __call__(self, recipe: ReactionExplicit) -> bool:
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         return self._filter1(recipe) or self._filter2(recipe)
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._filter1.meta_required + self._filter2.meta_required
 
 
@@ -300,17 +294,17 @@ class ReactionFilterXor(ReactionFilterBase):
     _filter1: ReactionFilterBase
     _filter2: ReactionFilterBase
 
-    def __call__(self, recipe: ReactionExplicit) -> bool:
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         return self._filter1(recipe) != self._filter2(recipe)
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._filter1.meta_required + self._filter2.meta_required
 
 
 class PropertyCompositor(ABC):
     @abstractmethod
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         ...
 
     @property
@@ -378,7 +372,7 @@ class PropertyCompositor(ABC):
 
     @property
     @abstractmethod
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         ...
 
 
@@ -396,7 +390,7 @@ class MergePropertyCompositor(PropertyCompositor):
         self._comp2 = comp2
         self._keys = comp1.keys & comp2.keys
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         state1 = self._comp1(rxn)
         state2 = self._comp2(rxn)
         state1.mol_info.update(state2.mol_info)
@@ -409,7 +403,7 @@ class MergePropertyCompositor(PropertyCompositor):
         return self._keys
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._comp1.meta_required + self._comp2.meta_required
 
 
@@ -421,7 +415,7 @@ class FunctionPropertyCompositor(PropertyCompositor):
     _comp1: PropertyCompositor
     _comp2: PropertyCompositor
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         state1 = self._comp1(rxn)
         state2 = self._comp2(rxn)
 
@@ -466,7 +460,7 @@ class FunctionPropertyCompositor(PropertyCompositor):
         return self._comp1.keys | self._comp2.keys
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._comp1.meta_required + self._comp2.meta_required
 
 
@@ -476,7 +470,7 @@ class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
 
     _calc: MolPropertyCalc[_T]
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
         props = {
             mol.item.uid: calc
@@ -491,7 +485,7 @@ class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
         return KeyOutput(frozenset((self._calc.key,)), frozenset(), frozenset())
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
 
@@ -501,7 +495,7 @@ class MolRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
 
     _calc: MolPropertyFromRxnCalc[_T]
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         mols = chain(rxn.reactants, rxn.products)
         props = {
             mol.item.uid: calc
@@ -516,7 +510,7 @@ class MolRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
         return KeyOutput(frozenset((self._calc.key,)), frozenset(), frozenset())
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
 
@@ -526,7 +520,7 @@ class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
 
     _calc: OpPropertyCalc[_T]
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         calc = self._calc(rxn.operator)
         if calc is None:
             return MetaPropertyState({}, {}, {})
@@ -539,7 +533,7 @@ class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
         return KeyOutput(frozenset(), frozenset((self._calc.key,)), frozenset())
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
 
@@ -549,7 +543,7 @@ class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
 
     _calc: OpPropertyFromRxnCalc[_T]
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         calc = self._calc(rxn.operator, rxn)
         if calc is None:
             return MetaPropertyState({}, {}, {})
@@ -562,7 +556,7 @@ class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
         return KeyOutput(frozenset(), frozenset((self._calc.key,)), frozenset())
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
 
@@ -572,7 +566,7 @@ class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
 
     _calc: RxnPropertyCalc[_T]
 
-    def __call__(self, rxn: ReactionExplicit) -> "MetaPropertyState":
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
         calc = self._calc(rxn)
         if calc is None:
             return MetaPropertyState({}, {}, {})
@@ -587,7 +581,7 @@ class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
         return KeyOutput(frozenset(), frozenset(), frozenset((self._calc.key,)))
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
 
@@ -596,7 +590,7 @@ class MetaPropertyStateSingleProp(Generic[_T]):
     # note: this class is intended to be mutable; it will change after merging!
     __slots__ = ("data", "resolver")
 
-    data: dict[Identifier, _T]
+    data: dict[interfaces.Identifier, _T]
     resolver: MetaDataResolverFunc[_T]
 
     def overwrite(
@@ -609,7 +603,7 @@ class MetaPropertyStateSingleProp(Generic[_T]):
     def __or__(
         self, other: "MetaPropertyStateSingleProp[_T]"
     ) -> "MetaPropertyStateSingleProp[_T]":
-        resolved_props: dict[Identifier, _T] = {}
+        resolved_props: dict[interfaces.Identifier, _T] = {}
         if len(self.data) == 0:
             return other
         if len(other.data) == 0:
@@ -687,8 +681,8 @@ class MetaPropertyState:
 class RxnAnalysisStep(ABC):
     @abstractmethod
     def execute(
-        self, rxns: Iterable[tuple[ReactionExplicit, bool]]
-    ) -> Iterable[tuple[ReactionExplicit, bool]]:
+        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
+    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         ...
 
     @final
@@ -709,7 +703,7 @@ class RxnAnalysisStep(ABC):
 
     @property
     @abstractmethod
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         ...
 
 
@@ -721,14 +715,14 @@ class RxnAnalysisStepCompound(RxnAnalysisStep):
     step2: RxnAnalysisStep
 
     def execute(
-        self, rxns: Iterable[tuple[ReactionExplicit, bool]]
-    ) -> Iterable[tuple[ReactionExplicit, bool]]:
+        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
+    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         return self.step2.execute(
             rxn_out for rxn_out in self.step1.execute(rxns)
         )
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self.step1.meta_required + self.step2.meta_required
 
 
@@ -747,9 +741,10 @@ def _mmd(
 
 
 def metalib_to_rxn_meta(
-    metalib: MetaPropertyState, rxns: Iterable[tuple[ReactionExplicit, bool]]
-) -> Iterable[tuple[ReactionExplicit, bool]]:
-    mol_info: dict[Identifier, dict[Hashable, Any]] = {
+    metalib: MetaPropertyState,
+    rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]],
+) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+    mol_info: dict[interfaces.Identifier, dict[Hashable, Any]] = {
         mol.item.uid: dict()
         for mol in chain(
             *((chain(rxn[0].reactants, rxn[0].products)) for rxn in rxns)
@@ -758,13 +753,13 @@ def metalib_to_rxn_meta(
     for meta_key, mol_dict in metalib.mol_info.items():
         for mol_id, key_val in mol_dict.data.items():
             mol_info[mol_id][meta_key] = key_val
-    op_info: dict[Identifier, dict[Hashable, Any]] = {
+    op_info: dict[interfaces.Identifier, dict[Hashable, Any]] = {
         rxn[0].operator.item.uid: dict() for rxn in rxns
     }
     for meta_key, op_dict in metalib.op_info.items():
         for op_id, key_val in op_dict.data.items():
             op_info[op_id][meta_key] = key_val
-    rxn_info: dict[Identifier, dict[Hashable, Any]] = {
+    rxn_info: dict[interfaces.Identifier, dict[Hashable, Any]] = {
         rxn[0].uid: dict() for rxn in rxns
     }
     for meta_key, rxn_dict in metalib.rxn_info.items():
@@ -772,20 +767,20 @@ def metalib_to_rxn_meta(
             rxn_info[rxn_id][meta_key] = key_val
     for rxn, passed_filter in rxns:
         yield (
-            ReactionExplicit(
-                DataPacketE(
+            interfaces.ReactionExplicit(
+                interfaces.DataPacketE(
                     rxn.operator.i,
                     rxn.operator.item,
                     _mmd(rxn.operator.meta, op_info[rxn.operator.item.uid]),
                 ),
                 tuple(
-                    DataPacketE(
+                    interfaces.DataPacketE(
                         mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid])
                     )
                     for mol in rxn.reactants
                 ),
                 tuple(
-                    DataPacketE(
+                    interfaces.DataPacketE(
                         mol.i, mol.item, _mmd(mol.meta, mol_info[mol.item.uid])
                     )
                     for mol in rxn.products
@@ -806,17 +801,17 @@ class RxnAnalysisStepProp(RxnAnalysisStep):
     _prop: PropertyCompositor
 
     def execute(
-        self, rxns: Iterable[tuple[ReactionExplicit, bool]]
-    ) -> Iterable[tuple[ReactionExplicit, bool]]:
+        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
+    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         rxn_list = list(rxns)
         meta_lib_generator = (self._prop(rxn[0]) for rxn in rxn_list if rxn[1])
-        prop_map: MetaPropertyState = logreduce(
+        prop_map: MetaPropertyState = utils.logreduce(
             operator.or_, meta_lib_generator
         )
         return metalib_to_rxn_meta(prop_map, rxn_list)
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._prop.meta_required
 
 
@@ -827,8 +822,8 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
         self._arg = arg
 
     def execute(
-        self, rxns: Iterable[tuple[ReactionExplicit, bool]]
-    ) -> Iterable[tuple[ReactionExplicit, bool]]:
+        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
+    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         for rxn, pass_filter in rxns:
             if not pass_filter:
                 yield rxn, False
@@ -836,7 +831,7 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
                 yield rxn, self._arg(rxn)
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
+    def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._arg.meta_required
 
 

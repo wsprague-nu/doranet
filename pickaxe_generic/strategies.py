@@ -3,7 +3,7 @@ Contains classes which define and implement network expansion strategies.
 
 Classes:
 
-    ExpansionStrategy
+    interfaces.ExpansionStrategy
       CartesianStrategy*
       CartesianStrategyParallel*
 """
@@ -37,28 +37,6 @@ from typing import (
     overload,
 )
 
-from pickaxe_generic.containers import ObjectLibrary
-from pickaxe_generic.datatypes import (
-    DataPacket,
-    DataPacketE,
-    Identifier,
-    MolDatBase,
-    OpDatBase,
-    RxnDatBase,
-)
-from pickaxe_generic.filters import (
-    MetaDataCalculatorLocal,
-    MetaDataUpdate,
-    MetaKeyPacket,
-    MolFilter,
-    MolFilterMetaExist,
-    MolFilterMetaVal,
-    RankValue,
-    ReactionFilter,
-    RecipeFilter,
-    RecipeRanker,
-    ReplaceBlacklist,
-)
 from pickaxe_generic.metadata import (
     LocalPropertyCalc,
     MetaDataResolverFunc,
@@ -68,41 +46,36 @@ from pickaxe_generic.metadata import (
     RxnAnalysisStep,
     as_rxn_analysis_step,
 )
-from pickaxe_generic.network import (
-    ChemNetwork,
-    Reaction,
-    ReactionExplicit,
-    Recipe,
-    RecipeExplicit,
-    _MolIndex,
-    _OpIndex,
-    recipe_from_explicit,
-)
+from pickaxe_generic.network import Recipe
+
+from . import interfaces
 
 
 class _ReactionProvider(Protocol):
     def Rxn(
         self,
-        operator: Identifier = None,
-        reactants: Collection[Identifier] = None,
-        products: Collection[Identifier] = None,
-    ) -> RxnDatBase:
+        operator: interfaces.Identifier = None,
+        reactants: Collection[interfaces.Identifier] = None,
+        products: Collection[interfaces.Identifier] = None,
+    ) -> interfaces.RxnDatBase:
         ...
 
 
 def _generate_recipes_from_compat_table(
-    compat: dict[Identifier, list[list[Identifier]]],
+    compat: dict[interfaces.Identifier, list[list[interfaces.Identifier]]],
     known_cache: Optional[
-        set[tuple[Identifier, tuple[Identifier, ...]]]
+        set[tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]]
     ] = None,
     uid_prefilter: Optional[
-        Callable[[Identifier, Sequence[Identifier]], bool]
+        Callable[[interfaces.Identifier, Sequence[interfaces.Identifier]], bool]
     ] = None,
     add_to_cache: bool = True,
-) -> Generator[tuple[Identifier, tuple[Identifier, ...]], None, None]:
+) -> Generator[
+    tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]], None, None
+]:
     gen_cache = set()
     for op_uid, compat_list in compat.items():
-        reactants: tuple[Identifier, ...]
+        reactants: tuple[interfaces.Identifier, ...]
         for reactants in iterproduct(*compat_list):
             recipe = (op_uid, reactants)
             if known_cache is not None:
@@ -124,19 +97,30 @@ def _generate_recipes_from_compat_table(
 
 
 def _evaluate_reaction(
-    operator: OpDatBase,
-    reactants: Sequence[MolDatBase],
+    operator: interfaces.OpDatBase,
+    reactants: Sequence[interfaces.MolDatBase],
     engine: _ReactionProvider,
     rxn_filter: Optional[
-        Callable[[OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool]
+        Callable[
+            [
+                interfaces.OpDatBase,
+                Sequence[interfaces.MolDatBase],
+                Sequence[interfaces.MolDatBase],
+            ],
+            bool,
+        ]
     ] = None,
     return_rejects: bool = False,
 ) -> tuple[
-    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
-    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
+    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
+    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
 ]:
-    resultslist: list[tuple[RxnDatBase, tuple[MolDatBase, ...]]] = []
-    rejectslist: list[tuple[RxnDatBase, tuple[MolDatBase, ...]]] = []
+    resultslist: list[
+        tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]]
+    ] = []
+    rejectslist: list[
+        tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]]
+    ] = []
     for productset in operator(reactants):
         productset = tuple(productset)
         if rxn_filter is not None and not rxn_filter(
@@ -158,18 +142,23 @@ def _evaluate_reaction(
 
 def _evaluate_reaction_unpack(
     job: tuple[
-        OpDatBase,
-        Sequence[MolDatBase],
+        interfaces.OpDatBase,
+        Sequence[interfaces.MolDatBase],
         _ReactionProvider,
         Optional[
             Callable[
-                [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+                [
+                    interfaces.OpDatBase,
+                    Sequence[interfaces.MolDatBase],
+                    Sequence[interfaces.MolDatBase],
+                ],
+                bool,
             ]
         ],
     ]
 ) -> tuple[
-    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
-    tuple[tuple[RxnDatBase, tuple[MolDatBase, ...]], ...],
+    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
+    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
 ]:
 
     return _evaluate_reaction(*job)
@@ -192,29 +181,29 @@ def _chunk_generator(
 
 
 @final
-class CartesianStrategy(ExpansionStrategy):
+class CartesianStrategy(interfaces.ExpansionStrategy):
     """
-    Implements ExpansionStrategy interface via Cartesian product of molecules
+    Implements interfaces.ExpansionStrategy interface via Cartesian product of molecules
     and operators.
     """
 
     def __init__(
         self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
+        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
+        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
+        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
         engine: _ReactionProvider,
-        blacklist: Optional[set[Identifier]] = None,
+        blacklist: Optional[set[interfaces.Identifier]] = None,
     ) -> None:
         """Initialize strategy by attaching libraries.
 
         Parameters
         ----------
-        mol_lib : ObjectLibrary[MolDatBase]
+        mol_lib : interfaces.ObjectLibrary[interfaces.MolDatBase]
             Library containing molecules.
-        op_lib : ObjectLibrary[OpDatBase]
+        op_lib : interfaces.ObjectLibrary[interfaces.OpDatBase]
             Library containing operators.
-        rxn_lib : ObjectLibrary[RxnDatBase]
+        rxn_lib : interfaces.ObjectLibrary[interfaces.RxnDatBase]
             Library containing reactions.
         engine : _ReactionProvider
             Object used to initialize reactions.
@@ -228,20 +217,22 @@ class CartesianStrategy(ExpansionStrategy):
         self._blacklist = blacklist
 
         # stores active molecule IDs
-        self._active_mols: set[Identifier] = set(
+        self._active_mols: set[interfaces.Identifier] = set(
             (uid for uid in self._mol_lib.ids())
         )
         # stores active operator IDs
-        self._active_ops: set[Identifier] = set(
+        self._active_ops: set[interfaces.Identifier] = set(
             (uid for uid in self._op_lib.ids())
         )
         # stores combinations of reagents and operators which have been tried
         self._recipe_cache: set[
-            tuple[Identifier, tuple[Identifier, ...]]
+            tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]
         ] = set()
 
         # create operator-molecule compatibility table
-        self._compat_table: dict[Identifier, list[list[Identifier]]] = {}
+        self._compat_table: dict[
+            interfaces.Identifier, list[list[interfaces.Identifier]]
+        ] = {}
         for op_uid in self._active_ops:
             self._add_op_to_compat(op_uid)
 
@@ -249,16 +240,18 @@ class CartesianStrategy(ExpansionStrategy):
         for mol_uid in self._active_mols:
             self._add_mol_to_compat(mol_uid)
 
-    def _add_mol_to_compat(self, mol: Union[Identifier, MolDatBase]) -> None:
+    def _add_mol_to_compat(
+        self, mol: Union[interfaces.Identifier, interfaces.MolDatBase]
+    ) -> None:
         """
         Add entries to compat_table for new molecule.
 
         Parameters
         ----------
-        mol : Identifier | MolDatBase
+        mol : interfaces.Identifier | interfaces.MolDatBase
             Molecule to be added to compat_table.
         """
-        if isinstance(mol, MolDatBase):
+        if isinstance(mol, interfaces.MolDatBase):
             mol_uid = mol.uid
         else:
             mol_uid = mol
@@ -270,22 +263,26 @@ class CartesianStrategy(ExpansionStrategy):
                 if op.compat(mol, arg):
                     self._compat_table[op_uid][arg].append(mol_uid)
 
-    def _add_op_to_compat(self, op: Union[Identifier, OpDatBase]) -> None:
+    def _add_op_to_compat(
+        self, op: Union[interfaces.Identifier, interfaces.OpDatBase]
+    ) -> None:
         """
         Add entries to compat_table for new operator.
 
         Parameters
         ----------
-        op : Identifier | OpDatBase
+        op : interfaces.Identifier | interfaces.OpDatBase
             Operator to be added to compat_table.
         """
-        if isinstance(op, OpDatBase):
+        if isinstance(op, interfaces.OpDatBase):
             op_uid = op.uid
         else:
             op_uid = op
             op = self._op_lib[op]
 
-        optable: list[list[Identifier]] = [[] for _ in range(len(op))]
+        optable: list[list[interfaces.Identifier]] = [
+            [] for _ in range(len(op))
+        ]
         for arg in range(len(optable)):
             for mol_uid in self._active_mols:
                 mol = self._mol_lib[mol_uid]
@@ -294,11 +291,11 @@ class CartesianStrategy(ExpansionStrategy):
         self._compat_table[op_uid] = optable
 
     @property
-    def blacklist(self) -> set[Identifier]:
+    def blacklist(self) -> set[interfaces.Identifier]:
         return self._blacklist
 
     @blacklist.setter
-    def blacklist(self, value: set[Identifier]) -> None:
+    def blacklist(self, value: set[interfaces.Identifier]) -> None:
         self._blacklist = value
 
     def reset_recipe_cache(self) -> None:
@@ -327,11 +324,18 @@ class CartesianStrategy(ExpansionStrategy):
         num_gens: Optional[int] = None,
         custom_filter: Optional[
             Callable[
-                [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+                [
+                    interfaces.OpDatBase,
+                    Sequence[interfaces.MolDatBase],
+                    Sequence[interfaces.MolDatBase],
+                ],
+                bool,
             ]
         ] = None,
         custom_uid_prefilter: Optional[
-            Callable[[Identifier, Sequence[Identifier]], bool]
+            Callable[
+                [interfaces.Identifier, Sequence[interfaces.Identifier]], bool
+            ]
         ] = None,
         retain_products_to_blacklist: bool = False,
     ) -> None:
@@ -393,17 +397,17 @@ class CartesianStrategy(ExpansionStrategy):
 
 
 @final
-class CartesianStrategyParallel(ExpansionStrategy):
+class CartesianStrategyParallel(interfaces.ExpansionStrategy):
     """
-    Implements ExpansionStrategy interface via Cartesian product of molecules
+    Implements interfaces.ExpansionStrategy interface via Cartesian product of molecules
     and operators.
     """
 
     def __init__(
         self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
+        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
+        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
+        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
         engine: _ReactionProvider,
         num_procs: int,
     ) -> None:
@@ -411,11 +415,11 @@ class CartesianStrategyParallel(ExpansionStrategy):
 
         Parameters
         ----------
-        mol_lib : ObjectLibrary[MolDatBase]
+        mol_lib : interfaces.ObjectLibrary[interfaces.MolDatBase]
             Library containing molecules.
-        op_lib : ObjectLibrary[OpDatBase]
+        op_lib : interfaces.ObjectLibrary[interfaces.OpDatBase]
             Library containing operators.
-        rxn_lib : ObjectLibrary[RxnDatBase]
+        rxn_lib : interfaces.ObjectLibrary[interfaces.RxnDatBase]
             Library containing reactions.
         engine : _ReactionProvider
             Object used to initialize reactions.
@@ -427,20 +431,22 @@ class CartesianStrategyParallel(ExpansionStrategy):
         self._num_procs = num_procs
 
         # stores active molecule IDs
-        self._active_mols: set[Identifier] = set(
+        self._active_mols: set[interfaces.Identifier] = set(
             (uid for uid in self._mol_lib.ids())
         )
         # stores active operator IDs
-        self._active_ops: set[Identifier] = set(
+        self._active_ops: set[interfaces.Identifier] = set(
             (uid for uid in self._op_lib.ids())
         )
         # stores combinations of reagents and operators which have been tried
         self._recipe_cache: set[
-            tuple[Identifier, tuple[Identifier, ...]]
+            tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]
         ] = set()
 
         # create operator-molecule compatibility table
-        self._compat_table: dict[Identifier, list[list[Identifier]]] = {}
+        self._compat_table: dict[
+            interfaces.Identifier, list[list[interfaces.Identifier]]
+        ] = {}
         for op_uid in self._active_ops:
             self._add_op_to_compat(op_uid)
 
@@ -448,16 +454,18 @@ class CartesianStrategyParallel(ExpansionStrategy):
         for mol_uid in self._active_mols:
             self._add_mol_to_compat(mol_uid)
 
-    def _add_mol_to_compat(self, mol: Union[Identifier, MolDatBase]) -> None:
+    def _add_mol_to_compat(
+        self, mol: Union[interfaces.Identifier, interfaces.MolDatBase]
+    ) -> None:
         """
         Add entries to compat_table for new molecule.
 
         Parameters
         ----------
-        mol : Identifier | MolDatBase
+        mol : interfaces.Identifier | interfaces.MolDatBase
             Molecule to be added to compat_table.
         """
-        if isinstance(mol, MolDatBase):
+        if isinstance(mol, interfaces.MolDatBase):
             mol_uid = mol.uid
         else:
             mol_uid = mol
@@ -469,22 +477,26 @@ class CartesianStrategyParallel(ExpansionStrategy):
                 if op.compat(mol, arg):
                     self._compat_table[op_uid][arg].append(mol_uid)
 
-    def _add_op_to_compat(self, op: Union[Identifier, OpDatBase]) -> None:
+    def _add_op_to_compat(
+        self, op: Union[interfaces.Identifier, interfaces.OpDatBase]
+    ) -> None:
         """
         Add entries to compat_table for new operator.
 
         Parameters
         ----------
-        op : Identifier | OpDatBase
+        op : interfaces.Identifier | interfaces.OpDatBase
             Operator to be added to compat_table.
         """
-        if isinstance(op, OpDatBase):
+        if isinstance(op, interfaces.OpDatBase):
             op_uid = op.uid
         else:
             op_uid = op
             op = self._op_lib[op]
 
-        optable: list[list[Identifier]] = [[] for _ in range(len(op))]
+        optable: list[list[interfaces.Identifier]] = [
+            [] for _ in range(len(op))
+        ]
         for arg in range(len(optable)):
             for mol_uid in self._active_mols:
                 mol = self._mol_lib[mol_uid]
@@ -515,11 +527,18 @@ class CartesianStrategyParallel(ExpansionStrategy):
         num_gens: Optional[int] = None,
         custom_filter: Optional[
             Callable[
-                [OpDatBase, Sequence[MolDatBase], Sequence[MolDatBase]], bool
+                [
+                    interfaces.OpDatBase,
+                    Sequence[interfaces.MolDatBase],
+                    Sequence[interfaces.MolDatBase],
+                ],
+                bool,
             ]
         ] = None,
         custom_uid_prefilter: Optional[
-            Callable[[Identifier, Sequence[Identifier]], bool]
+            Callable[
+                [interfaces.Identifier, Sequence[interfaces.Identifier]], bool
+            ]
         ] = None,
     ) -> None:
         # value used to tell if any new reactions have occurred in a generation
@@ -573,35 +592,6 @@ class CartesianStrategyParallel(ExpansionStrategy):
             self.refresh()
 
 
-class PriorityQueueStrategy(ABC):
-    __slots__ = ()
-
-    @abstractmethod
-    def __init__(
-        self,
-        network: ChemNetwork,
-        num_procs: Optional[int] = None,
-        blacklist_key: Optional[str] = None,
-    ) -> None:
-        ...
-
-    @abstractmethod
-    def expand(
-        self,
-        max_recipes: Optional[int] = None,
-        heap_size: int = 1,
-        batch_size: Optional[int] = None,
-        beam_size: Optional[int] = 1,
-        # mol_filter_local: Optional[MolFilter] = None,
-        # mol_filter: Optional[MolFilter] = None,
-        recipe_filter: Optional[RecipeFilter] = None,
-        recipe_ranker: Optional[RecipeRanker] = None,
-        # mc_local: Optional[MetaDataCalculatorLocal] = None,
-        # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
-    ) -> None:
-        ...
-
-
 @dataclass(frozen=True)
 class RecipeRankingJob:
     __slots__ = (
@@ -612,10 +602,12 @@ class RecipeRankingJob:
         "heap_size",
     )
 
-    operator: DataPacket[OpDatBase]
-    op_args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
-    recipe_filter: Optional[RecipeFilter]
-    recipe_ranker: Optional[RecipeRanker]
+    operator: interfaces.DataPacket[interfaces.OpDatBase]
+    op_args: tuple[
+        tuple[interfaces.DataPacket[interfaces.MolDatBase], ...], ...
+    ]
+    recipe_filter: Optional[interfaces.RecipeFilter]
+    recipe_ranker: Optional[interfaces.RecipeRanker]
     heap_size: Optional[int]
 
 
@@ -635,11 +627,11 @@ def calc_batch_split(
 
 
 def _generate_recipe_batches(
-    mol_table: Sequence[Sequence[_MolIndex]],
+    mol_table: Sequence[Sequence[interfaces.MolIndex]],
     table_indices: Sequence[int],
     batch_size: Optional[int] = None,
-    updated_mols: set[_MolIndex] = set(),
-) -> Generator[tuple[tuple[_MolIndex, ...], ...], None, None]:
+    updated_mols: set[interfaces.MolIndex] = set(),
+) -> Generator[tuple[tuple[interfaces.MolIndex, ...], ...], None, None]:
     num_args = len(mol_table)
 
     # get number of old and new mols for each argument
@@ -651,7 +643,7 @@ def _generate_recipe_batches(
     #     n_old = i_counter - n_new_from_old
     #     num_old.append(n_old)
     #     num_new.append(n_new)
-    updated_vals: tuple[tuple[_MolIndex, ...], ...] = tuple(
+    updated_vals: tuple[tuple[interfaces.MolIndex, ...], ...] = tuple(
         tuple(updated_mols.intersection(mol_list)) for mol_list in mol_table
     )
     num_old = tuple(table_indices)
@@ -768,17 +760,17 @@ def _generate_recipe_batches(
 
 
 def assemble_recipe_batch_job(
-    op_index: _OpIndex,
-    batch: tuple[tuple[_MolIndex, ...], ...],
-    network: ChemNetwork,
-    keyset: MetaKeyPacket,
-    recipe_ranker: Optional[RecipeRanker] = None,
+    op_index: interfaces.OpIndex,
+    batch: tuple[tuple[interfaces.MolIndex, ...], ...],
+    network: interfaces.ChemNetwork,
+    keyset: interfaces.MetaKeyPacket,
+    recipe_ranker: Optional[interfaces.RecipeRanker] = None,
     heap_size: Optional[int] = None,
-    recipe_filter: Optional[RecipeFilter] = None,
+    recipe_filter: Optional[interfaces.RecipeFilter] = None,
 ) -> RecipeRankingJob:
     mol_data: Union[
         Generator[Generator[None, None, None], None, None],
-        Generator[Generator[MolDatBase, None, None], None, None],
+        Generator[Generator[interfaces.MolDatBase, None, None], None, None],
     ]
     mol_meta: Generator[
         Union[Sequence[Mapping], Generator[None, None, None]], None, None
@@ -791,7 +783,7 @@ def assemble_recipe_batch_job(
         op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
     else:
         op_meta = None
-    op = DataPacket(op_index, op_data, op_meta)
+    op = interfaces.DataPacket(op_index, op_data, op_meta)
     if keyset.live_molecule:
         mol_data = ((network.mols[i] for i in mol_list) for mol_list in batch)
     else:
@@ -805,7 +797,7 @@ def assemble_recipe_batch_job(
         mol_meta = ((None for _ in mol_list) for mol_list in batch)
     mol_batch = tuple(
         tuple(
-            DataPacket(i, mol, m_meta)
+            interfaces.DataPacket(i, mol, m_meta)
             for i, mol, m_meta in zip(i_col, mol_col, meta_col)
         )
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
@@ -822,12 +814,14 @@ class ReactionJob:
         "op_args",
     )
 
-    operator: DataPacketE[OpDatBase]
-    op_args: tuple[DataPacketE[MolDatBase], ...]
+    operator: interfaces.DataPacketE[interfaces.OpDatBase]
+    op_args: tuple[interfaces.DataPacketE[interfaces.MolDatBase], ...]
 
 
 def assemble_reaction_job(
-    recipe: Recipe, network: ChemNetwork, keyset: MetaKeyPacket
+    recipe: Recipe,
+    network: interfaces.ChemNetwork,
+    keyset: interfaces.MetaKeyPacket,
 ) -> ReactionJob:
     op_index = recipe.operator
     op_data = network.ops[op_index]
@@ -837,7 +831,7 @@ def assemble_reaction_job(
     else:
         op_meta = None
 
-    op = DataPacketE(op_index, op_data, op_meta)
+    op = interfaces.DataPacketE(op_index, op_data, op_meta)
 
     mol_meta: Iterable[Optional[Mapping]]
     if keyset.molecule_keys:
@@ -846,7 +840,7 @@ def assemble_reaction_job(
         mol_meta = (None for _ in recipe.reactants)
 
     reactants = tuple(
-        DataPacketE(i, network.mols[i], meta)
+        interfaces.DataPacketE(i, network.mols[i], meta)
         for i, meta in zip(recipe.reactants, mol_meta)
     )
 
@@ -855,7 +849,7 @@ def assemble_reaction_job(
 
 @dataclass(frozen=True)
 class RecipePriorityItem:
-    rank: Optional[RankValue]
+    rank: Optional[interfaces.RankValue]
     recipe: Recipe
 
     def __lt__(self, other: "RecipePriorityItem") -> bool:
@@ -883,12 +877,12 @@ def execute_recipe_ranking(
     recipes_tested: Collection[Recipe],
 ) -> "RecipeHeap":
     recipe_generator = (
-        (RecipeExplicit(job.operator, reactants_data), recipe)
+        (interfaces.RecipeExplicit(job.operator, reactants_data), recipe)
         for reactants_data, recipe in (
             (
                 reactants_data,
                 Recipe(
-                    _OpIndex(job.operator.i),
+                    interfaces.OpIndex(job.operator.i),
                     tuple(reactant.i for reactant in reactants_data),
                 ),
             )
@@ -909,7 +903,7 @@ def execute_recipe_ranking(
                         )
                         for recipe in (
                             Recipe(
-                                _OpIndex(job.operator.i),
+                                interfaces.OpIndex(job.operator.i),
                                 tuple(reactant.i for reactant in reactants),
                             )
                             for reactants in iterproduct(*job.op_args)
@@ -1082,22 +1076,23 @@ class RecipeHeap:
 
 def execute_reaction(
     rxn_job: ReactionJob,
-) -> Generator[tuple[ReactionExplicit, bool], None, None]:
+) -> Generator[tuple[interfaces.ReactionExplicit, bool], None, None]:
     reactants = tuple(mol.item for mol in rxn_job.op_args)
     if rxn_job.operator.item is None or any(mol is None for mol in reactants):
         raise ValueError("ReactionJob has non-None item components!")
     product_packets = rxn_job.operator.item(reactants)  # type: ignore
     reactant_datapackets = tuple(
-        DataPacketE(p.i, p.item, p.meta) for p in rxn_job.op_args
+        interfaces.DataPacketE(p.i, p.item, p.meta) for p in rxn_job.op_args
     )
-    operator_datapacket = DataPacketE(
+    operator_datapacket = interfaces.DataPacketE(
         rxn_job.operator.i, rxn_job.operator.item, rxn_job.operator.meta
     )
     for rxn_products in product_packets:
         product_datapackets = tuple(
-            DataPacketE(-1, product, None) for product in rxn_products
+            interfaces.DataPacketE(-1, product, None)
+            for product in rxn_products
         )
-        rxn = ReactionExplicit(
+        rxn = interfaces.ReactionExplicit(
             operator_datapacket,
             reactant_datapackets,
             product_datapackets,
@@ -1109,7 +1104,7 @@ def execute_reaction(
 def execute_reactions(
     rxn_jobs: Collection[ReactionJob],
     rxn_analysis: Optional[RxnAnalysisStep] = None,
-) -> Iterable[tuple[ReactionExplicit, bool]]:
+) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
     rxn_generator = reduce(
         chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
     )
@@ -1118,12 +1113,12 @@ def execute_reactions(
     return rxn_analysis.execute(rxn_generator)
 
 
-class PriorityQueueStrategyBasic(PriorityQueueStrategy):
+class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
     __slots__ = "_network"
 
     def __init__(
         self,
-        network: ChemNetwork,
+        network: interfaces.ChemNetwork,
         num_procs: Optional[int] = None,
     ) -> None:
         if num_procs is not None:
@@ -1140,8 +1135,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
         beam_size: Optional[int] = 1,
         # mol_filter_local: Optional[MolFilter] = None,
         # mol_filter: Optional[MolFilter] = None,
-        recipe_filter: Optional[RecipeFilter] = None,
-        recipe_ranker: Optional[RecipeRanker] = None,
+        recipe_filter: Optional[interfaces.RecipeFilter] = None,
+        recipe_ranker: Optional[interfaces.RecipeRanker] = None,
         mc_local: Optional[
             Union[
                 RxnAnalysisStep,
@@ -1167,8 +1162,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
         # set keysets so that updated reactions may occur and parameters may be
         # passed to parallel processes
-        recipe_keyset: MetaKeyPacket = MetaKeyPacket()
-        reaction_keyset: MetaKeyPacket = MetaKeyPacket()
+        recipe_keyset: interfaces.MetaKeyPacket = interfaces.MetaKeyPacket()
+        reaction_keyset: interfaces.MetaKeyPacket = interfaces.MetaKeyPacket()
         if recipe_filter is not None:
             recipe_keyset = recipe_keyset + recipe_filter.meta_required
         if recipe_ranker is not None:
@@ -1196,8 +1191,8 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
             [0 for _ in network.compat_table(i)]
             for i in range(len(network.ops))
         ]
-        updated_mols_set: set[_MolIndex] = set()
-        updated_ops_set: set[_OpIndex] = set()
+        updated_mols_set: set[interfaces.MolIndex] = set()
+        updated_ops_set: set[interfaces.OpIndex] = set()
         recipe_heap: RecipeHeap = RecipeHeap(maxsize=heap_size)
         recipes_tested: set[Recipe] = set()
 
@@ -1233,7 +1228,7 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
                 ):
                     # assemble recipe ranking job
                     recipejob = assemble_recipe_batch_job(
-                        _OpIndex(opIndex),
+                        interfaces.OpIndex(opIndex),
                         batch,
                         network,
                         recipe_keyset,
@@ -1281,10 +1276,10 @@ class PriorityQueueStrategyBasic(PriorityQueueStrategy):
 
                 # build reaction
                 reactants_indices = tuple(
-                    _MolIndex(mol.i) for mol in rxn.reactants
+                    interfaces.MolIndex(mol.i) for mol in rxn.reactants
                 )
-                rxn_implicit = Reaction(
-                    _OpIndex(rxn.operator.i),
+                rxn_implicit = interfaces.Reaction(
+                    interfaces.OpIndex(rxn.operator.i),
                     reactants_indices,
                     products_indices,
                 )

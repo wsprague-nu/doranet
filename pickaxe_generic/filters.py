@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import (
@@ -17,40 +16,16 @@ from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
 from rdkit.DataStructs import TanimotoSimilarity
 
-from pickaxe_generic.datatypes import (
-    Identifier,
-    MetaKeyPacket,
-    MolDatBase,
-    MolDatRDKit,
-    OpDatBase,
-)
-from pickaxe_generic.network import (
-    ChemNetwork,
-    ReactionExplicit,
-    RecipeExplicit,
-    _MolIndex,
-    _OpIndex,
-)
+from . import interfaces
 
 
-class ReactionFilter(ABC):
-    @abstractmethod
-    def __call__(
-        self,
-        operator: OpDatBase,
-        reactants: Sequence[MolDatBase],
-        products: Sequence[MolDatBase],
-    ) -> bool:
-        pass
-
-
-class AlwaysTrueFilter(ReactionFilter):
+class AlwaysTrueFilter(interfaces.ReactionFilter):
     def __call__(self, operator, reactants, products):
         return True
 
 
-class ChainFilter(ReactionFilter):
-    def __init__(self, filters: Iterable[ReactionFilter]):
+class ChainFilter(interfaces.ReactionFilter):
+    def __init__(self, filters: Iterable[interfaces.ReactionFilter]):
         self._filters = filters
 
     def __call__(self, operator, reactants, products):
@@ -59,7 +34,7 @@ class ChainFilter(ReactionFilter):
         )
 
 
-class LessThanNElementTypeFilter(ReactionFilter):
+class LessThanNElementTypeFilter(interfaces.ReactionFilter):
     def __init__(self, n: int, proton_number: int):
         self._n = n
         self._p = proton_number
@@ -67,7 +42,7 @@ class LessThanNElementTypeFilter(ReactionFilter):
 
     def __call__(self, operator, reactants, products):
         for mol in products:
-            if isinstance(mol, MolDatRDKit):
+            if isinstance(mol, interfaces.MolDatRDKit):
                 if len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n:
                     return False
         return True
@@ -81,29 +56,23 @@ class LessThanNElementTypeFilter(ReactionFilter):
         self._q = AtomNumEqualsQueryAtom(self._p)
 
 
-class UIDPreFilter(ABC):
-    @abstractmethod
+class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
     def __call__(
         self,
-        operator: Identifier,
-        reactants: Sequence[Identifier],
-    ) -> bool:
-        pass
-
-
-class AlwaysTrueUIDPreFilter(UIDPreFilter):
-    def __call__(
-        self, operator: Identifier, reactants: Sequence[Identifier]
+        operator: interfaces.Identifier,
+        reactants: Sequence[interfaces.Identifier],
     ) -> bool:
         return True
 
 
-class CoreactantUIDPreFilter(UIDPreFilter):
-    def __init__(self, coreactants: Collection[Identifier]):
+class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
+    def __init__(self, coreactants: Collection[interfaces.Identifier]):
         self._coreactants = frozenset(coreactants)
 
     def __call__(
-        self, operator: Identifier, reactants: Sequence[Identifier]
+        self,
+        operator: interfaces.Identifier,
+        reactants: Sequence[interfaces.Identifier],
     ) -> bool:
         for uid in reactants:
             if uid not in self._coreactants:
@@ -111,7 +80,7 @@ class CoreactantUIDPreFilter(UIDPreFilter):
         return False
 
 
-class TanimotoSimilarityFilter(ReactionFilter):
+class TanimotoSimilarityFilter(interfaces.ReactionFilter):
     def __init__(self, n: float, smi: str):
         self._n = n
         self._s = smi
@@ -120,7 +89,7 @@ class TanimotoSimilarityFilter(ReactionFilter):
 
     def __call__(self, operator, reactants, products):
         for mol in products:
-            if isinstance(mol, MolDatRDKit):
+            if isinstance(mol, interfaces.MolDatRDKit):
                 mol_fp = RDKFingerprint(mol.rdkitmol)
                 similarity = TanimotoSimilarity(mol_fp, self._tfp)
 
@@ -129,108 +98,16 @@ class TanimotoSimilarityFilter(ReactionFilter):
         return False
 
 
-class MolFilter(ABC):
-    __slots__ = ()
-
-    @abstractmethod
-    def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
-    ) -> bool:
-        ...
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
-
-    @final
-    def __and__(self, other: "MolFilter") -> "MolFilter":
-        return MolFilterAnd(self, other)
-
-    @final
-    def __invert__(self) -> "MolFilter":
-        return MolFilterInv(self)
-
-    @final
-    def __or__(self, other: "MolFilter") -> "MolFilter":
-        return MolFilterOr(self, other)
-
-    @final
-    def __xor__(self, other: "MolFilter") -> "MolFilter":
-        return MolFilterXor(self, other)
-
-
 @dataclass(frozen=True)
-class MolFilterAnd(MolFilter):
-    __slots__ = ("_filter1", "_filter2")
-
-    _filter1: MolFilter
-    _filter2: MolFilter
-
-    def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
-    ) -> bool:
-        return self._filter1(mol, meta) and self._filter2(mol, meta)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class MolFilterInv(MolFilter):
-    __slots__ = ("_filter",)
-    _filter: MolFilter
-
-    def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
-    ) -> bool:
-        return not self._filter(mol, meta)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter.meta_required
-
-
-@dataclass(frozen=True)
-class MolFilterOr(MolFilter):
-    __slots__ = ("_filter1", "_filter2")
-    _filter1: MolFilter
-    _filter2: MolFilter
-
-    def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
-    ) -> bool:
-        return self._filter1(mol, meta) or self._filter2(mol, meta)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class MolFilterXor(MolFilter):
-    __slots__ = ("_filter1", "_filter2")
-    _filter1: MolFilter
-    _filter2: MolFilter
-
-    def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
-    ) -> bool:
-        return self._filter1(mol, meta) != self._filter2(mol, meta)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class MolFilterMetaVal(MolFilter):
+class MolFilterMetaVal(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
     _key: Hashable
     _val: Any
 
     def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+        self,
+        mol: interfaces.MolDatBase,
+        meta: Optional[Mapping[Hashable, Any]] = None,
     ) -> bool:
         if meta is None:
             return False
@@ -239,17 +116,19 @@ class MolFilterMetaVal(MolFilter):
         return meta[self._key] == self._val
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket(frozenset(), frozenset((self._key,)))
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(frozenset(), frozenset((self._key,)))
 
 
 @dataclass(frozen=True)
-class MolFilterMetaExist(MolFilter):
+class MolFilterMetaExist(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
     _key: Hashable
 
     def __call__(
-        self, mol: MolDatBase, meta: Optional[Mapping[Hashable, Any]] = None
+        self,
+        mol: interfaces.MolDatBase,
+        meta: Optional[Mapping[Hashable, Any]] = None,
     ) -> bool:
         if meta is None:
             return False
@@ -258,150 +137,22 @@ class MolFilterMetaExist(MolFilter):
         return True
 
     @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket(frozenset(), frozenset((self._key,)))
-
-
-class RecipeFilter(ABC):
-    __slots__ = ()
-
-    @abstractmethod
-    def __call__(self, recipe: RecipeExplicit) -> bool:
-        ...
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
-
-    @final
-    def __and__(self, other: "RecipeFilter") -> "RecipeFilter":
-        return RecipeFilterAnd(self, other)
-
-    @final
-    def __invert__(self) -> "RecipeFilter":
-        return RecipeFilterInv(self)
-
-    @final
-    def __or__(self, other: "RecipeFilter") -> "RecipeFilter":
-        return RecipeFilterOr(self, other)
-
-    @final
-    def __xor__(self, other: "RecipeFilter") -> "RecipeFilter":
-        return RecipeFilterXor(self, other)
-
-
-@dataclass(frozen=True)
-class RecipeFilterAnd(RecipeFilter):
-    __slots__ = ("_filter1", "_filter2")
-
-    _filter1: RecipeFilter
-    _filter2: RecipeFilter
-
-    def __call__(self, recipe: RecipeExplicit) -> bool:
-        return self._filter1(recipe) and self._filter2(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class RecipeFilterInv(RecipeFilter):
-    __slots__ = ("_filter",)
-    _filter: RecipeFilter
-
-    def __call__(self, recipe: RecipeExplicit) -> bool:
-        return not self._filter(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter.meta_required
-
-
-@dataclass(frozen=True)
-class RecipeFilterOr(RecipeFilter):
-    __slots__ = ("_filter1", "_filter2")
-    _filter1: RecipeFilter
-    _filter2: RecipeFilter
-
-    def __call__(self, recipe: RecipeExplicit) -> bool:
-        return self._filter1(recipe) or self._filter2(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclass(frozen=True)
-class RecipeFilterXor(RecipeFilter):
-    __slots__ = ("_filter1", "_filter2")
-    _filter1: RecipeFilter
-    _filter2: RecipeFilter
-
-    def __call__(self, recipe: RecipeExplicit) -> bool:
-        return self._filter1(recipe) != self._filter2(recipe)
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return self._filter1.meta_required + self._filter2.meta_required
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(frozenset(), frozenset((self._key,)))
 
 
 @dataclass
-class CoreactantFilter(RecipeFilter):
+class CoreactantFilter(interfaces.RecipeFilter):
     __slots__ = "_coreactants"
-    _coreactants: set[_MolIndex]
+    _coreactants: set[interfaces.MolIndex]
 
-    def __init__(self, coreactants: Iterable[_MolIndex]) -> None:
+    def __init__(self, coreactants: Iterable[interfaces.MolIndex]) -> None:
         self._coreactants = set(coreactants)
 
-    def __call__(self, recipe: RecipeExplicit) -> bool:
+    def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
         if all(mol.i in self._coreactants for mol in recipe.reactants):
             return False
         return True
-
-
-class RankValue(Protocol):
-    @abstractmethod
-    def __lt__(self, other: "RankValue") -> bool:
-        ...
-
-
-class RecipeRanker(Protocol):
-    @abstractmethod
-    def __call__(
-        self, recipe: RecipeExplicit, min_rank: Optional[RankValue] = None
-    ) -> Optional[RankValue]:
-        ...
-
-    @property
-    def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
-
-
-class MetaDataCalculatorLocal(Protocol):
-    @abstractmethod
-    def __call__(self, unit: Union[ReactionExplicit, RecipeExplicit]) -> None:
-        ...
-
-    @property
-    @abstractmethod
-    def meta_required(self) -> MetaKeyPacket:
-        ...
-
-
-class MetaDataUpdate(Protocol):
-    @abstractmethod
-    def __call__(
-        self, unit: ReactionExplicit, network: ChemNetwork
-    ) -> Generator[
-        tuple[
-            Optional[tuple[_MolIndex, Hashable]],
-            Optional[tuple[_OpIndex, Hashable]],
-        ],
-        None,
-        None,
-    ]:
-        ...
 
 
 def ReplaceNewValue(key: Hashable, old_value: Any, new_value: Any) -> bool:
@@ -428,12 +179,12 @@ class ReplaceBlacklist:
 class DefaultMetaDataUpdate:
     def __call__(
         self,
-        unit: ReactionExplicit,
-        network: ChemNetwork,
+        unit: interfaces.ReactionExplicit,
+        network: interfaces.ChemNetwork,
     ) -> Generator[
         tuple[
-            Optional[tuple[_MolIndex, Hashable]],
-            Optional[tuple[_OpIndex, Hashable]],
+            Optional[tuple[interfaces.MolIndex, Hashable]],
+            Optional[tuple[interfaces.OpIndex, Hashable]],
         ],
         None,
         None,

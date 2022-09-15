@@ -1,9 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from pickaxe_generic.datatypes import DataPacketE, MetaKeyPacket, MolDatBase
 from pickaxe_generic.engine import create_engine
 from pickaxe_generic.filters import CoreactantFilter
+from pickaxe_generic.interfaces import (
+    DataPacketE,
+    MetaKeyPacket,
+    MolDatBase,
+    ReactionExplicit,
+)
 from pickaxe_generic.metadata import (
     LocalPropertyCalc,
     MetaDataResolverFunc,
@@ -12,7 +17,7 @@ from pickaxe_generic.metadata import (
     MolPropertyFromRxnCalc,
     ReactionFilterBase,
 )
-from pickaxe_generic.network import ChemNetworkBasic, ReactionExplicit
+from pickaxe_generic.network import ChemNetworkBasic
 from pickaxe_generic.strategies import PriorityQueueStrategyBasic
 
 network = ChemNetworkBasic()

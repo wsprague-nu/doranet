@@ -14,27 +14,16 @@ Classes:
 """
 
 
-from abc import ABC, abstractmethod
 from typing import Any, Iterable, Optional, Tuple, Union
 
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 
-from pickaxe_generic.containers import (
-    ObjectLibrary,
-    ObjectLibraryBasic,
-    ObjectLibraryKeyVal,
-)
+from pickaxe_generic.containers import ObjectLibraryBasic, ObjectLibraryKeyVal
 from pickaxe_generic.datatypes import (
-    Identifier,
-    MolDatBase,
     MolDatBasicV1,
     MolDatBasicV2,
-    MolDatRDKit,
-    OpDatBase,
     OpDatBasic,
-    OpDatRDKit,
-    RxnDatBase,
     RxnDatBasic,
 )
 from pickaxe_generic.strategies import CartesianStrategy
@@ -42,7 +31,7 @@ from pickaxe_generic.strategies import CartesianStrategy
 from . import interfaces
 
 
-def create_engine(speed: int = 5) -> "NetworkEngine":
+def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
     """
     Initializes and returns a NetworkEngine based on configuration parameters.
 
@@ -135,7 +124,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         molecule: Union[RDKitMol, str, bytes],
         sanitize: bool = True,
         neutralize: bool = False,
-    ) -> MolDatRDKit:
+    ) -> interfaces.MolDatRDKit:
         return self._Mol(
             molecule=molecule, sanitize=sanitize, neutralize=neutralize
         )
@@ -149,9 +138,9 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def Rxn(
         self,
-        operator: Optional[Identifier] = None,
-        reactants: Optional[Iterable[Identifier]] = None,
-        products: Optional[Iterable[Identifier]] = None,
+        operator: Optional[interfaces.Identifier] = None,
+        reactants: Optional[Iterable[interfaces.Identifier]] = None,
+        products: Optional[Iterable[interfaces.Identifier]] = None,
         reaction: Optional[bytes] = None,
     ) -> RxnDatBasic:
         return self._Rxn(
@@ -164,20 +153,24 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     def Libs(
         self,
     ) -> Tuple[
-        ObjectLibrary[MolDatBase],
-        ObjectLibrary[OpDatBase],
-        ObjectLibrary[RxnDatBase],
+        interfaces.ObjectLibrary[interfaces.MolDatBase],
+        interfaces.ObjectLibrary[interfaces.OpDatBase],
+        interfaces.ObjectLibrary[interfaces.RxnDatBase],
     ]:
-        mol_lib: ObjectLibrary[MolDatBase] = self._Mol_Lib()
-        op_lib: ObjectLibrary[OpDatBase] = self._Op_Lib()
-        rxn_lib: ObjectLibrary[RxnDatBase] = self._Rxn_Lib()
+        mol_lib: interfaces.ObjectLibrary[
+            interfaces.MolDatBase
+        ] = self._Mol_Lib()
+        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase] = self._Op_Lib()
+        rxn_lib: interfaces.ObjectLibrary[
+            interfaces.RxnDatBase
+        ] = self._Rxn_Lib()
         return (mol_lib, op_lib, rxn_lib)
 
     def CartesianStrategy(
         self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
+        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
+        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
+        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
     ) -> CartesianStrategy:
         return self._CartesianStrategy(
             mol_lib=mol_lib, op_lib=op_lib, rxn_lib=rxn_lib, engine=self
