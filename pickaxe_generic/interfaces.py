@@ -12,6 +12,8 @@ import dataclasses
 import typing
 
 import rdkit
+import rdkit.Chem
+import rdkit.Chem.rdChemReactions
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)
