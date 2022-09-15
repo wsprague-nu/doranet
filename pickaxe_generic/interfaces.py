@@ -111,7 +111,7 @@ class DataUnit(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def from_bytes(
-        cls: type[T_ci], data: bytes, engine: typing.Optional["NetworkEngine"]
+        cls: type[T_ci], data: bytes, engine: "NetworkEngine"
     ) -> T_ci:
         """
         Produce object from bytestring.
@@ -194,6 +194,14 @@ class MolDatRDKit(MolDatBase):
         neutralize: bool = False,
     ) -> None:
         pass
+
+    @classmethod
+    def from_bytes(
+        cls,
+        data: bytes,
+        engine: "NetworkEngine",
+    ) -> "MolDatRDKit":
+        return engine.Mol(data)
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, MolDatRDKit):
@@ -359,6 +367,15 @@ class OpDatRDKit(OpDatBase):
     def __init__(self, operator: rdkit.Chem.rdchem.Mol | str | bytes):
         pass
 
+    @typing.final
+    @classmethod
+    def from_bytes(
+        cls,
+        data: bytes,
+        engine: "NetworkEngine",
+    ) -> "OpDatRDKit":
+        return engine.Op(data)
+
     @property
     @abc.abstractmethod
     def smarts(self) -> str:
@@ -399,6 +416,15 @@ class RxnDatBase(DataUnit):
         reaction: typing.Optional[bytes] = None,
     ) -> None:
         pass
+
+    @typing.final
+    @classmethod
+    def from_bytes(
+        cls,
+        data: bytes,
+        engine: "NetworkEngine",
+    ) -> "RxnDatBase":
+        return engine.Rxn(data)
 
     @property
     @abc.abstractmethod
@@ -936,6 +962,7 @@ class NetworkEngine(abc.ABC):
         operator: typing.Union[
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
+        kekulize: bool = False,
     ) -> OpDatRDKit:
         """
         Initializes an OpDatRDKit object of relevant type.
