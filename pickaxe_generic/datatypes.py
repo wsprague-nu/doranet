@@ -22,14 +22,9 @@ import io
 import pickle
 import typing
 
-from rdkit.Chem import Mol as BuildMol
-from rdkit.Chem import MolToSmiles
-from rdkit.Chem.inchi import MolToInchiKey
-from rdkit.Chem.rdchem import AtomValenceException, KekulizeException
-from rdkit.Chem.rdchem import Mol as RDKitMol
-from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
-from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
-from rdkit.Chem.rdmolops import Kekulize
+import rdkit
+import rdkit.Chem
+import rdkit.Chem.rdChemReactions
 
 from . import interfaces
 
@@ -83,16 +78,16 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
 
     def __init__(
         self,
-        molecule: RDKitMol | str | bytes,
+        molecule: rdkit.Chem.rdchem.Mol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
         rdkitmol = self._processinput(molecule, sanitize, neutralize)
         self._buildfrommol(rdkitmol)
 
-    def _buildfrommol(self, in_val: RDKitMol) -> None:
+    def _buildfrommol(self, in_val: rdkit.Chem.rdchem.Mol) -> None:
         self._blob = in_val.ToBinary()
-        self._smiles = MolToSmiles(in_val)
+        self._smiles = rdkit.Chem.MolToSmiles(in_val)
 
     @property
     def blob(self) -> bytes:
@@ -100,11 +95,11 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
 
     @property
     def inchikey(self) -> str:
-        return MolToInchiKey(self.rdkitmol)
+        return rdkit.Chem.inchi.MolToInchiKey(self.rdkitmol)
 
     @property
-    def rdkitmol(self) -> RDKitMol:
-        return BuildMol(self._blob)
+    def rdkitmol(self) -> rdkit.Chem.rdchem.Mol:
+        return rdkit.Chem.Mol(self._blob)
 
     @property
     def smiles(self) -> str:
@@ -119,7 +114,7 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
 
     def __setstate__(self, arg: bytes) -> None:
         self._blob = arg
-        self._smiles = MolToSmiles(BuildMol(arg))
+        self._smiles = rdkit.Chem.MolToSmiles(rdkit.Chem.Mol(arg))
 
 
 @typing.final
@@ -133,12 +128,12 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
     __slots__ = ("_blob", "_inchikey", "_rdkitmol", "_smiles")
     _blob: typing.Optional[bytes]
     _inchikey: typing.Optional[str]
-    _rdkitmol: RDKitMol
+    _rdkitmol: rdkit.Chem.rdchem.Mol
     _smiles: str
 
     def __init__(
         self,
-        molecule: RDKitMol | str | bytes,
+        molecule: rdkit.Chem.rdchem.Mol | str | bytes,
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> None:
@@ -147,9 +142,9 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
         rdkitmol = self._processinput(molecule, sanitize, neutralize)
         self._buildfrommol(rdkitmol)
 
-    def _buildfrommol(self, in_val: RDKitMol) -> None:
+    def _buildfrommol(self, in_val: rdkit.Chem.rdchem.Mol) -> None:
         self._rdkitmol = in_val
-        self._smiles = MolToSmiles(in_val)
+        self._smiles = rdkit.Chem.MolToSmiles(in_val)
 
     @property
     def blob(self) -> bytes:
@@ -160,11 +155,11 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
     @property
     def inchikey(self) -> str:
         if self._inchikey is None:
-            self._inchikey = MolToInchiKey(self._rdkitmol)
+            self._inchikey = rdkit.Chem.inchi.MolToInchiKey(self._rdkitmol)
         return self._inchikey
 
     @property
-    def rdkitmol(self) -> RDKitMol:
+    def rdkitmol(self) -> rdkit.Chem.rdchem.Mol:
         return self._rdkitmol
 
     @property
@@ -189,7 +184,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
 
     Parameters
     ----------
-    operator : RDKitMol | str | bytes
+    operator : rdkit.Chem.rdchem.Mol | str | bytes
         SMARTS string which is used to generate operator data, otherwise some
         encoding of relevant data.
 
@@ -197,7 +192,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
     ----------
     blob : bytes
         Binary representation of operator.
-    rdkitrxn : RDKitRxn
+    rdkitrxn : rdkit.Chem.rdChemReactions.ChemicalReaction
         RDKit reaction object.
     smarts : str
         SMARTS string representing operator.
@@ -215,8 +210,8 @@ class OpDatBasic(interfaces.OpDatRDKit):
         "_uid",
     )
 
-    _rdkitrxn: RDKitRxn
-    _templates: typing.Optional[tuple[RDKitMol, ...]]
+    _rdkitrxn: rdkit.Chem.rdChemReactions.ChemicalReaction
+    _templates: typing.Optional[tuple[rdkit.Chem.rdchem.Mol, ...]]
     _engine: interfaces.NetworkEngine
 
     _blob: typing.Optional[bytes]
@@ -226,15 +221,17 @@ class OpDatBasic(interfaces.OpDatRDKit):
 
     def __init__(
         self,
-        operator: RDKitMol | str | bytes,
+        operator: rdkit.Chem.rdchem.Mol | str | bytes,
         engine: interfaces.NetworkEngine,
         kekulize_before_operation: bool = False,
     ) -> None:
-        if isinstance(operator, RDKitRxn):
+        if isinstance(operator, rdkit.Chem.rdChemReactions.ChemicalReaction):
             self._rdkitrxn = operator
             self._kekulize = kekulize_before_operation
         elif isinstance(operator, str):
-            self._rdkitrxn = ReactionFromSmarts(operator)
+            self._rdkitrxn = rdkit.Chem.rdChemReactions.ReactionFromSmarts(
+                operator
+            )
             self._kekulize = kekulize_before_operation
             # SanitizeRxn(self._rdkitrxn)
         elif isinstance(operator, bytes):
@@ -255,19 +252,23 @@ class OpDatBasic(interfaces.OpDatRDKit):
         return self._blob
 
     @property
-    def rdkitrxn(self) -> RDKitRxn:
+    def rdkitrxn(self) -> rdkit.Chem.rdChemReactions.ChemicalReaction:
         return self._rdkitrxn
 
     @property
     def smarts(self) -> str:
         if self._smarts is None:
-            self._smarts = ReactionToSmarts(self._rdkitrxn)
+            self._smarts = rdkit.Chem.rdChemReactions.ReactionToSmarts(
+                self._rdkitrxn
+            )
         return self._smarts
 
     @property
     def uid(self) -> str:
         if self._smarts is None:
-            self._smarts = ReactionToSmarts(self._rdkitrxn)
+            self._smarts = rdkit.Chem.rdChemReactions.ReactionToSmarts(
+                self._rdkitrxn
+            )
         return self._smarts
 
     def compat(self, mol: interfaces.MolDatBase, arg: int) -> bool:
@@ -276,20 +277,20 @@ class OpDatBasic(interfaces.OpDatRDKit):
         if isinstance(mol, interfaces.MolDatRDKit):
             tempmol = mol.rdkitmol
             if self._kekulize:
-                tempmol = BuildMol(tempmol)
-                Kekulize(tempmol, clearAromaticFlags=True)
+                tempmol = rdkit.Chem.Mol(tempmol)
+                rdkit.Chem.rdmolops.Kekulize(tempmol, clearAromaticFlags=True)
             return tempmol.HasSubstructMatch(
                 self._templates[arg], useChirality=True
             )
         else:
             return False
 
-    def _build_templates(self) -> tuple[RDKitMol, ...]:
+    def _build_templates(self) -> tuple[rdkit.Chem.rdchem.Mol, ...]:
         return tuple(self._rdkitrxn.GetReactants())
 
     def _attempt_reaction(
-        self, mols: collections.abc.Iterable[RDKitMol]
-    ) -> collections.abc.Iterable[RDKitMol]:
+        self, mols: collections.abc.Iterable[rdkit.Chem.rdchem.Mol]
+    ) -> collections.abc.Iterable[rdkit.Chem.rdchem.Mol]:
         try:
             return self._rdkitrxn.RunReactants(mols, maxProducts=0)
         except Exception as err:
@@ -299,15 +300,15 @@ class OpDatBasic(interfaces.OpDatRDKit):
     def __call__(
         self, reactants: collections.abc.Sequence[interfaces.MolDatBase]
     ) -> tuple[tuple[interfaces.MolDatBase, ...], ...]:
-        rdkitmols: list[RDKitMol] = [
+        rdkitmols: list[rdkit.Chem.rdchem.Mol] = [
             reactant.rdkitmol
             for reactant in reactants
             if isinstance(reactant, interfaces.MolDatRDKit)
         ]
         if self._kekulize:
-            rdkitmols = [BuildMol(rdkitmol) for rdkitmol in rdkitmols]
+            rdkitmols = [rdkit.Chem.Mol(rdkitmol) for rdkitmol in rdkitmols]
             for rdkitmol in rdkitmols:
-                Kekulize(rdkitmol, clearAromaticFlags=True)
+                rdkit.Chem.rdmolops.Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
             return tuple(
                 tuple(self._engine.Mol(product) for product in products)
@@ -315,11 +316,11 @@ class OpDatBasic(interfaces.OpDatRDKit):
                     rdkitmols, maxProducts=0
                 )
             )
-        except AtomValenceException as err:
+        except rdkit.Chem.rdchem.AtomValenceException as err:
             raise ValueError(
                 f"Error occurred when using operator {self} on {reactants}"
             ) from err
-        except KekulizeException as err:
+        except rdkit.Chem.rdchem.KekulizeException as err:
             raise ValueError(
                 f"Error occurred when using operator {self} on {reactants}"
             ) from err
