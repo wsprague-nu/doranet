@@ -8,26 +8,10 @@ Classes:
       RxnTrackerDepthFirst*
 """
 
-from abc import ABC, abstractmethod
+import collections.abc
+import typing
 from itertools import chain
 from itertools import product as iterproduct
-from re import X
-from types import NoneType
-from typing import (
-    Callable,
-    Collection,
-    Dict,
-    Generator,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    TypeVar,
-    overload,
-)
 
 from . import interfaces
 
@@ -38,7 +22,7 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
     ObjectLibrary interface is updated to include native search functionality.
     """
 
-    _mol_lookup: Dict[interfaces.Identifier, list[interfaces.Identifier]]
+    _mol_lookup: dict[interfaces.Identifier, list[interfaces.Identifier]]
     _rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase]
 
     def __init__(
@@ -54,13 +38,17 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
 
     def _getchains(
         self,
-        cur_gen_mols: Collection[interfaces.Identifier],
-        prev_gens_mols: Set[interfaces.Identifier] = None,
-        prev_gens_rxns: Set[interfaces.Identifier] = None,
-        reagent_table: Optional[Iterable[interfaces.Identifier]] = None,
+        cur_gen_mols: collections.abc.Collection[interfaces.Identifier],
+        prev_gens_mols: set[interfaces.Identifier] = None,
+        prev_gens_rxns: set[interfaces.Identifier] = None,
+        reagent_table: typing.Optional[
+            collections.abc.Iterable[interfaces.Identifier]
+        ] = None,
         fail_on_unknown_reagent: bool = False,
-        depth: Optional[int] = None,
-    ) -> Generator[list[frozenset[interfaces.Identifier]], None, None]:
+        depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.Identifier]], None, None
+    ]:
         if depth is not None:
             if depth <= 0:
                 return
@@ -76,14 +64,14 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
             prev_gens_rxns = set()
         if reagent_table is None:
             reagent_table = set()
-        rxnsets: List[List[interfaces.Identifier]] = []
+        rxnsets: list[list[interfaces.Identifier]] = []
         for mol in cur_gen_mols:
             if mol in reagent_table:
                 continue
             elif mol not in self._mol_lookup:
                 rxnsets.append([])
                 continue
-            newrxnset: List[interfaces.Identifier] = [
+            newrxnset: list[interfaces.Identifier] = [
                 rxn
                 for rxn in self._mol_lookup[mol]
                 if rxn not in prev_gens_rxns
@@ -131,10 +119,14 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
     def getParentChains(
         self,
         target: interfaces.Identifier,
-        reagent_table: Sequence[interfaces.Identifier] = tuple(),
+        reagent_table: collections.abc.Sequence[
+            interfaces.Identifier
+        ] = tuple(),
         fail_on_unknown_reagent: bool = False,
-        max_depth: Optional[int] = None,
-    ) -> Generator[list[frozenset[interfaces.Identifier]], None, None]:
+        max_depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.Identifier]], None, None
+    ]:
         if fail_on_unknown_reagent and not reagent_table:
             raise ValueError(
                 "reagent table must be specified if fail_on_unknown_reagent is "
@@ -151,10 +143,13 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
         )
 
 
-T = TypeVar("T")
+T = typing.TypeVar("T")
 
 
-def logreduce(function: Callable[[T, T], T], iterable: Iterable[T]) -> T:
+def logreduce(
+    function: collections.abc.Callable[[T, T], T],
+    iterable: collections.abc.Iterable[T],
+) -> T:
     """
     logreduce(function, iterable[, initial]) -> value
 
@@ -185,7 +180,9 @@ def logreduce(function: Callable[[T, T], T], iterable: Iterable[T]) -> T:
 
 
 def _logreduce(
-    f: Callable[[T, T], T], i: Iterator[T], n: int
+    f: collections.abc.Callable[[T, T], T],
+    i: collections.abc.Iterator[T],
+    n: int,
 ) -> tuple[T, bool]:
     if n == 0:
         x = next(i)
