@@ -8,34 +8,16 @@ Classes:
       CartesianStrategyParallel*
 """
 
+import collections.abc
 import heapq
-import operator
-from abc import ABC, abstractmethod
+import typing
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import reduce
 from itertools import chain, islice
 from itertools import product as iterproduct
 from itertools import repeat
 from math import prod
-from operator import floordiv
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Generator,
-    Hashable,
-    Iterable,
-    Iterator,
-    Mapping,
-    Optional,
-    Protocol,
-    Sequence,
-    TypeVar,
-    Union,
-    final,
-    overload,
-)
 
 from pickaxe_generic.metadata import (
     LocalPropertyCalc,
@@ -49,26 +31,32 @@ from pickaxe_generic.metadata import (
 from . import interfaces
 
 
-class _ReactionProvider(Protocol):
+class _ReactionProvider(typing.Protocol):
     def Rxn(
         self,
         operator: interfaces.Identifier = None,
-        reactants: Collection[interfaces.Identifier] = None,
-        products: Collection[interfaces.Identifier] = None,
+        reactants: collections.abc.Collection[interfaces.Identifier] = None,
+        products: collections.abc.Collection[interfaces.Identifier] = None,
     ) -> interfaces.RxnDatBase:
         ...
 
 
 def _generate_recipes_from_compat_table(
     compat: dict[interfaces.Identifier, list[list[interfaces.Identifier]]],
-    known_cache: Optional[
+    known_cache: typing.Optional[
         set[tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]]
     ] = None,
-    uid_prefilter: Optional[
-        Callable[[interfaces.Identifier, Sequence[interfaces.Identifier]], bool]
+    uid_prefilter: typing.Optional[
+        collections.abc.Callable[
+            [
+                interfaces.Identifier,
+                collections.abc.Sequence[interfaces.Identifier],
+            ],
+            bool,
+        ]
     ] = None,
     add_to_cache: bool = True,
-) -> Generator[
+) -> collections.abc.Generator[
     tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]], None, None
 ]:
     gen_cache = set()
@@ -96,14 +84,14 @@ def _generate_recipes_from_compat_table(
 
 def _evaluate_reaction(
     operator: interfaces.OpDatBase,
-    reactants: Sequence[interfaces.MolDatBase],
+    reactants: collections.abc.Sequence[interfaces.MolDatBase],
     engine: _ReactionProvider,
-    rxn_filter: Optional[
-        Callable[
+    rxn_filter: typing.Optional[
+        collections.abc.Callable[
             [
                 interfaces.OpDatBase,
-                Sequence[interfaces.MolDatBase],
-                Sequence[interfaces.MolDatBase],
+                collections.abc.Sequence[interfaces.MolDatBase],
+                collections.abc.Sequence[interfaces.MolDatBase],
             ],
             bool,
         ]
@@ -141,14 +129,14 @@ def _evaluate_reaction(
 def _evaluate_reaction_unpack(
     job: tuple[
         interfaces.OpDatBase,
-        Sequence[interfaces.MolDatBase],
+        collections.abc.Sequence[interfaces.MolDatBase],
         _ReactionProvider,
-        Optional[
-            Callable[
+        typing.Optional[
+            collections.abc.Callable[
                 [
                     interfaces.OpDatBase,
-                    Sequence[interfaces.MolDatBase],
-                    Sequence[interfaces.MolDatBase],
+                    collections.abc.Sequence[interfaces.MolDatBase],
+                    collections.abc.Sequence[interfaces.MolDatBase],
                 ],
                 bool,
             ]
@@ -162,12 +150,12 @@ def _evaluate_reaction_unpack(
     return _evaluate_reaction(*job)
 
 
-T = TypeVar("T")
+T = typing.TypeVar("T")
 
 
 def _chunk_generator(
-    n: int, iterable: Iterable[T]
-) -> Generator[Iterable[T], None, None]:
+    n: int, iterable: collections.abc.Iterable[T]
+) -> collections.abc.Generator[collections.abc.Iterable[T], None, None]:
     it = iter(iterable)
     while True:
         chunk_it = islice(it, n)
@@ -178,7 +166,7 @@ def _chunk_generator(
         yield chain((first_el,), chunk_it)
 
 
-@final
+@typing.final
 class CartesianStrategy(interfaces.ExpansionStrategy):
     """
     Implements interfaces.ExpansionStrategy interface via Cartesian product of molecules
@@ -191,7 +179,7 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
         rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
         engine: _ReactionProvider,
-        blacklist: Optional[set[interfaces.Identifier]] = None,
+        blacklist: typing.Optional[set[interfaces.Identifier]] = None,
     ) -> None:
         """Initialize strategy by attaching libraries.
 
@@ -239,7 +227,7 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
             self._add_mol_to_compat(mol_uid)
 
     def _add_mol_to_compat(
-        self, mol: Union[interfaces.Identifier, interfaces.MolDatBase]
+        self, mol: typing.Union[interfaces.Identifier, interfaces.MolDatBase]
     ) -> None:
         """
         Add entries to compat_table for new molecule.
@@ -262,7 +250,7 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
                     self._compat_table[op_uid][arg].append(mol_uid)
 
     def _add_op_to_compat(
-        self, op: Union[interfaces.Identifier, interfaces.OpDatBase]
+        self, op: typing.Union[interfaces.Identifier, interfaces.OpDatBase]
     ) -> None:
         """
         Add entries to compat_table for new operator.
@@ -317,22 +305,26 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
 
     def expand(
         self,
-        max_rxns: Optional[int] = None,
-        max_mols: Optional[int] = None,
-        num_gens: Optional[int] = None,
-        custom_filter: Optional[
-            Callable[
+        max_rxns: typing.Optional[int] = None,
+        max_mols: typing.Optional[int] = None,
+        num_gens: typing.Optional[int] = None,
+        custom_filter: typing.Optional[
+            collections.abc.Callable[
                 [
                     interfaces.OpDatBase,
-                    Sequence[interfaces.MolDatBase],
-                    Sequence[interfaces.MolDatBase],
+                    collections.abc.Sequence[interfaces.MolDatBase],
+                    collections.abc.Sequence[interfaces.MolDatBase],
                 ],
                 bool,
             ]
         ] = None,
-        custom_uid_prefilter: Optional[
-            Callable[
-                [interfaces.Identifier, Sequence[interfaces.Identifier]], bool
+        custom_uid_prefilter: typing.Optional[
+            collections.abc.Callable[
+                [
+                    interfaces.Identifier,
+                    collections.abc.Sequence[interfaces.Identifier],
+                ],
+                bool,
             ]
         ] = None,
         retain_products_to_blacklist: bool = False,
@@ -394,7 +386,7 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
             self.refresh()
 
 
-@final
+@typing.final
 class CartesianStrategyParallel(interfaces.ExpansionStrategy):
     """
     Implements interfaces.ExpansionStrategy interface via Cartesian product of molecules
@@ -453,7 +445,7 @@ class CartesianStrategyParallel(interfaces.ExpansionStrategy):
             self._add_mol_to_compat(mol_uid)
 
     def _add_mol_to_compat(
-        self, mol: Union[interfaces.Identifier, interfaces.MolDatBase]
+        self, mol: typing.Union[interfaces.Identifier, interfaces.MolDatBase]
     ) -> None:
         """
         Add entries to compat_table for new molecule.
@@ -476,7 +468,7 @@ class CartesianStrategyParallel(interfaces.ExpansionStrategy):
                     self._compat_table[op_uid][arg].append(mol_uid)
 
     def _add_op_to_compat(
-        self, op: Union[interfaces.Identifier, interfaces.OpDatBase]
+        self, op: typing.Union[interfaces.Identifier, interfaces.OpDatBase]
     ) -> None:
         """
         Add entries to compat_table for new operator.
@@ -520,22 +512,26 @@ class CartesianStrategyParallel(interfaces.ExpansionStrategy):
 
     def expand(
         self,
-        max_rxns: Optional[int] = None,
-        max_mols: Optional[int] = None,
-        num_gens: Optional[int] = None,
-        custom_filter: Optional[
-            Callable[
+        max_rxns: typing.Optional[int] = None,
+        max_mols: typing.Optional[int] = None,
+        num_gens: typing.Optional[int] = None,
+        custom_filter: typing.Optional[
+            collections.abc.Callable[
                 [
                     interfaces.OpDatBase,
-                    Sequence[interfaces.MolDatBase],
-                    Sequence[interfaces.MolDatBase],
+                    collections.abc.Sequence[interfaces.MolDatBase],
+                    collections.abc.Sequence[interfaces.MolDatBase],
                 ],
                 bool,
             ]
         ] = None,
-        custom_uid_prefilter: Optional[
-            Callable[
-                [interfaces.Identifier, Sequence[interfaces.Identifier]], bool
+        custom_uid_prefilter: typing.Optional[
+            collections.abc.Callable[
+                [
+                    interfaces.Identifier,
+                    collections.abc.Sequence[interfaces.Identifier],
+                ],
+                bool,
             ]
         ] = None,
     ) -> None:
@@ -604,13 +600,13 @@ class RecipeRankingJob:
     op_args: tuple[
         tuple[interfaces.DataPacket[interfaces.MolDatBase], ...], ...
     ]
-    recipe_filter: Optional[interfaces.RecipeFilter]
-    recipe_ranker: Optional[interfaces.RecipeRanker]
-    heap_size: Optional[int]
+    recipe_filter: typing.Optional[interfaces.RecipeFilter]
+    recipe_ranker: typing.Optional[interfaces.RecipeRanker]
+    heap_size: typing.Optional[int]
 
 
 def calc_batch_split(
-    size_bundle: Sequence[int], batch_size: int
+    size_bundle: collections.abc.Sequence[int], batch_size: int
 ) -> tuple[int, ...]:
     num_split = list(repeat(1, len(size_bundle)))
     split_size = tuple(size_bundle)
@@ -625,11 +621,15 @@ def calc_batch_split(
 
 
 def _generate_recipe_batches(
-    mol_table: Sequence[Sequence[interfaces.MolIndex]],
-    table_indices: Sequence[int],
-    batch_size: Optional[int] = None,
+    mol_table: collections.abc.Sequence[
+        collections.abc.Sequence[interfaces.MolIndex]
+    ],
+    table_indices: collections.abc.Sequence[int],
+    batch_size: typing.Optional[int] = None,
     updated_mols: set[interfaces.MolIndex] = set(),
-) -> Generator[tuple[tuple[interfaces.MolIndex, ...], ...], None, None]:
+) -> collections.abc.Generator[
+    tuple[tuple[interfaces.MolIndex, ...], ...], None, None
+]:
     num_args = len(mol_table)
 
     # get number of old and new mols for each argument
@@ -762,16 +762,27 @@ def assemble_recipe_batch_job(
     batch: tuple[tuple[interfaces.MolIndex, ...], ...],
     network: interfaces.ChemNetwork,
     keyset: interfaces.MetaKeyPacket,
-    recipe_ranker: Optional[interfaces.RecipeRanker] = None,
-    heap_size: Optional[int] = None,
-    recipe_filter: Optional[interfaces.RecipeFilter] = None,
+    recipe_ranker: typing.Optional[interfaces.RecipeRanker] = None,
+    heap_size: typing.Optional[int] = None,
+    recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
 ) -> RecipeRankingJob:
-    mol_data: Union[
-        Generator[Generator[None, None, None], None, None],
-        Generator[Generator[interfaces.MolDatBase, None, None], None, None],
+    mol_data: typing.Union[
+        collections.abc.Generator[
+            collections.abc.Generator[None, None, None], None, None
+        ],
+        collections.abc.Generator[
+            collections.abc.Generator[interfaces.MolDatBase, None, None],
+            None,
+            None,
+        ],
     ]
-    mol_meta: Generator[
-        Union[Sequence[Mapping], Generator[None, None, None]], None, None
+    mol_meta: collections.abc.Generator[
+        typing.Union[
+            collections.abc.Sequence[collections.abc.Mapping],
+            collections.abc.Generator[None, None, None],
+        ],
+        None,
+        None,
     ]
     if keyset.live_operator:
         op_data = network.ops[op_index]
@@ -831,7 +842,7 @@ def assemble_reaction_job(
 
     op = interfaces.DataPacketE(op_index, op_data, op_meta)
 
-    mol_meta: Iterable[Optional[Mapping]]
+    mol_meta: collections.abc.Iterable[typing.Optional[collections.abc.Mapping]]
     if keyset.molecule_keys:
         mol_meta = network.mol_metas(recipe.reactants, keyset.molecule_keys)
     else:
@@ -847,7 +858,7 @@ def assemble_reaction_job(
 
 @dataclass(frozen=True)
 class RecipePriorityItem:
-    rank: Optional[interfaces.RankValue]
+    rank: typing.Optional[interfaces.RankValue]
     recipe: interfaces.Recipe
 
     def __lt__(self, other: "RecipePriorityItem") -> bool:
@@ -871,8 +882,8 @@ class RecipePriorityItem:
 
 def execute_recipe_ranking(
     job: RecipeRankingJob,
-    min_val: Optional[RecipePriorityItem],
-    recipes_tested: Collection[interfaces.Recipe],
+    min_val: typing.Optional[RecipePriorityItem],
+    recipes_tested: collections.abc.Collection[interfaces.Recipe],
 ) -> "RecipeHeap":
     recipe_generator = (
         (interfaces.RecipeExplicit(job.operator, reactants_data), recipe)
@@ -950,14 +961,14 @@ def execute_recipe_ranking(
 class RecipeHeap:
     __slots__ = ("_heap", "_maxsize", "_ordered")
 
-    _heap: Optional[list[RecipePriorityItem]]
-    _ordered: Optional[list[RecipePriorityItem]]
-    _maxsize: Optional[int]
+    _heap: typing.Optional[list[RecipePriorityItem]]
+    _ordered: typing.Optional[list[RecipePriorityItem]]
+    _maxsize: typing.Optional[int]
 
     def __init__(
         self,
-        maxsize: Optional[int] = None,
-        heaps: Optional[Collection["RecipeHeap"]] = None,
+        maxsize: typing.Optional[int] = None,
+        heaps: typing.Optional[collections.abc.Collection["RecipeHeap"]] = None,
     ) -> None:
         if heaps is None:
             self._heap = None
@@ -985,7 +996,9 @@ class RecipeHeap:
 
     @classmethod
     def from_iter(
-        cls, data: Iterable[RecipePriorityItem], maxsize: Optional[int] = None
+        cls,
+        data: collections.abc.Iterable[RecipePriorityItem],
+        maxsize: typing.Optional[int] = None,
     ) -> "RecipeHeap":
         heap = RecipeHeap(maxsize)
         for item in data:
@@ -993,14 +1006,16 @@ class RecipeHeap:
         return heap
 
     @property
-    def min(self) -> Optional[RecipePriorityItem]:
+    def min(self) -> typing.Optional[RecipePriorityItem]:
         if self._heap is None:
             if self._ordered is None or len(self._ordered) == 0:
                 return None
             return min(self._ordered)
         return self._heap[0]
 
-    def popvals(self, n: Optional[int]) -> tuple[RecipePriorityItem, ...]:
+    def popvals(
+        self, n: typing.Optional[int]
+    ) -> tuple[RecipePriorityItem, ...]:
         if self._ordered is None:
             if self._heap is None:
                 return tuple()
@@ -1014,15 +1029,17 @@ class RecipeHeap:
             self._ordered.pop() for _ in range(min(len(self._ordered), n))
         )
 
-    @overload
-    def __getitem__(self, item: slice) -> Sequence[RecipePriorityItem]:
+    @typing.overload
+    def __getitem__(
+        self, item: slice
+    ) -> collections.abc.Sequence[RecipePriorityItem]:
         ...
 
-    @overload
+    @typing.overload
     def __getitem__(self, item: int) -> RecipePriorityItem:
         ...
 
-    def __getitem__(self, item: Union[int, slice]):
+    def __getitem__(self, item: typing.Union[int, slice]):
         if self._ordered is None:
             if self._heap is None:
                 raise IndexError(f"Invalid index {item=}; heap is empty")
@@ -1036,14 +1053,14 @@ class RecipeHeap:
             return len(self._ordered)
         return len(self._heap)
 
-    def __iter__(self) -> Iterator[RecipePriorityItem]:
+    def __iter__(self) -> collections.abc.Iterator[RecipePriorityItem]:
         if self._ordered is None:
             if self._heap is None:
                 return iter([])
             self._ordered = sorted(self._heap)
         return iter(self._ordered)
 
-    def __reversed__(self) -> Iterator[RecipePriorityItem]:
+    def __reversed__(self) -> collections.abc.Iterator[RecipePriorityItem]:
         if self._ordered is None:
             if self._heap is None:
                 return iter([])
@@ -1074,7 +1091,9 @@ class RecipeHeap:
 
 def execute_reaction(
     rxn_job: ReactionJob,
-) -> Generator[tuple[interfaces.ReactionExplicit, bool], None, None]:
+) -> collections.abc.Generator[
+    tuple[interfaces.ReactionExplicit, bool], None, None
+]:
     reactants = tuple(mol.item for mol in rxn_job.op_args)
     if rxn_job.operator.item is None or any(mol is None for mol in reactants):
         raise ValueError("ReactionJob has non-None item components!")
@@ -1100,9 +1119,9 @@ def execute_reaction(
 
 
 def execute_reactions(
-    rxn_jobs: Collection[ReactionJob],
-    rxn_analysis: Optional[RxnAnalysisStep] = None,
-) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+    rxn_jobs: collections.abc.Collection[ReactionJob],
+    rxn_analysis: typing.Optional[RxnAnalysisStep] = None,
+) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
     rxn_generator = reduce(
         chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
     )
@@ -1117,7 +1136,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
     def __init__(
         self,
         network: interfaces.ChemNetwork,
-        num_procs: Optional[int] = None,
+        num_procs: typing.Optional[int] = None,
     ) -> None:
         if num_procs is not None:
             raise NotImplementedError(
@@ -1127,27 +1146,27 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
     def expand(
         self,
-        max_recipes: Optional[int] = None,
-        heap_size: Optional[int] = None,
-        batch_size: Optional[int] = None,
-        beam_size: Optional[int] = 1,
-        # mol_filter_local: Optional[MolFilter] = None,
-        # mol_filter: Optional[MolFilter] = None,
-        recipe_filter: Optional[interfaces.RecipeFilter] = None,
-        recipe_ranker: Optional[interfaces.RecipeRanker] = None,
-        mc_local: Optional[
-            Union[
+        max_recipes: typing.Optional[int] = None,
+        heap_size: typing.Optional[int] = None,
+        batch_size: typing.Optional[int] = None,
+        beam_size: typing.Optional[int] = 1,
+        # mol_filter_local: typing.Optional[MolFilter] = None,
+        # mol_filter: typing.Optional[MolFilter] = None,
+        recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
+        recipe_ranker: typing.Optional[interfaces.RecipeRanker] = None,
+        mc_local: typing.Optional[
+            typing.Union[
                 RxnAnalysisStep,
                 PropertyCompositor,
                 ReactionFilterBase,
                 LocalPropertyCalc,
             ]
         ] = None,
-        mc_update: Optional[MetaUpdateResolver] = None,
-        # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
+        mc_update: typing.Optional[MetaUpdateResolver] = None,
+        # mc_update: typing.Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
-        rxn_analysis_task: Optional[RxnAnalysisStep] = None
+        rxn_analysis_task: typing.Optional[RxnAnalysisStep] = None
         if mc_local is not None:
             rxn_analysis_task = as_rxn_analysis_step(mc_local)
         if mc_update is None:
