@@ -18,9 +18,9 @@ Classes:
 
 import builtins
 import collections.abc
+import io
+import pickle
 import typing
-from io import BytesIO
-from pickle import Unpickler, UnpicklingError, dumps
 
 from rdkit.Chem import Mol as BuildMol
 from rdkit.Chem import MolToSmiles
@@ -45,15 +45,15 @@ _safe_builtins_classes: frozenset[str] = frozenset(
 )
 
 
-class __SafeUnpickler(Unpickler):
+class __SafeUnpickler(pickle.Unpickler):
     def find_class(self, module: str, name: str) -> typing.Any:
         if module == "builtins" and name in _safe_builtins_classes:
             return getattr(builtins, name)
-        raise UnpicklingError(f"global '{module}.{name}' is forbidden")
+        raise pickle.UnpicklingError(f"global '{module}.{name}' is forbidden")
 
 
 def loads(string_in: bytes) -> typing.Any:
-    return __SafeUnpickler(BytesIO(string_in)).load()
+    return __SafeUnpickler(io.BytesIO(string_in)).load()
 
     # @final
     # def __getstate__(self) -> bytes:
@@ -251,7 +251,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = dumps((self.rdkitrxn, self._kekulize))
+            self._blob = pickle.dumps((self.rdkitrxn, self._kekulize))
         return self._blob
 
     @property
@@ -425,7 +425,7 @@ class RxnDatBasic(interfaces.RxnDatBase):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = dumps(
+            self._blob = pickle.dumps(
                 tuple((self._operator, self._products, self._reactants))
             )
         return self._blob
