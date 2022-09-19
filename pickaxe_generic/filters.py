@@ -3,21 +3,19 @@ Contains classes which implement various filter components.
 
 Classes:
 
-    ReactionFilter (deprecated)
-      AlwaysTrueFilter*
-      ChainFilter*
-      LessThanNElementTypeFilter*
-      TanimotoSimilarityFilter*
-    UIDPreFilter (deprecated)
-      AlwaysTrueUIDPreFilter*
-      CoreactantUIDPreFilter*
-    MolFilter
+    interfaces.ReactionFilter (deprecated)
+      AlwaysTrueFilter* (deprecated)
+      ChainFilter* (deprecated)
+      LessThanNElementTypeFilter* (deprecated)
+      TanimotoSimilarityFilter* (deprecated)
+    interfaces.UIDPreFilter (deprecated)
+      AlwaysTrueUIDPreFilter* (deprecated)
+      CoreactantUIDPreFilter* (deprecated)
+    interfaces.MolFilter
       MolFilterMetaVal*
       MolFilterMetaExist*
-    RecipeFilter
+    interfaces.RecipeFilter
       CoreactantFilter*
-      
-
 """
 
 import collections.abc

@@ -3,7 +3,7 @@ Contains classes which define and implement relevant smart containers.
 
 Classes:
 
-    ObjectLibrary (deprecated)
+    interfaces.ObjectLibrary (deprecated)
       ObjectLibraryBasic*
       ObjectLibraryKeyVal*
 """

@@ -9,7 +9,7 @@ Functions:
 
 Classes:
 
-    NetworkEngine
+    interfaces.NetworkEngine
       NetworkEngineBasic*
 """
 

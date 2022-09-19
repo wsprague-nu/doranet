@@ -3,16 +3,13 @@ Contains classes which define and implement molecule-operator data units.
 
 Classes:
 
-    DataUnit
-      MolDatBase
-        MolDatRDKit
-          MolDatBasicV1*
-          MolDatBasicV2*
-      OpDatBase
-        OpDatRDKit
-          OpDatBasic*
-      RxnDatBase
-        RxnDatBasic*
+    interfaces.MolDatRDKit
+      MolDatBasicV1*
+      MolDatBasicV2*
+    interfaces.OpDatRDKit
+      OpDatBasic*
+    interfaces.RxnDatBase (deprecated)
+      RxnDatBasic* (deprecated)
 """
 
 import builtins
