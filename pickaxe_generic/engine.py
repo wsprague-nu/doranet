@@ -128,7 +128,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     def Op(
         self,
         operator: typing.Union[
-            rdkit.Chem.rdChemReaction.ChemicalReaction, str, bytes
+            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
     ) -> datatypes.OpDatBasic:
