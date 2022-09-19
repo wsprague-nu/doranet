@@ -4,8 +4,8 @@ Contains classes which define and implement relevant smart containers.
 Classes:
 
     ObjectLibrary
-      ObjectLibraryBasic*
-      ObjectLibraryKeyVal*
+      ObjectLibraryBasic* (deprecated)
+      ObjectLibraryKeyVal* (deprecated)
 """
 
 import collections.abc
