@@ -14,7 +14,8 @@ Classes:
 """
 
 
-from typing import Any, Iterable, Optional, Tuple, Union
+import collections.abc
+import typing
 
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
@@ -76,10 +77,10 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         "_CartesianStrategy",
         "_speed",
     )
-    _Mol: Any
-    _Mol_Lib: Any
-    _Op_Lib: Any
-    _Rxn_Lib: Any
+    _Mol: typing.Any
+    _Mol_Lib: typing.Any
+    _Op_Lib: typing.Any
+    _Rxn_Lib: typing.Any
 
     def __init__(self, speed: int = 5):
         if speed == 1:
@@ -121,7 +122,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def Mol(
         self,
-        molecule: Union[RDKitMol, str, bytes],
+        molecule: typing.Union[RDKitMol, str, bytes],
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> interfaces.MolDatRDKit:
@@ -130,7 +131,9 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         )
 
     def Op(
-        self, operator: Union[RDKitRxn, str, bytes], kekulize: bool = False
+        self,
+        operator: typing.Union[RDKitRxn, str, bytes],
+        kekulize: bool = False,
     ) -> OpDatBasic:
         return self._Op(
             operator=operator, engine=self, kekulize_before_operation=kekulize
@@ -138,10 +141,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def Rxn(
         self,
-        operator: Optional[interfaces.Identifier] = None,
-        reactants: Optional[Iterable[interfaces.Identifier]] = None,
-        products: Optional[Iterable[interfaces.Identifier]] = None,
-        reaction: Optional[bytes] = None,
+        operator: typing.Optional[interfaces.Identifier] = None,
+        reactants: typing.Optional[
+            collections.abc.Iterable[interfaces.Identifier]
+        ] = None,
+        products: typing.Optional[
+            collections.abc.Iterable[interfaces.Identifier]
+        ] = None,
+        reaction: typing.Optional[bytes] = None,
     ) -> RxnDatBasic:
         return self._Rxn(
             operator=operator,
@@ -152,7 +159,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def Libs(
         self,
-    ) -> Tuple[
+    ) -> tuple[
         interfaces.ObjectLibrary[interfaces.MolDatBase],
         interfaces.ObjectLibrary[interfaces.OpDatBase],
         interfaces.ObjectLibrary[interfaces.RxnDatBase],
