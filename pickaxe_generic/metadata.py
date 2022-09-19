@@ -1,29 +1,14 @@
+import collections.abc
 import operator
+import typing
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Mapping
 from dataclasses import dataclass
-from email.generator import Generator
-from functools import reduce
 from itertools import chain
-from multiprocessing.sharedctypes import Value
-from operator import add, or_
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Hashable,
-    Iterable,
-    Optional,
-    Protocol,
-    TypeVar,
-    Union,
-    final,
-)
 
 from . import interfaces, utils
 
 
-class MetaSink(Protocol):
+class MetaSink(typing.Protocol):
     __slots__ = ()
 
     @property
@@ -32,15 +17,15 @@ class MetaSink(Protocol):
         ...
 
 
-_T = TypeVar("_T")
-_U = TypeVar("_U")
-MetaDataResolverFunc = Callable[[_T, _T], _T]
+_T = typing.TypeVar("_T")
+_U = typing.TypeVar("_U")
+MetaDataResolverFunc = collections.abc.Callable[[_T, _T], _T]
 
 
-class LocalPropertyCalc(ABC, Generic[_T]):
+class LocalPropertyCalc(ABC, typing.Generic[_T]):
     @property
     @abstractmethod
-    def key(self) -> Hashable:
+    def key(self) -> collections.abc.Hashable:
         ...
 
     @property
@@ -53,17 +38,17 @@ class LocalPropertyCalc(ABC, Generic[_T]):
     def resolver(self) -> MetaDataResolverFunc[_T]:
         ...
 
-    @final
+    @typing.final
     def __and__(
-        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+        self, other: typing.Union["PropertyCompositor", "LocalPropertyCalc"]
     ) -> "PropertyCompositor":
         return MergePropertyCompositor(
             _as_property_compositor(self), _as_property_compositor(other)
         )
 
-    @final
+    @typing.final
     def __add__(
-        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+        self, other: typing.Union["PropertyCompositor", "LocalPropertyCalc"]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.add,
@@ -71,9 +56,9 @@ class LocalPropertyCalc(ABC, Generic[_T]):
             _as_property_compositor(other),
         )
 
-    @final
+    @typing.final
     def __sub__(
-        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+        self, other: typing.Union["PropertyCompositor", "LocalPropertyCalc"]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.sub,
@@ -81,9 +66,9 @@ class LocalPropertyCalc(ABC, Generic[_T]):
             _as_property_compositor(other),
         )
 
-    @final
+    @typing.final
     def __mul__(
-        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+        self, other: typing.Union["PropertyCompositor", "LocalPropertyCalc"]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.mul,
@@ -91,9 +76,9 @@ class LocalPropertyCalc(ABC, Generic[_T]):
             _as_property_compositor(other),
         )
 
-    @final
+    @typing.final
     def __truediv__(
-        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+        self, other: typing.Union["PropertyCompositor", "LocalPropertyCalc"]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.truediv,
@@ -101,9 +86,9 @@ class LocalPropertyCalc(ABC, Generic[_T]):
             _as_property_compositor(other),
         )
 
-    @final
+    @typing.final
     def __pow__(
-        self, other: Union["PropertyCompositor", "LocalPropertyCalc"]
+        self, other: typing.Union["PropertyCompositor", "LocalPropertyCalc"]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.pow,
@@ -111,10 +96,10 @@ class LocalPropertyCalc(ABC, Generic[_T]):
             _as_property_compositor(other),
         )
 
-    @final
+    @typing.final
     def __rshift__(
         self,
-        other: Union[
+        other: typing.Union[
             "RxnAnalysisStep",
             "PropertyCompositor",
             "ReactionFilterBase",
@@ -129,8 +114,8 @@ class MolPropertyCalc(LocalPropertyCalc[_T]):
     def __call__(
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
-        prev_value: Optional[_T] = None,
-    ) -> Optional[_T]:
+        prev_value: typing.Optional[_T] = None,
+    ) -> typing.Optional[_T]:
         ...
 
 
@@ -140,8 +125,8 @@ class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
         rxn: interfaces.ReactionExplicit,
-        prev_value: Optional[_T] = None,
-    ) -> Optional[_T]:
+        prev_value: typing.Optional[_T] = None,
+    ) -> typing.Optional[_T]:
         ...
 
 
@@ -150,8 +135,8 @@ class OpPropertyCalc(LocalPropertyCalc[_T]):
     def __call__(
         self,
         data: interfaces.DataPacketE[interfaces.OpDatBase],
-        prev_value: Optional[_T] = None,
-    ) -> Optional[_T]:
+        prev_value: typing.Optional[_T] = None,
+    ) -> typing.Optional[_T]:
         ...
 
 
@@ -161,24 +146,26 @@ class OpPropertyFromRxnCalc(LocalPropertyCalc[_T]):
         self,
         data: interfaces.DataPacketE[interfaces.OpDatBase],
         rxn: interfaces.ReactionExplicit,
-        prev_value: Optional[_T] = None,
-    ) -> Optional[_T]:
+        prev_value: typing.Optional[_T] = None,
+    ) -> typing.Optional[_T]:
         ...
 
 
 class RxnPropertyCalc(LocalPropertyCalc[_T]):
     @abstractmethod
     def __call__(
-        self, data: interfaces.ReactionExplicit, prev_value: Optional[_T] = None
-    ) -> Optional[_T]:
+        self,
+        data: interfaces.ReactionExplicit,
+        prev_value: typing.Optional[_T] = None,
+    ) -> typing.Optional[_T]:
         ...
 
 
 @dataclass(frozen=True)
 class KeyOutput:
-    mol_keys: frozenset[Hashable]
-    op_keys: frozenset[Hashable]
-    rxn_keys: frozenset[Hashable]
+    mol_keys: frozenset[collections.abc.Hashable]
+    op_keys: frozenset[collections.abc.Hashable]
+    rxn_keys: frozenset[collections.abc.Hashable]
 
     def __or__(self, other: "KeyOutput") -> "KeyOutput":
         return KeyOutput(
@@ -217,26 +204,26 @@ class ReactionFilterBase(ABC):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return interfaces.MetaKeyPacket()
 
-    @final
+    @typing.final
     def __and__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
         return ReactionFilterAnd(self, other)
 
-    @final
+    @typing.final
     def __invert__(self) -> "ReactionFilterBase":
         return ReactionFilterInv(self)
 
-    @final
+    @typing.final
     def __or__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
         return ReactionFilterOr(self, other)
 
-    @final
+    @typing.final
     def __xor__(self, other: "ReactionFilterBase") -> "ReactionFilterBase":
         return ReactionFilterXor(self, other)
 
-    @final
+    @typing.final
     def __rshift__(
         self,
-        other: Union[
+        other: typing.Union[
             "RxnAnalysisStep",
             "PropertyCompositor",
             "ReactionFilterBase",
@@ -312,56 +299,56 @@ class PropertyCompositor(ABC):
     def keys(self) -> KeyOutput:
         ...
 
-    @final
+    @typing.final
     def __and__(
-        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+        self, other: typing.Union["PropertyCompositor", LocalPropertyCalc]
     ) -> "PropertyCompositor":
         return MergePropertyCompositor(self, _as_property_compositor(other))
 
-    @final
+    @typing.final
     def __add__(
-        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+        self, other: typing.Union["PropertyCompositor", LocalPropertyCalc]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.add, self, _as_property_compositor(other)
         )
 
-    @final
+    @typing.final
     def __sub__(
-        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+        self, other: typing.Union["PropertyCompositor", LocalPropertyCalc]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.sub, self, _as_property_compositor(other)
         )
 
-    @final
+    @typing.final
     def __mul__(
-        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+        self, other: typing.Union["PropertyCompositor", LocalPropertyCalc]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.mul, self, _as_property_compositor(other)
         )
 
-    @final
+    @typing.final
     def __truediv__(
-        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+        self, other: typing.Union["PropertyCompositor", LocalPropertyCalc]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.truediv, self, _as_property_compositor(other)
         )
 
-    @final
+    @typing.final
     def __pow__(
-        self, other: Union["PropertyCompositor", LocalPropertyCalc]
+        self, other: typing.Union["PropertyCompositor", LocalPropertyCalc]
     ) -> "PropertyCompositor":
         return FunctionPropertyCompositor(
             operator.pow, self, _as_property_compositor(other)
         )
 
-    @final
+    @typing.final
     def __rshift__(
         self,
-        other: Union[
+        other: typing.Union[
             "RxnAnalysisStep",
             "PropertyCompositor",
             ReactionFilterBase,
@@ -411,7 +398,7 @@ class MergePropertyCompositor(PropertyCompositor):
 class FunctionPropertyCompositor(PropertyCompositor):
     __slots__ = ("_func", "_comp1", "_comp2")
 
-    _func: Callable[[Any, Any], Any]
+    _func: collections.abc.Callable[[typing.Any, typing.Any], typing.Any]
     _comp1: PropertyCompositor
     _comp2: PropertyCompositor
 
@@ -465,7 +452,7 @@ class FunctionPropertyCompositor(PropertyCompositor):
 
 
 @dataclass(frozen=True)
-class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
+class MolPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     __slots__ = ("_calc",)
 
     _calc: MolPropertyCalc[_T]
@@ -490,7 +477,7 @@ class MolPropertyCompositor(PropertyCompositor, Generic[_T]):
 
 
 @dataclass(frozen=True)
-class MolRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
+class MolRxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     __slots__ = ("_calc",)
 
     _calc: MolPropertyFromRxnCalc[_T]
@@ -515,7 +502,7 @@ class MolRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
 
 
 @dataclass(frozen=True)
-class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
+class OpPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     __slots__ = ("_calc",)
 
     _calc: OpPropertyCalc[_T]
@@ -538,7 +525,7 @@ class OpPropertyCompositor(PropertyCompositor, Generic[_T]):
 
 
 @dataclass(frozen=True)
-class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
+class OpRxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     __slots__ = ("_calc",)
 
     _calc: OpPropertyFromRxnCalc[_T]
@@ -561,7 +548,7 @@ class OpRxnPropertyCompositor(PropertyCompositor, Generic[_T]):
 
 
 @dataclass(frozen=True)
-class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
+class RxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     __slots__ = ("_calc",)
 
     _calc: RxnPropertyCalc[_T]
@@ -586,7 +573,7 @@ class RxnPropertyCompositor(PropertyCompositor, Generic[_T]):
 
 
 @dataclass
-class MetaPropertyStateSingleProp(Generic[_T]):
+class MetaPropertyStateSingleProp(typing.Generic[_T]):
     # note: this class is intended to be mutable; it will change after merging!
     __slots__ = ("data", "resolver")
 
@@ -627,9 +614,9 @@ class MetaPropertyState:
     # note: this class is intended to be mutable; it will change after merging!
     __slots__ = ("mol_info", "op_info", "rxn_info")
 
-    mol_info: dict[Hashable, MetaPropertyStateSingleProp]
-    op_info: dict[Hashable, MetaPropertyStateSingleProp]
-    rxn_info: dict[Hashable, MetaPropertyStateSingleProp]
+    mol_info: dict[collections.abc.Hashable, MetaPropertyStateSingleProp]
+    op_info: dict[collections.abc.Hashable, MetaPropertyStateSingleProp]
+    rxn_info: dict[collections.abc.Hashable, MetaPropertyStateSingleProp]
 
     def __or__(self, other: "MetaPropertyState") -> "MetaPropertyState":
         if len(self.mol_info) == 0:
@@ -639,7 +626,7 @@ class MetaPropertyState:
             if len(common_keys) == 0:
                 self.mol_info.update(other.mol_info)
             else:
-                resolved_info: dict[Hashable, Any] = {}
+                resolved_info: dict[collections.abc.Hashable, typing.Any] = {}
                 for prop_key in common_keys:
                     resolved_info[prop_key] = (
                         self.mol_info[prop_key] | other.mol_info[prop_key]
@@ -681,14 +668,17 @@ class MetaPropertyState:
 class RxnAnalysisStep(ABC):
     @abstractmethod
     def execute(
-        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
-    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+        self,
+        rxns: collections.abc.Iterable[
+            tuple[interfaces.ReactionExplicit, bool]
+        ],
+    ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         ...
 
-    @final
+    @typing.final
     def __rshift__(
         self,
-        other: Union[
+        other: typing.Union[
             "RxnAnalysisStep",
             PropertyCompositor,
             ReactionFilterBase,
@@ -715,8 +705,11 @@ class RxnAnalysisStepCompound(RxnAnalysisStep):
     step2: RxnAnalysisStep
 
     def execute(
-        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
-    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+        self,
+        rxns: collections.abc.Iterable[
+            tuple[interfaces.ReactionExplicit, bool]
+        ],
+    ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         return self.step2.execute(
             rxn_out for rxn_out in self.step1.execute(rxns)
         )
@@ -727,8 +720,15 @@ class RxnAnalysisStepCompound(RxnAnalysisStep):
 
 
 def _mmd(
-    i1: Optional[Mapping[Hashable, Any]], i2: Optional[Mapping[Hashable, Any]]
-) -> Optional[Mapping[Hashable, Any]]:
+    i1: typing.Optional[
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+    ],
+    i2: typing.Optional[
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+    ],
+) -> typing.Optional[
+    collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+]:
     if i1 is None:
         if i2 is None:
             return None
@@ -742,9 +742,11 @@ def _mmd(
 
 def metalib_to_rxn_meta(
     metalib: MetaPropertyState,
-    rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]],
-) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
-    mol_info: dict[interfaces.Identifier, dict[Hashable, Any]] = {
+    rxns: collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]],
+) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+    mol_info: dict[
+        interfaces.Identifier, dict[collections.abc.Hashable, typing.Any]
+    ] = {
         mol.item.uid: dict()
         for mol in chain(
             *((chain(rxn[0].reactants, rxn[0].products)) for rxn in rxns)
@@ -753,15 +755,15 @@ def metalib_to_rxn_meta(
     for meta_key, mol_dict in metalib.mol_info.items():
         for mol_id, key_val in mol_dict.data.items():
             mol_info[mol_id][meta_key] = key_val
-    op_info: dict[interfaces.Identifier, dict[Hashable, Any]] = {
-        rxn[0].operator.item.uid: dict() for rxn in rxns
-    }
+    op_info: dict[
+        interfaces.Identifier, dict[collections.abc.Hashable, typing.Any]
+    ] = {rxn[0].operator.item.uid: dict() for rxn in rxns}
     for meta_key, op_dict in metalib.op_info.items():
         for op_id, key_val in op_dict.data.items():
             op_info[op_id][meta_key] = key_val
-    rxn_info: dict[interfaces.Identifier, dict[Hashable, Any]] = {
-        rxn[0].uid: dict() for rxn in rxns
-    }
+    rxn_info: dict[
+        interfaces.Identifier, dict[collections.abc.Hashable, typing.Any]
+    ] = {rxn[0].uid: dict() for rxn in rxns}
     for meta_key, rxn_dict in metalib.rxn_info.items():
         for rxn_id, key_val in rxn_dict.data.items():
             rxn_info[rxn_id][meta_key] = key_val
@@ -801,8 +803,11 @@ class RxnAnalysisStepProp(RxnAnalysisStep):
     _prop: PropertyCompositor
 
     def execute(
-        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
-    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+        self,
+        rxns: collections.abc.Iterable[
+            tuple[interfaces.ReactionExplicit, bool]
+        ],
+    ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         rxn_list = list(rxns)
         meta_lib_generator = (self._prop(rxn[0]) for rxn in rxn_list if rxn[1])
         prop_map: MetaPropertyState = utils.logreduce(
@@ -822,8 +827,11 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
         self._arg = arg
 
     def execute(
-        self, rxns: Iterable[tuple[interfaces.ReactionExplicit, bool]]
-    ) -> Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+        self,
+        rxns: collections.abc.Iterable[
+            tuple[interfaces.ReactionExplicit, bool]
+        ],
+    ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         for rxn, pass_filter in rxns:
             if not pass_filter:
                 yield rxn, False
@@ -836,7 +844,7 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
 
 
 def _as_property_compositor(
-    arg: Union[PropertyCompositor, LocalPropertyCalc]
+    arg: typing.Union[PropertyCompositor, LocalPropertyCalc]
 ) -> PropertyCompositor:
     if isinstance(arg, PropertyCompositor):
         return arg
@@ -860,7 +868,7 @@ def _as_property_compositor(
 
 
 def as_rxn_analysis_step(
-    arg: Union[
+    arg: typing.Union[
         RxnAnalysisStep,
         PropertyCompositor,
         ReactionFilterBase,
@@ -881,7 +889,7 @@ def as_rxn_analysis_step(
 
 
 def _compose_property_function(
-    func: Callable[[Any, Any], Any],
+    func: collections.abc.Callable[[typing.Any, typing.Any], typing.Any],
     comp1: PropertyCompositor,
     comp2: PropertyCompositor,
 ) -> PropertyCompositor:
@@ -894,6 +902,12 @@ def _compose_property_function(
 class MetaUpdateResolver:
     __slots__ = ("mol_updates", "op_updates", "rxn_updates")
 
-    mol_updates: Mapping[Hashable, MetaDataResolverFunc]
-    op_updates: Mapping[Hashable, MetaDataResolverFunc]
-    rxn_updates: Mapping[Hashable, MetaDataResolverFunc]
+    mol_updates: collections.abc.Mapping[
+        collections.abc.Hashable, MetaDataResolverFunc
+    ]
+    op_updates: collections.abc.Mapping[
+        collections.abc.Hashable, MetaDataResolverFunc
+    ]
+    rxn_updates: collections.abc.Mapping[
+        collections.abc.Hashable, MetaDataResolverFunc
+    ]
