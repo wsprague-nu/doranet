@@ -20,16 +20,7 @@ import typing
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from pickaxe_generic.containers import ObjectLibraryBasic, ObjectLibraryKeyVal
-from pickaxe_generic.datatypes import (
-    MolDatBasicV1,
-    MolDatBasicV2,
-    OpDatBasic,
-    RxnDatBasic,
-)
-from pickaxe_generic.strategies import CartesianStrategy
-
-from . import interfaces
+from . import containers, datatypes, interfaces, strategies
 
 
 def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
@@ -85,35 +76,39 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     def __init__(self, speed: int = 5):
         if speed == 1:
             # type: ignore
-            self._Mol = MolDatBasicV2
+            self._Mol = datatypes.MolDatBasicV2
             raise NotImplementedError("Speed not yet implemented")
         elif speed == 2:
-            self._Mol = MolDatBasicV2
+            self._Mol = datatypes.MolDatBasicV2
             raise NotImplementedError("Speed not yet implemented")
         elif speed == 3:
-            self._Mol = MolDatBasicV2
+            self._Mol = datatypes.MolDatBasicV2
             raise NotImplementedError("Speed not yet implemented")
         elif speed == 4:
-            self._Mol = MolDatBasicV2
-            self._Mol_Lib = lambda: ObjectLibraryKeyVal(initializer=self.Mol)
-            self._Op_Lib = lambda: ObjectLibraryKeyVal(initializer=self.Op)
+            self._Mol = datatypes.MolDatBasicV2
+            self._Mol_Lib = lambda: containers.ObjectLibraryKeyVal(
+                initializer=self.Mol
+            )
+            self._Op_Lib = lambda: containers.ObjectLibraryKeyVal(
+                initializer=self.Op
+            )
             # self._Rxn_Lib = lambda: ObjectLibraryKeyVal(initializer=self.Rxn)
-            self._Rxn_Lib = ObjectLibraryBasic
+            self._Rxn_Lib = containers.ObjectLibraryBasic
         elif speed == 5:
-            self._Mol = MolDatBasicV1
-            self._Mol_Lib = ObjectLibraryBasic
-            self._Op_Lib = ObjectLibraryBasic
-            self._Rxn_Lib = ObjectLibraryBasic
+            self._Mol = datatypes.MolDatBasicV1
+            self._Mol_Lib = containers.ObjectLibraryBasic
+            self._Op_Lib = containers.ObjectLibraryBasic
+            self._Rxn_Lib = containers.ObjectLibraryBasic
         elif speed == 6:
-            self._Mol = MolDatBasicV2
-            self._Mol_Lib = ObjectLibraryBasic
-            self._Op_Lib = ObjectLibraryBasic
-            self._Rxn_Lib = ObjectLibraryBasic
+            self._Mol = datatypes.MolDatBasicV2
+            self._Mol_Lib = containers.ObjectLibraryBasic
+            self._Op_Lib = containers.ObjectLibraryBasic
+            self._Rxn_Lib = containers.ObjectLibraryBasic
         else:
             raise ValueError(f"speed = {speed} is invalid")
-        self._Op = OpDatBasic
-        self._Rxn = RxnDatBasic
-        self._CartesianStrategy = CartesianStrategy
+        self._Op = datatypes.OpDatBasic
+        self._Rxn = datatypes.RxnDatBasic
+        self._CartesianStrategy = strategies.CartesianStrategy
         self._speed = speed
 
     @property
@@ -136,7 +131,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             rdkit.Chem.rdChemReaction.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
-    ) -> OpDatBasic:
+    ) -> datatypes.OpDatBasic:
         return self._Op(
             operator=operator, engine=self, kekulize_before_operation=kekulize
         )
@@ -151,7 +146,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             collections.abc.Iterable[interfaces.Identifier]
         ] = None,
         reaction: typing.Optional[bytes] = None,
-    ) -> RxnDatBasic:
+    ) -> datatypes.RxnDatBasic:
         return self._Rxn(
             operator=operator,
             reactants=reactants,
@@ -180,7 +175,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
         rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
-    ) -> CartesianStrategy:
+    ) -> strategies.CartesianStrategy:
         return self._CartesianStrategy(
             mol_lib=mol_lib, op_lib=op_lib, rxn_lib=rxn_lib, engine=self
         )
