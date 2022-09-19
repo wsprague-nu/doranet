@@ -1,18 +1,8 @@
-from collections.abc import Collection, Hashable, Iterator, Mapping, Sequence
+import collections.abc
+import typing
 from dataclasses import dataclass
-from functools import cache
 from gzip import open as gzopen
 from pickle import dump, load
-from typing import (
-    Any,
-    Generic,
-    NewType,
-    Optional,
-    Protocol,
-    TypeVar,
-    Union,
-    overload,
-)
 
 from . import interfaces
 
@@ -29,8 +19,8 @@ class MolSlot:
     operator: interfaces.OpDatBase
     molecule: interfaces.MolDatBase
     argnum: int
-    operator_meta: Optional[Mapping]
-    molecule_meta: Optional[Mapping]
+    operator_meta: typing.Optional[collections.abc.Mapping]
+    molecule_meta: typing.Optional[collections.abc.Mapping]
 
 
 def recipe_from_explicit(
@@ -45,30 +35,32 @@ def recipe_from_explicit(
 
 
 @dataclass(frozen=True)
-class _ValueQueryData(Generic[interfaces.T_data, interfaces.T_int]):
+class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
     __slots__ = ("_list", "_map")
-    _list: Sequence[interfaces.T_data]
-    _map: Mapping[interfaces.Identifier, interfaces.T_int]
+    _list: collections.abc.Sequence[interfaces.T_data]
+    _map: collections.abc.Mapping[interfaces.Identifier, interfaces.T_int]
 
     def __contains__(
-        self, item: Union[interfaces.Identifier, interfaces.T_data]
+        self, item: typing.Union[interfaces.Identifier, interfaces.T_data]
     ) -> bool:
         if isinstance(item, interfaces.DataUnit):
             item = item.uid
         return item in self._map.keys()
 
-    @overload
-    def __getitem__(self, item: slice) -> Sequence[interfaces.T_data]:
+    @typing.overload
+    def __getitem__(
+        self, item: slice
+    ) -> collections.abc.Sequence[interfaces.T_data]:
         ...
 
-    @overload
+    @typing.overload
     def __getitem__(
-        self, item: Union[interfaces.T_int, interfaces.Identifier]
+        self, item: typing.Union[interfaces.T_int, interfaces.Identifier]
     ) -> interfaces.T_data:
         ...
 
     def __getitem__(
-        self, item: Union[slice, interfaces.T_int, interfaces.Identifier]
+        self, item: typing.Union[slice, interfaces.T_int, interfaces.Identifier]
     ):
         if isinstance(item, slice):
             return self._list[item]
@@ -79,7 +71,7 @@ class _ValueQueryData(Generic[interfaces.T_data, interfaces.T_int]):
     def i(self, uid: interfaces.Identifier) -> interfaces.T_int:
         return self._map[uid]
 
-    def keys(self) -> Collection[interfaces.Identifier]:
+    def keys(self) -> collections.abc.Collection[interfaces.Identifier]:
         return self._map.keys()
 
     def uid(self, i: interfaces.T_int) -> interfaces.Identifier:
@@ -88,25 +80,27 @@ class _ValueQueryData(Generic[interfaces.T_data, interfaces.T_int]):
     def __len__(self) -> int:
         return len(self._list)
 
-    def __iter__(self) -> Iterator[interfaces.T_data]:
+    def __iter__(self) -> collections.abc.Iterator[interfaces.T_data]:
         return iter(self._list)
 
 
 @dataclass(frozen=True)
-class _ValueQueryAssoc(Generic[interfaces.T_id, interfaces.T_int]):
+class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
     __slots__ = ("_list", "_map")
-    _list: Sequence[interfaces.T_id]
-    _map: Mapping[interfaces.T_id, interfaces.T_int]
+    _list: collections.abc.Sequence[interfaces.T_id]
+    _map: collections.abc.Mapping[interfaces.T_id, interfaces.T_int]
 
-    @overload
-    def __getitem__(self, item: slice) -> Sequence[interfaces.T_id]:
+    @typing.overload
+    def __getitem__(
+        self, item: slice
+    ) -> collections.abc.Sequence[interfaces.T_id]:
         ...
 
-    @overload
+    @typing.overload
     def __getitem__(self, item: interfaces.T_int) -> interfaces.T_id:
         ...
 
-    def __getitem__(self, item: Union[slice, interfaces.T_int]):
+    def __getitem__(self, item: typing.Union[slice, interfaces.T_int]):
         if isinstance(item, slice):
             return self._list[item]
         return self._list[item]
@@ -117,7 +111,7 @@ class _ValueQueryAssoc(Generic[interfaces.T_id, interfaces.T_int]):
     def __len__(self) -> int:
         return len(self._list)
 
-    def __iter__(self) -> Iterator[interfaces.T_id]:
+    def __iter__(self) -> collections.abc.Iterator[interfaces.T_id]:
         return iter(self._list)
 
 
@@ -157,15 +151,17 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         self._mol_producers: list[list[interfaces.RxnIndex]] = []
         self._mol_consumers: list[list[interfaces.RxnIndex]] = []
 
-        self._compat_table: list[Sequence[list[interfaces.MolIndex]]] = []
+        self._compat_table: list[
+            collections.abc.Sequence[list[interfaces.MolIndex]]
+        ] = []
 
-        self._mol_query: Optional[
+        self._mol_query: typing.Optional[
             _ValueQueryData[interfaces.MolDatBase, interfaces.MolIndex]
         ] = None
-        self._op_query: Optional[
+        self._op_query: typing.Optional[
             _ValueQueryData[interfaces.OpDatBase, interfaces.OpIndex]
         ] = None
-        self._rxn_query: Optional[
+        self._rxn_query: typing.Optional[
             _ValueQueryAssoc[interfaces.Reaction, interfaces.RxnIndex]
         ] = None
 
@@ -193,21 +189,36 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             self._rxn_query = _ValueQueryAssoc(self._rxn_list, self._rxn_map)
         return self._rxn_query
 
-    def mol_meta(self, index: interfaces.MolIndex, key: Hashable, value=None):
+    def mol_meta(
+        self,
+        index: interfaces.MolIndex,
+        key: collections.abc.Hashable,
+        value=None,
+    ):
         if value is None:
             if key not in self._mol_meta[index]:
                 return None
             return self._mol_meta[index][key]
         self._mol_meta[index][key] = value
 
-    def op_meta(self, index: interfaces.OpIndex, key: Hashable, value=None):
+    def op_meta(
+        self,
+        index: interfaces.OpIndex,
+        key: collections.abc.Hashable,
+        value=None,
+    ):
         if value is None:
             if key not in self._op_meta[index]:
                 return None
             return self._op_meta[index][key]
         self._op_meta[index][key] = value
 
-    def rxn_meta(self, index: interfaces.RxnIndex, key: Hashable, value=None):
+    def rxn_meta(
+        self,
+        index: interfaces.RxnIndex,
+        key: collections.abc.Hashable,
+        value=None,
+    ):
         if value is None:
             if key not in self._rxn_meta[index]:
                 return None
@@ -216,9 +227,15 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def mol_metas(
         self,
-        indices: Optional[Sequence[interfaces.MolIndex]] = None,
-        keys: Optional[Collection[Hashable]] = None,
-    ) -> Sequence[Mapping[Hashable, Any]]:
+        indices: typing.Optional[
+            collections.abc.Sequence[interfaces.MolIndex]
+        ] = None,
+        keys: typing.Optional[
+            collections.abc.Collection[collections.abc.Hashable]
+        ] = None,
+    ) -> collections.abc.Sequence[
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+    ]:
         if indices is None:
             if keys is None:
                 return self._mol_meta
@@ -243,9 +260,15 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def op_metas(
         self,
-        indices: Optional[Sequence[interfaces.OpIndex]] = None,
-        keys: Optional[Collection[Hashable]] = None,
-    ) -> Sequence[Mapping[Hashable, Any]]:
+        indices: typing.Optional[
+            collections.abc.Sequence[interfaces.OpIndex]
+        ] = None,
+        keys: typing.Optional[
+            collections.abc.Collection[collections.abc.Hashable]
+        ] = None,
+    ) -> collections.abc.Sequence[
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+    ]:
         if indices is None:
             if keys is None:
                 return self._op_meta
@@ -270,9 +293,15 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def rxn_metas(
         self,
-        indices: Optional[Sequence[interfaces.RxnIndex]] = None,
-        keys: Optional[Collection[Hashable]] = None,
-    ) -> Sequence[Mapping[Hashable, Any]]:
+        indices: typing.Optional[
+            collections.abc.Sequence[interfaces.RxnIndex]
+        ] = None,
+        keys: typing.Optional[
+            collections.abc.Collection[collections.abc.Hashable]
+        ] = None,
+    ) -> collections.abc.Sequence[
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+    ]:
         if indices is None:
             if keys is None:
                 return self._rxn_meta
@@ -297,12 +326,15 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def compat_table(
         self, index: int
-    ) -> Sequence[Sequence[interfaces.MolIndex]]:
+    ) -> collections.abc.Sequence[
+        collections.abc.Sequence[interfaces.MolIndex]
+    ]:
         return self._compat_table[index]
 
     def consumers(
-        self, mol: Union[int, interfaces.MolDatBase, interfaces.Identifier]
-    ) -> Collection[interfaces.RxnIndex]:
+        self,
+        mol: typing.Union[int, interfaces.MolDatBase, interfaces.Identifier],
+    ) -> collections.abc.Collection[interfaces.RxnIndex]:
         if isinstance(mol, int):
             return self._mol_consumers[interfaces.MolIndex(mol)]
         elif isinstance(mol, interfaces.MolDatBase):
@@ -310,8 +342,9 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         return self._mol_consumers[self._mol_map[mol]]
 
     def producers(
-        self, mol: Union[int, interfaces.MolDatBase, interfaces.Identifier]
-    ) -> Collection[interfaces.RxnIndex]:
+        self,
+        mol: typing.Union[int, interfaces.MolDatBase, interfaces.Identifier],
+    ) -> collections.abc.Collection[interfaces.RxnIndex]:
         if isinstance(mol, int):
             return self._mol_producers[interfaces.MolIndex(mol)]
         elif isinstance(mol, interfaces.MolDatBase):
@@ -321,10 +354,10 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
     def add_mol(
         self,
         mol: interfaces.MolDatBase,
-        meta: Optional[Mapping] = None,
+        meta: typing.Optional[collections.abc.Mapping] = None,
         reactive: bool = True,
-        custom_compat: Optional[
-            Collection[tuple[interfaces.OpIndex, int]]
+        custom_compat: typing.Optional[
+            collections.abc.Collection[tuple[interfaces.OpIndex, int]]
         ] = None,
     ) -> interfaces.MolIndex:
         # if already in database, return existing index
@@ -382,7 +415,9 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         return mol_index
 
     def add_op(
-        self, op: interfaces.OpDatBase, meta: Optional[Mapping] = None
+        self,
+        op: interfaces.OpDatBase,
+        meta: typing.Optional[collections.abc.Mapping] = None,
     ) -> interfaces.OpIndex:
         # if already in database, return existing index
         op_uid = op.uid
@@ -424,11 +459,15 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def add_rxn(
         self,
-        rxn: Optional[interfaces.Reaction] = None,
-        op: Optional[interfaces.OpIndex] = None,
-        reactants: Optional[Sequence[interfaces.MolIndex]] = None,
-        products: Optional[Sequence[interfaces.MolIndex]] = None,
-        meta: Optional[Mapping] = None,
+        rxn: typing.Optional[interfaces.Reaction] = None,
+        op: typing.Optional[interfaces.OpIndex] = None,
+        reactants: typing.Optional[
+            collections.abc.Sequence[interfaces.MolIndex]
+        ] = None,
+        products: typing.Optional[
+            collections.abc.Sequence[interfaces.MolIndex]
+        ] = None,
+        meta: typing.Optional[collections.abc.Mapping] = None,
     ) -> interfaces.RxnIndex:
 
         if rxn is None:
