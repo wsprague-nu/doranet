@@ -1,3 +1,25 @@
+"""
+Contains classes which implement various filter components.
+
+Classes:
+
+    ReactionFilter (deprecated)
+      AlwaysTrueFilter*
+      ChainFilter*
+      LessThanNElementTypeFilter*
+      TanimotoSimilarityFilter*
+    UIDPreFilter (deprecated)
+      AlwaysTrueUIDPreFilter*
+      CoreactantUIDPreFilter*
+    MolFilter
+      MolFilterMetaVal*
+      MolFilterMetaExist*
+    RecipeFilter
+      CoreactantFilter*
+      
+
+"""
+
 import collections.abc
 import dataclasses
 import typing
@@ -47,6 +69,26 @@ class LessThanNElementTypeFilter(interfaces.ReactionFilter):
         self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(self._p)
 
 
+class TanimotoSimilarityFilter(interfaces.ReactionFilter):
+    def __init__(self, n: float, smi: str):
+        self._n = n
+        self._s = smi
+        self._tmol = rdkit.Chem.MolFromSmiles(self._s)
+        self._tfp = rdkit.Chem.RDKFingerprint(self._tmol)
+
+    def __call__(self, operator, reactants, products):
+        for mol in products:
+            if isinstance(mol, interfaces.MolDatRDKit):
+                mol_fp = rdkit.Chem.RDKFingerprint(mol.rdkitmol)
+                similarity = rdkit.DataStructs.TanimotoSimilarity(
+                    mol_fp, self._tfp
+                )
+
+                if similarity > self._n:
+                    return True
+        return False
+
+
 class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
     def __call__(
         self,
@@ -70,26 +112,6 @@ class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
         for uid in reactants:
             if uid not in self._coreactants:
                 return True
-        return False
-
-
-class TanimotoSimilarityFilter(interfaces.ReactionFilter):
-    def __init__(self, n: float, smi: str):
-        self._n = n
-        self._s = smi
-        self._tmol = rdkit.Chem.MolFromSmiles(self._s)
-        self._tfp = rdkit.Chem.RDKFingerprint(self._tmol)
-
-    def __call__(self, operator, reactants, products):
-        for mol in products:
-            if isinstance(mol, interfaces.MolDatRDKit):
-                mol_fp = rdkit.Chem.RDKFingerprint(mol.rdkitmol)
-                similarity = rdkit.DataStructs.TanimotoSimilarity(
-                    mol_fp, self._tfp
-                )
-
-                if similarity > self._n:
-                    return True
         return False
 
 
