@@ -1,6 +1,6 @@
 import collections.abc
+import dataclasses
 import typing
-from dataclasses import dataclass
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -92,7 +92,7 @@ class TanimotoSimilarityFilter(interfaces.ReactionFilter):
         return False
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class MolFilterMetaVal(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
     _key: collections.abc.Hashable
@@ -116,7 +116,7 @@ class MolFilterMetaVal(interfaces.MolFilter):
         return interfaces.MetaKeyPacket(frozenset(), frozenset((self._key,)))
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class MolFilterMetaExist(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
     _key: collections.abc.Hashable
@@ -139,7 +139,7 @@ class MolFilterMetaExist(interfaces.MolFilter):
         return interfaces.MetaKeyPacket(frozenset(), frozenset((self._key,)))
 
 
-@dataclass
+@dataclasses.dataclass
 class CoreactantFilter(interfaces.RecipeFilter):
     __slots__ = "_coreactants"
     _coreactants: set[interfaces.MolIndex]
