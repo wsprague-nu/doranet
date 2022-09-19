@@ -1,3 +1,17 @@
+"""
+Contains classes for network representation and data storage.
+
+Functions:
+
+  dump_network_to_file
+  load_network_from_file
+
+Classes:
+
+    interfaces.ChemNetwork
+      ChemNetworkBasic*
+"""
+
 import collections.abc
 import dataclasses
 import gzip
