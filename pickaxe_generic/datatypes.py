@@ -3,7 +3,6 @@ Contains classes which define and implement molecule-operator data units.
 
 Classes:
 
-    Identifier(Protocol)
     DataUnit
       MolDatBase
         MolDatRDKit
