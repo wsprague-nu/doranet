@@ -17,8 +17,8 @@ Classes:
 import collections.abc
 import typing
 
-from rdkit.Chem.rdchem import Mol as RDKitMol
-from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
+import rdkit.Chem
+import rdkit.Chem.rdChemReactions
 
 from pickaxe_generic.containers import ObjectLibraryBasic, ObjectLibraryKeyVal
 from pickaxe_generic.datatypes import (
@@ -122,7 +122,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def Mol(
         self,
-        molecule: typing.Union[RDKitMol, str, bytes],
+        molecule: typing.Union[rdkit.Chem.rdchem.Mol, str, bytes],
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> interfaces.MolDatRDKit:
@@ -132,7 +132,9 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def Op(
         self,
-        operator: typing.Union[RDKitRxn, str, bytes],
+        operator: typing.Union[
+            rdkit.Chem.rdChemReaction.ChemicalReaction, str, bytes
+        ],
         kekulize: bool = False,
     ) -> OpDatBasic:
         return self._Op(
