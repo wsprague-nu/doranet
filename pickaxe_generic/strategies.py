@@ -9,15 +9,13 @@ Classes:
 """
 
 import collections.abc
+import dataclasses
+import functools
 import heapq
+import itertools
+import math
 import typing
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
-from functools import reduce
-from itertools import chain, islice
-from itertools import product as iterproduct
-from itertools import repeat
-from math import prod
 
 from pickaxe_generic.metadata import (
     LocalPropertyCalc,
@@ -62,7 +60,7 @@ def _generate_recipes_from_compat_table(
     gen_cache = set()
     for op_uid, compat_list in compat.items():
         reactants: tuple[interfaces.Identifier, ...]
-        for reactants in iterproduct(*compat_list):
+        for reactants in itertools.product(*compat_list):
             recipe = (op_uid, reactants)
             if known_cache is not None:
                 if recipe in known_cache:
@@ -158,12 +156,12 @@ def _chunk_generator(
 ) -> collections.abc.Generator[collections.abc.Iterable[T], None, None]:
     it = iter(iterable)
     while True:
-        chunk_it = islice(it, n)
+        chunk_it = itertools.islice(it, n)
         try:
             first_el = next(chunk_it)
         except StopIteration:
             return
-        yield chain((first_el,), chunk_it)
+        yield itertools.chain((first_el,), chunk_it)
 
 
 @typing.final
@@ -586,7 +584,7 @@ class CartesianStrategyParallel(interfaces.ExpansionStrategy):
             self.refresh()
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class RecipeRankingJob:
     __slots__ = (
         "operator",
@@ -608,9 +606,9 @@ class RecipeRankingJob:
 def calc_batch_split(
     size_bundle: collections.abc.Sequence[int], batch_size: int
 ) -> tuple[int, ...]:
-    num_split = list(repeat(1, len(size_bundle)))
+    num_split = list(itertools.repeat(1, len(size_bundle)))
     split_size = tuple(size_bundle)
-    while prod(split_size) > batch_size:
+    while math.prod(split_size) > batch_size:
         max_index = max(range(len(split_size)), key=split_size.__getitem__)
         num_split[max_index] += 1
         split_size = tuple(
@@ -721,7 +719,7 @@ def _generate_recipe_batches(
             for num_mols, splitnum in zip(size_bundle, batch_split)
         )
         split_indices = (range(num_splits) for num_splits in batch_split)
-        for batch_subindices in iterproduct(*split_indices):
+        for batch_subindices in itertools.product(*split_indices):
             prev_column_mols = tuple(
                 tuple(
                     mol_list[:i_counter][
@@ -816,7 +814,7 @@ def assemble_recipe_batch_job(
     )
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class ReactionJob:
     __slots__ = (
         "operator",
@@ -856,7 +854,7 @@ def assemble_reaction_job(
     return ReactionJob(op, reactants)
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class RecipePriorityItem:
     rank: typing.Optional[interfaces.RankValue]
     recipe: interfaces.Recipe
@@ -895,7 +893,7 @@ def execute_recipe_ranking(
                     tuple(reactant.i for reactant in reactants_data),
                 ),
             )
-            for reactants_data in iterproduct(*job.op_args)
+            for reactants_data in itertools.product(*job.op_args)
         )
         if recipe not in recipes_tested
     )
@@ -915,7 +913,7 @@ def execute_recipe_ranking(
                                 interfaces.OpIndex(job.operator.i),
                                 tuple(reactant.i for reactant in reactants),
                             )
-                            for reactants in iterproduct(*job.op_args)
+                            for reactants in itertools.product(*job.op_args)
                         )
                         if recipe not in recipes_tested
                     )
@@ -981,7 +979,7 @@ class RecipeHeap:
             self._ordered = list(
                 reversed(
                     tuple(
-                        islice(
+                        itertools.islice(
                             heapq.merge(
                                 *(reversed(heap) for heap in heaps),
                                 reverse=True,
@@ -1122,7 +1120,7 @@ def execute_reactions(
     rxn_jobs: collections.abc.Collection[ReactionJob],
     rxn_analysis: typing.Optional[RxnAnalysisStep] = None,
 ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
-    rxn_generator = reduce(
+    rxn_generator = functools.reduce(
         chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
     )
     if rxn_analysis is None:
