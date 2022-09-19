@@ -6,6 +6,8 @@ Classes:
     interfaces.ExpansionStrategy
       CartesianStrategy*
       CartesianStrategyParallel*
+    interfaces.PriorityQueueStrategy
+      PriorityQueueStrategyBasic*
 """
 
 import collections.abc

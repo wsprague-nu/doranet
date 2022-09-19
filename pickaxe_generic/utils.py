@@ -1,10 +1,13 @@
 """
 Contains classes which define and implement utility functions.
 
+Functions:
+
+    logreduce
+
 Classes:
 
-    RxnTracker
-      RxnTrackerSingle*
+    interfaces.RxnTracker
       RxnTrackerDepthFirst*
 """
 
