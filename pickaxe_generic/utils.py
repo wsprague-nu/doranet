@@ -9,9 +9,8 @@ Classes:
 """
 
 import collections.abc
+import itertools
 import typing
-from itertools import chain
-from itertools import product as iterproduct
 
 from . import interfaces
 
@@ -89,7 +88,7 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
             yield []
             return
         tested_combos = set()
-        for rxntuple in iterproduct(*rxnsets):
+        for rxntuple in itertools.product(*rxnsets):
             rxncombo: frozenset[interfaces.Identifier] = frozenset(rxntuple)
             if rxncombo in tested_combos:
                 continue
@@ -97,7 +96,7 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
                 tested_combos.add(frozenset(rxncombo))
             required_reagents = set(
                 mol
-                for mol in chain(
+                for mol in itertools.chain(
                     *(self._rxn_lib[rxn].reactants for rxn in rxncombo)
                 )
                 if mol not in reagent_table
