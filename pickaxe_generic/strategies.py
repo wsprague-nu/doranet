@@ -9,24 +9,15 @@ Classes:
 """
 
 import collections.abc
+import concurrent.futures
 import dataclasses
 import functools
 import heapq
 import itertools
 import math
 import typing
-from concurrent.futures import ProcessPoolExecutor
 
-from pickaxe_generic.metadata import (
-    LocalPropertyCalc,
-    MetaUpdateResolver,
-    PropertyCompositor,
-    ReactionFilterBase,
-    RxnAnalysisStep,
-    as_rxn_analysis_step,
-)
-
-from . import interfaces
+from . import interfaces, metadata
 
 
 class _ReactionProvider(typing.Protocol):
@@ -562,7 +553,9 @@ class CartesianStrategyParallel(interfaces.ExpansionStrategy):
             )
 
             # iterate through possible reactant combinations
-            with ProcessPoolExecutor(max_workers=self._num_procs) as executor:
+            with concurrent.futures.ProcessPoolExecutor(
+                max_workers=self._num_procs
+            ) as executor:
                 for jobchunk in job_generator:
                     jobchunk = tuple(jobchunk)
                     for results, _ in executor.map(
@@ -1118,7 +1111,7 @@ def execute_reaction(
 
 def execute_reactions(
     rxn_jobs: collections.abc.Collection[ReactionJob],
-    rxn_analysis: typing.Optional[RxnAnalysisStep] = None,
+    rxn_analysis: typing.Optional[metadata.RxnAnalysisStep] = None,
 ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
     rxn_generator = functools.reduce(
         chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
@@ -1154,21 +1147,21 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         recipe_ranker: typing.Optional[interfaces.RecipeRanker] = None,
         mc_local: typing.Optional[
             typing.Union[
-                RxnAnalysisStep,
-                PropertyCompositor,
-                ReactionFilterBase,
-                LocalPropertyCalc,
+                metadata.RxnAnalysisStep,
+                metadata.PropertyCompositor,
+                metadata.ReactionFilterBase,
+                metadata.LocalPropertyCalc,
             ]
         ] = None,
-        mc_update: typing.Optional[MetaUpdateResolver] = None,
+        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
         # mc_update: typing.Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
-        rxn_analysis_task: typing.Optional[RxnAnalysisStep] = None
+        rxn_analysis_task: typing.Optional[metadata.RxnAnalysisStep] = None
         if mc_local is not None:
-            rxn_analysis_task = as_rxn_analysis_step(mc_local)
+            rxn_analysis_task = metadata.as_rxn_analysis_step(mc_local)
         if mc_update is None:
-            mc_update = MetaUpdateResolver({}, {}, {})
+            mc_update = metadata.MetaUpdateResolver({}, {}, {})
 
         if heap_size is not None and beam_size is not None:
             ValueError(
