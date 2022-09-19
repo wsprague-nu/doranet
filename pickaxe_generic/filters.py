@@ -2,9 +2,8 @@ import collections.abc
 import dataclasses
 import typing
 
-from rdkit.Chem import MolFromSmiles, RDKFingerprint
-from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
-from rdkit.DataStructs import TanimotoSimilarity
+import rdkit
+import rdkit.Chem
 
 from . import interfaces
 
@@ -30,7 +29,7 @@ class LessThanNElementTypeFilter(interfaces.ReactionFilter):
     def __init__(self, n: int, proton_number: int):
         self._n = n
         self._p = proton_number
-        self._q = AtomNumEqualsQueryAtom(proton_number)
+        self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(proton_number)
 
     def __call__(self, operator, reactants, products):
         for mol in products:
@@ -45,7 +44,7 @@ class LessThanNElementTypeFilter(interfaces.ReactionFilter):
     def __setstate__(self, arg) -> None:
         self._n = arg[0]
         self._p = arg[1]
-        self._q = AtomNumEqualsQueryAtom(self._p)
+        self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(self._p)
 
 
 class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
@@ -78,14 +77,16 @@ class TanimotoSimilarityFilter(interfaces.ReactionFilter):
     def __init__(self, n: float, smi: str):
         self._n = n
         self._s = smi
-        self._tmol = MolFromSmiles(self._s)
-        self._tfp = RDKFingerprint(self._tmol)
+        self._tmol = rdkit.Chem.MolFromSmiles(self._s)
+        self._tfp = rdkit.Chem.RDKFingerprint(self._tmol)
 
     def __call__(self, operator, reactants, products):
         for mol in products:
             if isinstance(mol, interfaces.MolDatRDKit):
-                mol_fp = RDKFingerprint(mol.rdkitmol)
-                similarity = TanimotoSimilarity(mol_fp, self._tfp)
+                mol_fp = rdkit.Chem.RDKFingerprint(mol.rdkitmol)
+                similarity = rdkit.DataStructs.TanimotoSimilarity(
+                    mol_fp, self._tfp
+                )
 
                 if similarity > self._n:
                     return True
