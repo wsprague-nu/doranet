@@ -1,16 +1,6 @@
-from collections.abc import Collection, Iterable, Mapping, Sequence
+import collections.abc
+import typing
 from dataclasses import dataclass
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generator,
-    Hashable,
-    Optional,
-    Protocol,
-    Union,
-    final,
-)
 
 from rdkit.Chem import MolFromSmiles, RDKFingerprint
 from rdkit.Chem.rdqueries import AtomNumEqualsQueryAtom
@@ -25,7 +15,9 @@ class AlwaysTrueFilter(interfaces.ReactionFilter):
 
 
 class ChainFilter(interfaces.ReactionFilter):
-    def __init__(self, filters: Iterable[interfaces.ReactionFilter]):
+    def __init__(
+        self, filters: collections.abc.Iterable[interfaces.ReactionFilter]
+    ):
         self._filters = filters
 
     def __call__(self, operator, reactants, products):
@@ -60,19 +52,21 @@ class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
     def __call__(
         self,
         operator: interfaces.Identifier,
-        reactants: Sequence[interfaces.Identifier],
+        reactants: collections.abc.Sequence[interfaces.Identifier],
     ) -> bool:
         return True
 
 
 class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
-    def __init__(self, coreactants: Collection[interfaces.Identifier]):
+    def __init__(
+        self, coreactants: collections.abc.Collection[interfaces.Identifier]
+    ):
         self._coreactants = frozenset(coreactants)
 
     def __call__(
         self,
         operator: interfaces.Identifier,
-        reactants: Sequence[interfaces.Identifier],
+        reactants: collections.abc.Sequence[interfaces.Identifier],
     ) -> bool:
         for uid in reactants:
             if uid not in self._coreactants:
@@ -101,13 +95,15 @@ class TanimotoSimilarityFilter(interfaces.ReactionFilter):
 @dataclass(frozen=True)
 class MolFilterMetaVal(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
-    _key: Hashable
-    _val: Any
+    _key: collections.abc.Hashable
+    _val: typing.Any
 
     def __call__(
         self,
         mol: interfaces.MolDatBase,
-        meta: Optional[Mapping[Hashable, Any]] = None,
+        meta: typing.Optional[
+            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+        ] = None,
     ) -> bool:
         if meta is None:
             return False
@@ -123,12 +119,14 @@ class MolFilterMetaVal(interfaces.MolFilter):
 @dataclass(frozen=True)
 class MolFilterMetaExist(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
-    _key: Hashable
+    _key: collections.abc.Hashable
 
     def __call__(
         self,
         mol: interfaces.MolDatBase,
-        meta: Optional[Mapping[Hashable, Any]] = None,
+        meta: typing.Optional[
+            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+        ] = None,
     ) -> bool:
         if meta is None:
             return False
@@ -146,7 +144,9 @@ class CoreactantFilter(interfaces.RecipeFilter):
     __slots__ = "_coreactants"
     _coreactants: set[interfaces.MolIndex]
 
-    def __init__(self, coreactants: Iterable[interfaces.MolIndex]) -> None:
+    def __init__(
+        self, coreactants: typing.Iterable[interfaces.MolIndex]
+    ) -> None:
         self._coreactants = set(coreactants)
 
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
@@ -155,17 +155,27 @@ class CoreactantFilter(interfaces.RecipeFilter):
         return True
 
 
-def ReplaceNewValue(key: Hashable, old_value: Any, new_value: Any) -> bool:
+def ReplaceNewValue(
+    key: collections.abc.Hashable, old_value: typing.Any, new_value: typing.Any
+) -> bool:
     if old_value != new_value:
         return True
     return False
 
 
 class ReplaceBlacklist:
-    def __init__(self, blacklist_keys: Collection[Hashable]) -> None:
+    def __init__(
+        self,
+        blacklist_keys: collections.abc.Collection[collections.abc.Hashable],
+    ) -> None:
         self._blacklist_keys = frozenset(blacklist_keys)
 
-    def __call__(self, key: Hashable, old_value: Any, new_value: Any) -> bool:
+    def __call__(
+        self,
+        key: collections.abc.Hashable,
+        old_value: typing.Any,
+        new_value: typing.Any,
+    ) -> bool:
         if key in self._blacklist_keys:
             if old_value is None:
                 return True
