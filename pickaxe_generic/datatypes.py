@@ -16,38 +16,20 @@ Classes:
         RxnDatBasic*
 """
 
-from __future__ import annotations
-
 import builtins
 import collections.abc
 import typing
-from dataclasses import dataclass
 from io import BytesIO
 from pickle import Unpickler, UnpicklingError, dumps
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    FrozenSet,
-    Generic,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Protocol,
-    Sequence,
-    Tuple,
-    TypeVar,
-    final,
-)
 
 from rdkit.Chem import Mol as BuildMol
-from rdkit.Chem import MolFromSmiles, MolToSmiles
+from rdkit.Chem import MolToSmiles
 from rdkit.Chem.inchi import MolToInchiKey
 from rdkit.Chem.rdchem import AtomValenceException, KekulizeException
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from rdkit.Chem.rdChemReactions import ChemicalReaction as RDKitRxn
 from rdkit.Chem.rdChemReactions import ReactionFromSmarts, ReactionToSmarts
-from rdkit.Chem.rdmolops import AssignStereochemistry, Kekulize, SanitizeMol
+from rdkit.Chem.rdmolops import Kekulize
 
 from . import interfaces
 
@@ -64,13 +46,13 @@ _safe_builtins_classes: frozenset[str] = frozenset(
 
 
 class __SafeUnpickler(Unpickler):
-    def find_class(self, module: str, name: str) -> Any:
+    def find_class(self, module: str, name: str) -> typing.Any:
         if module == "builtins" and name in _safe_builtins_classes:
             return getattr(builtins, name)
         raise UnpicklingError(f"global '{module}.{name}' is forbidden")
 
 
-def loads(string_in: bytes) -> Any:
+def loads(string_in: bytes) -> typing.Any:
     return __SafeUnpickler(BytesIO(string_in)).load()
 
     # @final
@@ -87,7 +69,7 @@ def loads(string_in: bytes) -> Any:
     #     """
 
 
-@final
+@typing.final
 class MolDatBasicV1(interfaces.MolDatRDKit):
     """
     Version of MolDatRDKit which caches only SMILES and blob.
@@ -140,7 +122,7 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
         self._smiles = MolToSmiles(BuildMol(arg))
 
 
-@final
+@typing.final
 class MolDatBasicV2(interfaces.MolDatRDKit):
     """
     Version of MolDatRDKit which caches all values.
@@ -149,8 +131,8 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
     """
 
     __slots__ = ("_blob", "_inchikey", "_rdkitmol", "_smiles")
-    _blob: Optional[bytes]
-    _inchikey: Optional[str]
+    _blob: typing.Optional[bytes]
+    _inchikey: typing.Optional[str]
     _rdkitmol: RDKitMol
     _smiles: str
 
@@ -197,7 +179,7 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
         return f'MolDatBasic("{self.smiles}")'
 
 
-@final
+@typing.final
 class OpDatBasic(interfaces.OpDatRDKit):
     """
     Minimal class implementing the OpDatRDKit interface.
@@ -234,12 +216,12 @@ class OpDatBasic(interfaces.OpDatRDKit):
     )
 
     _rdkitrxn: RDKitRxn
-    _templates: Optional[Tuple[RDKitMol, ...]]
+    _templates: typing.Optional[tuple[RDKitMol, ...]]
     _engine: interfaces.NetworkEngine
 
-    _blob: Optional[bytes]
-    _smarts: Optional[str]
-    _uid: Optional[Tuple[Tuple[str, ...], Tuple[str, ...]]]
+    _blob: typing.Optional[bytes]
+    _smarts: typing.Optional[str]
+    _uid: typing.Optional[tuple[tuple[str, ...], tuple[str, ...]]]
     _kekulize: bool
 
     def __init__(
@@ -302,10 +284,12 @@ class OpDatBasic(interfaces.OpDatRDKit):
         else:
             return False
 
-    def _build_templates(self) -> Tuple[RDKitMol, ...]:
+    def _build_templates(self) -> tuple[RDKitMol, ...]:
         return tuple(self._rdkitrxn.GetReactants())
 
-    def _attempt_reaction(self, mols: Iterable[RDKitMol]) -> Iterable[RDKitMol]:
+    def _attempt_reaction(
+        self, mols: collections.abc.Iterable[RDKitMol]
+    ) -> collections.abc.Iterable[RDKitMol]:
         try:
             return self._rdkitrxn.RunReactants(mols, maxProducts=0)
         except Exception as err:
@@ -313,9 +297,9 @@ class OpDatBasic(interfaces.OpDatRDKit):
             raise err
 
     def __call__(
-        self, reactants: Sequence[interfaces.MolDatBase]
-    ) -> Tuple[Tuple[interfaces.MolDatBase, ...], ...]:
-        rdkitmols: List[RDKitMol] = [
+        self, reactants: collections.abc.Sequence[interfaces.MolDatBase]
+    ) -> tuple[tuple[interfaces.MolDatBase, ...], ...]:
+        rdkitmols: list[RDKitMol] = [
             reactant.rdkitmol
             for reactant in reactants
             if isinstance(reactant, interfaces.MolDatRDKit)
