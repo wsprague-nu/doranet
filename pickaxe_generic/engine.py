@@ -25,7 +25,7 @@ from . import containers, datatypes, interfaces, strategies
 
 def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
     """
-    Initializes and returns a NetworkEngine based on configuration parameters.
+    Initialize and return a NetworkEngine based on configuration parameters.
 
     Parameters
     ----------
