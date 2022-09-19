@@ -1,13 +1,13 @@
 import collections.abc
+import dataclasses
+import gzip
+import pickle
 import typing
-from dataclasses import dataclass
-from gzip import open as gzopen
-from pickle import dump, load
 
 from . import interfaces
 
 
-@dataclass(frozen=True, order=True)
+@dataclasses.dataclass(frozen=True, order=True)
 class MolSlot:
     __slots__ = (
         "operator",
@@ -34,7 +34,7 @@ def recipe_from_explicit(
     )
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
     __slots__ = ("_list", "_map")
     _list: collections.abc.Sequence[interfaces.T_data]
@@ -84,7 +84,7 @@ class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
         return iter(self._list)
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
     __slots__ = ("_list", "_map")
     _list: collections.abc.Sequence[interfaces.T_id]
@@ -523,12 +523,12 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 def dump_network_to_file(
     network: interfaces.ChemNetwork, filepath: str = "network.dat"
 ) -> None:
-    with gzopen(filepath, "wb") as fout:
-        dump(network, fout)
+    with gzip.open(filepath, "wb") as fout:
+        pickle.dump(network, fout)
 
 
 def load_network_from_file(
     filepath: str = "network.dat",
 ) -> interfaces.ChemNetwork:
-    with gzopen(filepath, "rb") as fin:
-        return load(fin)
+    with gzip.open(filepath, "rb") as fin:
+        return pickle.load(fin)
