@@ -1,3 +1,37 @@
+"""
+Contains logic and interfaces for metadata processing, plus reaction filter.
+
+Classes:
+
+    LocalPropertyCalc
+      MolPropertyCalc
+      MolPropertyFromRxnCalc
+      OpPropertyCalc
+      OpPropertyFromRxnCalc
+      RxnPropertyCalc
+    KeyOutput*
+    ReactionFilterBase
+      ReactionFilterAnd*
+      ReactionFilterInv*
+      ReactionFilterOr*
+      ReactionFilterXor*
+    PropertyCompositor
+      MergePropertyCompositor*
+      FunctionPropertyCompositor*
+      MolPropertyCompositor
+      MolRxnPropertyCompositor
+      OpPropertyCompositor
+      OpRxnPropertyCompositor
+      RxnPropertyCompositor
+    MetaPropertyStateSingleProp*
+    MetaPropertyState*
+    RxnAnalysisStep
+      RxnAnalysisStepCompound*
+      RxnAnalysisStepProp*
+      RxnAnalysisStepFilter*
+    MetaUpdateResolver*
+"""
+
 import abc
 import collections.abc
 import dataclasses
