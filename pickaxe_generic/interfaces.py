@@ -257,7 +257,7 @@ class MolDatRDKit(MolDatBase):
         cls: type["MolDatRDKit"], data: bytes, engine: "NetworkEngine"
     ) -> "MolDatRDKit":
         """
-        Generate new RDKitMol from bytestring, according to engine
+        Generate new RDKit molecule from bytestring, according to engine
         configuration.
 
         Parameters
@@ -441,42 +441,70 @@ class OpDatRDKit(OpDatBase):
 
     Attributes
     ----------
+    blob : bytes
+        Binary representation of operator.
+    rdkitrxn : rdkit.Chem.rdChemReactions.ChemicalReaction
+        RDKit reaction object.
     smarts : str
         SMARTS string representing operator.
-    rdkitrxn : RDKitRxn
-        RDKit reaction object.
-
-    Methods
-    -------
-    __call__
-    __len__
-    compat
+    uid : pickaxe_generic.interfaces.Identifier
+        Unique identifier of operator.
     """
 
     __slots__ = ()
 
     @abc.abstractmethod
-    def __init__(self, operator: rdkit.Chem.rdchem.Mol | str | bytes):
-        pass
+    def __init__(self, operator: rdkit.Chem.rdchem.Mol | str | bytes) -> None:
+        ...
 
-    @typing.final
     @classmethod
     def from_bytes(
         cls,
         data: bytes,
         engine: "NetworkEngine",
     ) -> "OpDatRDKit":
+        """
+        Generate new RDKit operator from bytestring, according to engine
+        configuration.
+
+        Parameters
+        ----------
+        data : bytes
+            Bytestring containing sufficient binary information to initialize
+            operator.
+        engine : pickaxe_generic.interfaces.NetworkEngine
+            Engine containing settings for operator initialization.
+
+        Returns
+        -------
+        pickaxe_generic.interfaces.OpDatRDKit
+            Operator returned from processing bytestring.
+        """
         return engine.Op(data)
 
     @property
     @abc.abstractmethod
-    def smarts(self) -> str:
-        """Return SMARTS string encoding operator information."""
+    def rdkitrxn(self) -> rdkit.Chem.rdChemReactions.ChemicalReaction:
+        """
+        RDKit operator object.
+
+        Returns
+        -------
+        rdkit.Chem.rdChemReactions.ChemicalReaction
+            RDKit operator, generated from RDKit.
+        """
 
     @property
     @abc.abstractmethod
-    def rdkitrxn(self) -> rdkit.Chem.rdChemReactions.ChemicalReaction:
-        """Return RDKit reaction object."""
+    def smarts(self) -> str:
+        """
+        SMARTS reaction string corresponding to operator.
+
+        Returns
+        -------
+        str
+            SMARTS string.
+        """
 
 
 class RxnDatBase(DataUnit):
