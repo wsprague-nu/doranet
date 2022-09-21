@@ -359,36 +359,21 @@ class OpDatBase(DataUnit):
     operator which acts on a molecule and can generate tuples of product
     molecules.
 
+    Attributes
+    ----------
+    blob : bytes
+        Binary representation of operator.
+    uid : pickaxe_generic.interfaces.Identifier
+        Unique identifier of operator.
+
     Methods
     -------
-    compat
     __call__
     __len__
+    compat
     """
 
     __slots__ = ()
-
-    @abc.abstractmethod
-    def compat(self, mol: MolDatBase, arg: int) -> bool:
-        """
-        Determine compatibility of molecule object with operator argument.
-
-        This feature enables caching of molecule-operator compatibility for more
-        efficient network expansion, avoiding the need to test for the presence
-        of reactive sites on each molecule each time the operator is called.
-
-        Parameters
-        ----------
-        mol : pickaxe_generic.interfaces.MolDatBase
-            MolDat object which is to be compared.
-        arg : int
-            Index of argument which is to be compared.
-
-        Returns
-        -------
-        bool
-            True if molecule is compatible with specified operator argument.
-        """
 
     @abc.abstractmethod
     def __call__(
@@ -423,6 +408,28 @@ class OpDatBase(DataUnit):
             Number of arguments in operator.
         """
 
+    @abc.abstractmethod
+    def compat(self, mol: MolDatBase, arg: int) -> bool:
+        """
+        Determine compatibility of molecule object with operator argument.
+
+        This feature enables caching of molecule-operator compatibility for more
+        efficient network expansion, avoiding the need to test for the presence
+        of reactive sites on each molecule each time the operator is called.
+
+        Parameters
+        ----------
+        mol : pickaxe_generic.interfaces.MolDatBase
+            MolDat object which is to be compared.
+        arg : int
+            Index of argument which is to be compared.
+
+        Returns
+        -------
+        bool
+            True if molecule is compatible with specified operator argument.
+        """
+
 
 class OpDatRDKit(OpDatBase):
     """
@@ -438,6 +445,12 @@ class OpDatRDKit(OpDatBase):
         SMARTS string representing operator.
     rdkitrxn : RDKitRxn
         RDKit reaction object.
+
+    Methods
+    -------
+    __call__
+    __len__
+    compat
     """
 
     __slots__ = ()
