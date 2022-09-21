@@ -135,7 +135,7 @@ class DataUnit(abc.ABC):
     ----------
     blob : bytes
         Binary representation of object.
-    uid : interfaces.Identifier
+    uid : pickaxe_generic.interfaces.Identifier
         Unique identifier of object.
     """
 
@@ -209,7 +209,7 @@ class MolDatRDKit(MolDatBase):
     inchikey : str
     rdkitmol : rdkit.Chem.rdchem.Mol
     smiles : str
-    uid : Identifier
+    uid : pickaxe_generic.interfaces.Identifier
 
     Other Parameters
     ----------------
@@ -258,12 +258,12 @@ class MolDatRDKit(MolDatBase):
         data : bytes
             Bytestring containing sufficient binary information to initialize
             molecule.
-        engine : NetworkEngine
+        engine : pickaxe_generic.interfaces.NetworkEngine
             Engine containing settings for molecule initialization.
 
         Returns
         -------
-        MolDatRDKit
+        pickaxe_generic.interfaces.MolDatRDKit
             Molecule returned from processing bytestring.
         """
         return engine.Mol(data)
