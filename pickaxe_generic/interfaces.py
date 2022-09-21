@@ -507,17 +507,55 @@ class OpDatRDKit(OpDatBase):
         """
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MetaKeyPacket:
-    operator_keys: frozenset = frozenset()
-    molecule_keys: frozenset = frozenset()
+    """
+    Dataclass containing information about metadata keys necessary for filters
+    and process-local metadata calculators to operate.
+
+    Attributes
+    ----------
+    operator_keys : collections.abc.Set[collections.abc.Hashable] (default: frozenset())
+        Collection of operator keys.
+    molecule_keys : collections.abc.Set[collections.abc.Hashable] (default: frozenset())
+        Collection of molecule keys.
+    live_operator : bool (default: False)
+        Whether initialized operators are required (True) or only index + UID (False).
+    live_molecule : bool (default: False)
+        Whether initialized molecules are required (True) or only index + UID (False).
+
+    Examples
+    --------
+    >>> MetaKeyPacket(molecule_keys={"enthalpy","generation"})
+    MetaKeyPacket(operator_keys=frozenset(), molecule_keys={'enthalpy', 'generation'}, live_operator=False, live_molecule=False)
+
+    Combining two MetaKeyPackets.
+
+    >>> MetaKeyPacket(molecule_keys={"enthalpy","generation"}) + MetaKeyPacket(molecule_keys={"cost","toxicity"}, live_operator=True)
+    MetaKeyPacket(operator_keys=frozenset(), molecule_keys={'enthalpy', 'cost', 'generation', 'toxicity'}, live_operator=True, live_molecule=False)
+    """
+
+    operator_keys: collections.abc.Set[collections.abc.Hashable] = frozenset()
+    molecule_keys: collections.abc.Set[collections.abc.Hashable] = frozenset()
     live_operator: bool = False
     live_molecule: bool = False
 
     def __add__(self, other: "MetaKeyPacket") -> "MetaKeyPacket":
+        """
+        Combine requirements from two MetaKeyPacket objects.
+
+        The new MetaKeyPacket contains the union of the keysets and the result
+        of the "or" operator on the boolean values.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined requirements of both original MetaKeyPackets.
+        """
         return MetaKeyPacket(
-            self.operator_keys.union(other.operator_keys),
-            self.molecule_keys.union(other.molecule_keys),
+            self.operator_keys | other.operator_keys,
+            self.molecule_keys | other.molecule_keys,
             self.live_operator or other.live_operator,
             self.live_molecule or other.live_molecule,
         )
@@ -863,9 +901,9 @@ class NetworkEngine(abc.ABC):
     def Libs(
         self,
     ) -> tuple[
-        "ObjectLibrary"[MolDatBase],
-        "ObjectLibrary"[OpDatBase],
-        "ObjectLibrary"["RxnDatBase"],
+        "ObjectLibrary[MolDatBase]",
+        "ObjectLibrary[OpDatBase]",
+        "ObjectLibrary[RxnDatBase]",
     ]:
         """
         Initializes the three basic ObjectLibraries necessary to run a Strategy.
@@ -874,9 +912,9 @@ class NetworkEngine(abc.ABC):
     @abc.abstractmethod
     def CartesianStrategy(
         self,
-        mol_lib: "ObjectLibrary"[MolDatBase],
-        op_lib: "ObjectLibrary"[OpDatBase],
-        rxn_lib: "ObjectLibrary"["RxnDatBase"],
+        mol_lib: "ObjectLibrary[MolDatBase]",
+        op_lib: "ObjectLibrary[OpDatBase]",
+        rxn_lib: "ObjectLibrary[RxnDatBase]",
     ):
         """
         Initializes a CartesianStrategy of relevant type.
