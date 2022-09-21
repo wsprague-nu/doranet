@@ -10,18 +10,14 @@ Classes:
       OpDatBase
         OpDatRDKit
       RxnDatBase (deprecated)
-    ObjectLibrary (deprecated)
-    ExpansionStrategy (deprecated)
-    ReactionFilter (deprecated)
-    UIDPreFilter (deprecated)
     MetaKeyPacket
+    DataPacket
+    DataPacketE
     MolFilter
       MolFilterAnd*
       MolFilterInv*
       MolFilterOr*
       MolFilterXor*
-    DataPacket
-    DataPacketE
     Reaction
     ReactionExplicit
     Recipe
@@ -41,6 +37,10 @@ Classes:
     RxnTracker
     MetaDataCalculatorLocal
     MetaDataUpdate
+    ObjectLibrary (deprecated)
+    ExpansionStrategy (deprecated)
+    ReactionFilter (deprecated)
+    UIDPreFilter (deprecated)
 """
 
 import abc
@@ -505,6 +505,69 @@ class OpDatRDKit(OpDatBase):
         str
             SMARTS string.
         """
+
+
+class RxnDatBase(DataUnit):
+    """
+    Interface representing reaction data.
+
+    .. deprecated:: 0.3.0
+        Reactions are no longer represented as DataUnits with the advent of
+        the ChemicalNetwork object.  Reactions are instead associations of
+        an operator, ordered reactants, ordered products, and metadata.  If
+        single struct is required, suggest using
+        pickaxe_generic.interfaces.Reaction if network is available or
+        pickaxe_generic.interfaces.ReactionExplicit if not.
+
+    Class implementing this interface manage information about a single reaction
+    between several molecules to produce several molecules, with an associated
+    operator.
+
+    Attributes
+    ----------
+    operator : Identifier
+        Operator object ID.
+    products : Iterable[Identifier]
+        Products of reaction IDs.
+    reactants : Iterable[Identifier]
+        Reactants involved in reaction IDs.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __init__(
+        self,
+        operator: typing.Optional[Identifier] = None,
+        reactants: typing.Optional[collections.abc.Iterable[Identifier]] = None,
+        products: typing.Optional[collections.abc.Iterable[Identifier]] = None,
+        reaction: typing.Optional[bytes] = None,
+    ) -> None:
+        pass
+
+    @typing.final
+    @classmethod
+    def from_bytes(
+        cls,
+        data: bytes,
+        engine: "NetworkEngine",
+    ) -> "RxnDatBase":
+        return engine.Rxn(data)
+
+    @property
+    @abc.abstractmethod
+    def operator(self) -> Identifier:
+        """Return ID of operator involved in reaction."""
+
+    @property
+    @abc.abstractmethod
+    def products(self) -> collections.abc.Iterable[Identifier]:
+        """Return IDs of products involved in reaction."""
+
+    @property
+    @abc.abstractmethod
+    def reactants(self) -> collections.abc.Iterable[Identifier]:
+        """Return IDs of reactants involved in reaction."""
 
 
 @typing.final
@@ -1228,69 +1291,6 @@ class MetaDataUpdate(typing.Protocol):
         None,
     ]:
         ...
-
-
-class RxnDatBase(DataUnit):
-    """
-    Interface representing reaction data.
-
-    .. deprecated:: 0.3.0
-        Reactions are no longer represented as DataUnits with the advent of
-        the ChemicalNetwork object.  Reactions are instead associations of
-        an operator, ordered reactants, ordered products, and metadata.  If
-        single struct is required, suggest using
-        pickaxe_generic.interfaces.Reaction if network is available or
-        pickaxe_generic.interfaces.ReactionExplicit if not.
-
-    Class implementing this interface manage information about a single reaction
-    between several molecules to produce several molecules, with an associated
-    operator.
-
-    Attributes
-    ----------
-    operator : Identifier
-        Operator object ID.
-    products : Iterable[Identifier]
-        Products of reaction IDs.
-    reactants : Iterable[Identifier]
-        Reactants involved in reaction IDs.
-    """
-
-    __slots__ = ()
-
-    @abc.abstractmethod
-    def __init__(
-        self,
-        operator: typing.Optional[Identifier] = None,
-        reactants: typing.Optional[collections.abc.Iterable[Identifier]] = None,
-        products: typing.Optional[collections.abc.Iterable[Identifier]] = None,
-        reaction: typing.Optional[bytes] = None,
-    ) -> None:
-        pass
-
-    @typing.final
-    @classmethod
-    def from_bytes(
-        cls,
-        data: bytes,
-        engine: "NetworkEngine",
-    ) -> "RxnDatBase":
-        return engine.Rxn(data)
-
-    @property
-    @abc.abstractmethod
-    def operator(self) -> Identifier:
-        """Return ID of operator involved in reaction."""
-
-    @property
-    @abc.abstractmethod
-    def products(self) -> collections.abc.Iterable[Identifier]:
-        """Return IDs of products involved in reaction."""
-
-    @property
-    @abc.abstractmethod
-    def reactants(self) -> collections.abc.Iterable[Identifier]:
-        """Return IDs of reactants involved in reaction."""
 
 
 class ObjectLibrary(abc.ABC, typing.Generic[T_data]):
