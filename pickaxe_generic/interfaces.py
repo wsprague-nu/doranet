@@ -589,8 +589,9 @@ class MolFilter(abc.ABC):
 
     Notes
     -----
-    If metadata is required in order to run the filter, then meta_required must
-    be provided or that metadata is not guaranteed to be included.
+    For developing new MolFilters: if metadata is required in order to run the
+    filter, then meta_required must be provided or that metadata is not
+    guaranteed to be included.
     """
 
     __slots__ = ()
