@@ -511,6 +511,14 @@ class RxnDatBase(DataUnit):
     """
     Interface representing reaction data.
 
+    .. deprecated:: 0.3.0
+        Reactions are no longer represented as DataUnits with the advent of
+        the ChemicalNetwork object.  Reactions are instead associations of
+        an operator, ordered reactants, ordered products, and metadata.  If
+        single struct is required, suggest using
+        pickaxe_generic.interfaces.Reaction if network is available or
+        pickaxe_generic.interfaces.ReactionExplicit if not.
+
     Class implementing this interface manage information about a single reaction
     between several molecules to produce several molecules, with an associated
     operator.
