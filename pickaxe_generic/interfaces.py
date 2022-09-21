@@ -513,8 +513,8 @@ class RxnDatBase(DataUnit):
 
     .. deprecated:: 0.3.0
         Reactions are no longer represented as DataUnits with the advent of
-        the ChemicalNetwork object.  Reactions are instead associations of
-        an operator, ordered reactants, ordered products, and metadata.  If
+        the ChemNetwork object.  Reactions are instead associations of an
+        operator, ordered reactants, ordered products, and metadata.  If a
         single struct is required, suggest using
         pickaxe_generic.interfaces.Reaction if network is available or
         pickaxe_generic.interfaces.ReactionExplicit if not.
@@ -626,6 +626,19 @@ class MetaKeyPacket:
 
 @dataclasses.dataclass(frozen=True)
 class DataPacket(typing.Generic[T_data]):
+    """
+    Dataclass containing information about a particular DataUnit.
+
+    Attributes
+    ----------
+    i : int
+        Index of the DataUnit in some ChemNetwork.
+    item : typing.Optional[DataUnit]
+        The value of the DataUnit itself.
+    meta : typing.Optional[collections.abc.Mapping]
+        Metadata associated with the DataUnit.
+    """
+
     __slots__ = ("i", "item", "meta")
     i: int
     item: typing.Optional[T_data]
@@ -1348,9 +1361,9 @@ class ObjectLibrary(abc.ABC, typing.Generic[T_data]):
     .. deprecated:: 0.3.0
         `ObjectLibrary` will be removed in pickaxe_generic 0.4.0.  The pattern
         of several ObjectLibraries representing a network has been replaced by
-        the ChemicalNetwork object representing all nodes.  However,
+        the ChemNetwork object representing all nodes.  However,
         ObjectLibraries generated through a NetworkEngine will temporarily be
-        available via a facade to ChemicalNetwork.
+        available via a facade to ChemNetwork.
 
     Classes implementing this interface manage multiple instances of a hashable
     object, and may have responsibility for synchronization with external
