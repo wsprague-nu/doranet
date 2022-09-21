@@ -660,27 +660,75 @@ class MolFilter(abc.ABC):
     __slots__ = ()
 
     @abc.abstractmethod
-    def __call__(self, mol: DataPacket) -> bool:
-        ...
+    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+        """
+        Evaluate a DataPacket using filter function.
+
+        Returns
+        -------
+        bool
+            Whether or not the DataPacket representing a molecule passes the
+            filter.
+        """
 
     @property
     def meta_required(self) -> MetaKeyPacket:
-        ...
+        """
+        Specifier for information required by filter function.
+
+        Returns
+        -------
+        MetaKeyPacket
+            MetaKeyPacket containing information on which molecule metadata is
+            necessary to run filter, and if live molecule is required.
+        """
 
     @typing.final
-    def __and__(self, other: "MolFilter") -> "MolFilter":
+    def __and__(self, other: "MolFilter") -> "MolFilterAnd":
+        """
+        Compose the intersection of two MolFilters.
+
+        Returns
+        -------
+        MolFilterAnd
+            MolFilter which returns the result of `self(mol) and other(mol)`.
+        """
         return MolFilterAnd(self, other)
 
     @typing.final
-    def __invert__(self) -> "MolFilter":
+    def __invert__(self) -> "MolFilterInv":
+        """
+        Invert the value of the MolFilter.
+
+        Returns
+        -------
+        MolFilterInv
+            MolFilter which returns the result of `not self(mol)`.
+        """
         return MolFilterInv(self)
 
     @typing.final
-    def __or__(self, other: "MolFilter") -> "MolFilter":
+    def __or__(self, other: "MolFilter") -> "MolFilterOr":
+        """
+        Compose the union of two MolFilters.
+
+        Returns
+        -------
+        MolFilterOr
+            MolFilter which returns the result of `self(mol) or other(mol)`.
+        """
         return MolFilterOr(self, other)
 
     @typing.final
-    def __xor__(self, other: "MolFilter") -> "MolFilter":
+    def __xor__(self, other: "MolFilter") -> "MolFilterXor":
+        """
+        Compose the symmetric difference of two MolFilters.
+
+        Returns
+        -------
+        MolFilterXor
+            MolFilter which returns the result of `self(mol) != other(mol)`
+        """
         return MolFilterXor(self, other)
 
 
@@ -691,7 +739,7 @@ class MolFilterAnd(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: DataPacket) -> bool:
+    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
         return self._filter1(mol) and self._filter2(mol)
 
     @property
@@ -704,7 +752,7 @@ class MolFilterInv(MolFilter):
     __slots__ = ("_filter",)
     _filter: MolFilter
 
-    def __call__(self, mol: DataPacket) -> bool:
+    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
         return not self._filter(mol)
 
     @property
@@ -718,7 +766,7 @@ class MolFilterOr(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: DataPacket) -> bool:
+    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
         return self._filter1(mol) or self._filter2(mol)
 
     @property
@@ -732,7 +780,7 @@ class MolFilterXor(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: DataPacket) -> bool:
+    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
         return self._filter1(mol) != self._filter2(mol)
 
     @property
