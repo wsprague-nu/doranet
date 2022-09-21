@@ -507,27 +507,6 @@ class OpDatRDKit(OpDatBase):
         """
 
 
-class ReactionFilter(abc.ABC):
-    @abc.abstractmethod
-    def __call__(
-        self,
-        operator: OpDatBase,
-        reactants: collections.abc.Sequence[MolDatBase],
-        products: collections.abc.Sequence[MolDatBase],
-    ) -> bool:
-        pass
-
-
-class UIDPreFilter(abc.ABC):
-    @abc.abstractmethod
-    def __call__(
-        self,
-        operator: Identifier,
-        reactants: collections.abc.Sequence[Identifier],
-    ) -> bool:
-        pass
-
-
 @dataclasses.dataclass(frozen=True)
 class MetaKeyPacket:
     operator_keys: frozenset = frozenset()
@@ -1397,7 +1376,7 @@ class ExpansionStrategy(abc.ABC):
     Interface representing a network expansion strategy.
 
     .. deprecated:: 0.3.0
-        ExpansionStrategy will be removed in pickaxe_generic 0.4.0.
+        `ExpansionStrategy` will be removed in pickaxe_generic 0.4.0.
         This definition was determined to be too expansive to capture the wide
         number and variety of possible expansion operations.  Recommend use of
         engine.strats.pq() or engine.strats.cartesian().
@@ -1464,3 +1443,48 @@ class ExpansionStrategy(abc.ABC):
         """
         Refresh active molecules and operators from attached libraries.
         """
+
+
+class ReactionFilter(abc.ABC):
+    """
+    Interface representing an old-style reaction filter.
+
+    .. deprecated:: 0.3.0
+        `ReactionFilter` will be removed in pickaxe_generic 0.4.0.
+        ReactionFilter is not general enough to enable effective reaction
+        filtering; a new struct (ReactionFilterBase) completely replaces it
+        paradigm by permitting metadata and integration with analysis flows.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        operator: OpDatBase,
+        reactants: collections.abc.Sequence[MolDatBase],
+        products: collections.abc.Sequence[MolDatBase],
+    ) -> bool:
+        pass
+
+
+class UIDPreFilter(abc.ABC):
+    """
+    Interface representing an old-style UID prefilter.
+
+    .. deprecated:: 0.3.0
+        `UIDPreFilter` will be removed in pickaxe_generic 0.4.0.  UIDPreFilter
+        is not general enough to enable effective reaction filtering; a new
+        struct (RecipeFilter) completely replaces it paradigm by permitting
+        metadata and more general filtering options.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        operator: Identifier,
+        reactants: collections.abc.Sequence[Identifier],
+    ) -> bool:
+        pass
