@@ -346,10 +346,11 @@ class MolDatRDKit(MolDatBase):
 
 class OpDatBase(DataUnit):
     """
-    Interface representing operator data.
+    Interface representing an RDKit operator (ChemicalReaction) data object.
 
     Classes implementing this interface manage information about a single
-    operator which acts on MolDatBase and can generate RxnDatBase objects.
+    operator which acts on a molecule and can generate tuples of product
+    molecules.
 
     Methods
     -------
@@ -363,11 +364,15 @@ class OpDatBase(DataUnit):
     @abc.abstractmethod
     def compat(self, mol: MolDatBase, arg: int) -> bool:
         """
-        Determine compatibility of MolDat object with operator argument.
+        Determine compatibility of molecule object with operator argument.
+
+        This feature enables caching of molecule-operator compatibility for more
+        efficient network expansion, avoiding the need to test for the presence
+        of reactive sites on each molecule each time the operator is called.
 
         Parameters
         ----------
-        mol : MolDatBase
+        mol : pickaxe_generic.interfaces.MolDatBase
             MolDat object which is to be compared.
         arg : int
             Index of argument which is to be compared.
@@ -375,7 +380,7 @@ class OpDatBase(DataUnit):
         Returns
         -------
         bool
-            True if MolDat may be passed as argument arg to operator.
+            True if molecule is compatible with specified operator argument.
         """
 
     @abc.abstractmethod
@@ -383,25 +388,33 @@ class OpDatBase(DataUnit):
         self, reactants: collections.abc.Sequence[MolDatBase]
     ) -> collections.abc.Iterable[collections.abc.Iterable[MolDatBase]]:
         """
-        React a sequence of MolDat objects using internal operator.
+        React a sequence of MolDatBase objects using internal operator.
 
-        Return a sequence of RxnDat objects which contain metadata about
-        potential results.
+        For every combination of reaction sites which is possible, there is a
+        set of product molecules.  This method returns an iterator over each of
+        these sets, which may not be unique.
 
         Parameters
         ----------
-        reactants : Sequence[MolDatBase]
+        reactants : collections.abc.Sequence[pickaxe_generic.interfaces.MolDatBase]
             Reactants which match the arguments in the operator.
 
         Returns
         -------
-        Iterable[RxnDatBase]
-            Iterable of reactions which are produced by applying the operator.
+        collections.abc.Iterable[collections.abc.Iterable[pickaxe_generic.interfaces.RxnDatBase]]
+            Iterable of reaction product sets.
         """
 
     @abc.abstractmethod
     def __len__(self) -> int:
-        """Return number of arguments in operator."""
+        """
+        Return number of arguments in operator.
+
+        Returns
+        -------
+        int
+            Number of arguments in operator.
+        """
 
 
 class OpDatRDKit(OpDatBase):
