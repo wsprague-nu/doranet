@@ -119,18 +119,12 @@ class MolFilterMetaVal(interfaces.MolFilter):
     _key: collections.abc.Hashable
     _val: typing.Any
 
-    def __call__(
-        self,
-        mol: interfaces.MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
-        if meta is None:
+    def __call__(self, mol) -> bool:
+        if mol.meta is None:
             return False
-        if self._key not in meta:
+        if self._key not in mol.meta:
             return False
-        return meta[self._key] == self._val
+        return mol.meta[self._key] == self._val
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -142,16 +136,10 @@ class MolFilterMetaExist(interfaces.MolFilter):
     __slots__ = ("_key", "_val")
     _key: collections.abc.Hashable
 
-    def __call__(
-        self,
-        mol: interfaces.MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
-        if meta is None:
+    def __call__(self, mol) -> bool:
+        if mol.meta is None:
             return False
-        if self._key not in meta:
+        if self._key not in mol.meta:
             return False
         return True
 

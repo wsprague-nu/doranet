@@ -561,22 +561,47 @@ class MetaKeyPacket:
         )
 
 
+@dataclasses.dataclass(frozen=True)
+class DataPacket(typing.Generic[T_data]):
+    __slots__ = ("i", "item", "meta")
+    i: int
+    item: typing.Optional[T_data]
+    meta: typing.Optional[collections.abc.Mapping]
+
+
+@dataclasses.dataclass(frozen=True)
+class DataPacketE(DataPacket, typing.Generic[T_data]):
+    __slots__ = ("item",)
+    item: T_data
+
+
 class MolFilter(abc.ABC):
+    """
+    Interface representing a molecule filter.
+
+    Classes which implement this interface provide a method for evaluating a
+    molecule's information and returning True or False.
+
+    Attributes
+    ----------
+    meta_required : MetaKeyPacket
+        Metadata required in order for filter to evaluate molecule.
+
+    Notes
+    -----
+    If metadata is required in order to run the filter, then meta_required must
+    be provided or that metadata is not guaranteed to be included.
+    """
+
     __slots__ = ()
 
     @abc.abstractmethod
-    def __call__(
-        self,
-        mol: MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
+    def __call__(self, mol: DataPacket) -> bool:
         ...
 
     @property
     def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
+        ...
 
     @typing.final
     def __and__(self, other: "MolFilter") -> "MolFilter":
@@ -602,14 +627,8 @@ class MolFilterAnd(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(
-        self,
-        mol: MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
-        return self._filter1(mol, meta) and self._filter2(mol, meta)
+    def __call__(self, mol: DataPacket) -> bool:
+        return self._filter1(mol) and self._filter2(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -621,14 +640,8 @@ class MolFilterInv(MolFilter):
     __slots__ = ("_filter",)
     _filter: MolFilter
 
-    def __call__(
-        self,
-        mol: MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
-        return not self._filter(mol, meta)
+    def __call__(self, mol: DataPacket) -> bool:
+        return not self._filter(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -641,14 +654,8 @@ class MolFilterOr(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(
-        self,
-        mol: MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
-        return self._filter1(mol, meta) or self._filter2(mol, meta)
+    def __call__(self, mol: DataPacket) -> bool:
+        return self._filter1(mol) or self._filter2(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -661,32 +668,12 @@ class MolFilterXor(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(
-        self,
-        mol: MolDatBase,
-        meta: typing.Optional[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ] = None,
-    ) -> bool:
-        return self._filter1(mol, meta) != self._filter2(mol, meta)
+    def __call__(self, mol: DataPacket) -> bool:
+        return self._filter1(mol) != self._filter2(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
         return self._filter1.meta_required + self._filter2.meta_required
-
-
-@dataclasses.dataclass(frozen=True)
-class DataPacket(typing.Generic[T_data]):
-    __slots__ = ("i", "item", "meta")
-    i: int
-    item: typing.Optional[T_data]
-    meta: typing.Optional[collections.abc.Mapping]
-
-
-@dataclasses.dataclass(frozen=True)
-class DataPacketE(DataPacket, typing.Generic[T_data]):
-    __slots__ = ("item",)
-    item: T_data
 
 
 @dataclasses.dataclass(frozen=True, order=True)
