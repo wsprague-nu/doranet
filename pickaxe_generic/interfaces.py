@@ -179,6 +179,13 @@ class MolDatBase(DataUnit):
 
     Classes implementing this interface manage information about a single
     molecule, allowing for memory management and lumped molecule frameworks.
+
+    Attributes
+    ----------
+    blob : bytes
+        Binary representation of object.
+    uid : pickaxe_generic.interfaces.Identifier
+        Unique identifier of object.
     """
 
     __slots__ = ()
