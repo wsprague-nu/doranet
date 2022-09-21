@@ -574,6 +574,13 @@ class ObjectLibrary(abc.ABC, typing.Generic[T_data]):
     """
     Interface representing library of data.
 
+    .. deprecated:: 0.3.0
+        `ObjectLibrary` will be removed in pickaxe_generic 0.4.0.  The pattern
+        of several ObjectLibraries representing a network has been replaced by
+        the ChemicalNetwork object representing all nodes.  However,
+        ObjectLibraries generated through a NetworkEngine will temporarily be
+        available via a facade to ChemicalNetwork.
+
     Classes implementing this interface manage multiple instances of a hashable
     object, and may have responsibility for synchronization with external
     databases which may also manage this information (be volatile).  Contained
@@ -670,6 +677,12 @@ class ObjectLibrary(abc.ABC, typing.Generic[T_data]):
 class ExpansionStrategy(abc.ABC):
     """
     Interface representing a network expansion strategy.
+
+    .. deprecated:: 0.3.0
+        ExpansionStrategy will be removed in pickaxe_generic 0.4.0.
+        This definition was determined to be too expansive to capture the wide
+        number and variety of possible expansion operations.  Recommend use of
+        engine.strats.pq() or engine.strats.cartesian().
 
     Classes implementing this interface use information from a molecule and
     operator library to generate new reactions, which are then output to a
