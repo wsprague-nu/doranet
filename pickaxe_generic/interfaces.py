@@ -647,6 +647,7 @@ class DataPacket(typing.Generic[T_data]):
 
 @dataclasses.dataclass(frozen=True)
 class DataPacketE(DataPacket, typing.Generic[T_data]):
+    """mostly unused type???"""
     __slots__ = ("item",)
     item: T_data
 
