@@ -507,247 +507,6 @@ class OpDatRDKit(OpDatBase):
         """
 
 
-class RxnDatBase(DataUnit):
-    """
-    Interface representing reaction data.
-
-    .. deprecated:: 0.3.0
-        Reactions are no longer represented as DataUnits with the advent of
-        the ChemicalNetwork object.  Reactions are instead associations of
-        an operator, ordered reactants, ordered products, and metadata.  If
-        single struct is required, suggest using
-        pickaxe_generic.interfaces.Reaction if network is available or
-        pickaxe_generic.interfaces.ReactionExplicit if not.
-
-    Class implementing this interface manage information about a single reaction
-    between several molecules to produce several molecules, with an associated
-    operator.
-
-    Attributes
-    ----------
-    operator : Identifier
-        Operator object ID.
-    products : Iterable[Identifier]
-        Products of reaction IDs.
-    reactants : Iterable[Identifier]
-        Reactants involved in reaction IDs.
-    """
-
-    __slots__ = ()
-
-    @abc.abstractmethod
-    def __init__(
-        self,
-        operator: typing.Optional[Identifier] = None,
-        reactants: typing.Optional[collections.abc.Iterable[Identifier]] = None,
-        products: typing.Optional[collections.abc.Iterable[Identifier]] = None,
-        reaction: typing.Optional[bytes] = None,
-    ) -> None:
-        pass
-
-    @typing.final
-    @classmethod
-    def from_bytes(
-        cls,
-        data: bytes,
-        engine: "NetworkEngine",
-    ) -> "RxnDatBase":
-        return engine.Rxn(data)
-
-    @property
-    @abc.abstractmethod
-    def operator(self) -> Identifier:
-        """Return ID of operator involved in reaction."""
-
-    @property
-    @abc.abstractmethod
-    def products(self) -> collections.abc.Iterable[Identifier]:
-        """Return IDs of products involved in reaction."""
-
-    @property
-    @abc.abstractmethod
-    def reactants(self) -> collections.abc.Iterable[Identifier]:
-        """Return IDs of reactants involved in reaction."""
-
-
-class ObjectLibrary(abc.ABC, typing.Generic[T_data]):
-    """
-    Interface representing library of data.
-
-    .. deprecated:: 0.3.0
-        `ObjectLibrary` will be removed in pickaxe_generic 0.4.0.  The pattern
-        of several ObjectLibraries representing a network has been replaced by
-        the ChemicalNetwork object representing all nodes.  However,
-        ObjectLibraries generated through a NetworkEngine will temporarily be
-        available via a facade to ChemicalNetwork.
-
-    Classes implementing this interface manage multiple instances of a hashable
-    object, and may have responsibility for synchronization with external
-    databases which may also manage this information (be volatile).  Contained
-    objects must have a "uid" attribute which contains a hashable unique id.
-
-    Current implementations assume that this library will never shrink or remove
-    entries.
-    """
-
-    __slots__ = ()
-
-    @abc.abstractmethod
-    def add(
-        self, obj: typing.Union[collections.abc.Iterable[T_data], T_data]
-    ) -> None:
-        """
-        Add an object or multiple objects to the library.
-
-        This function does not add the new item if it has the same UID as an
-        item already in the library.
-
-        Parameters
-        ----------
-        obj : Union[Iterable[DataUnit], DataUnit]
-            Object(s) to be added.
-        """
-
-    @abc.abstractmethod
-    def ids(self) -> collections.abc.Iterable[Identifier]:
-        """
-        Return a set of keys used in the library.
-
-        Returns
-        -------
-        Iterable[Identifier]
-            Ids of objects in the library.
-        """
-
-    @abc.abstractmethod
-    def __contains__(self, item: T_data) -> bool:
-        """
-        Check if ObjectLibrary contains an object where object.uid == item.uid.
-
-        Parameters
-        ----------
-        item : DataUnit
-            Item to be checked against internal object list.
-
-        Returns
-        -------
-        bool
-            True if ObjectLibrary contains object with same UID.
-        """
-
-    @abc.abstractmethod
-    def __getitem__(self, item: Identifier) -> T_data:
-        """
-        Return object where object.uid == item returns True.
-
-        Parameters
-        ----------
-        item : Identifier
-            Item to be checked against internal object list.
-
-        Returns
-        -------
-        DataUnit
-            Object where uid attribute is equal to item.
-        """
-
-    @abc.abstractmethod
-    def __iter__(self) -> collections.abc.Iterator[T_data]:
-        """
-        Return an iterator over the objects contained in the ObjectLibrary.
-
-        Returns
-        -------
-        Iterator[T_data]
-            Iterator over objects contained in the ObjectLibrary.
-        """
-
-    @abc.abstractmethod
-    def __len__(self) -> int:
-        """
-        Return the number of items contained in the ObjectLibrary.
-
-        Returns
-        -------
-        int
-            Number of items in ObjectLibrary.
-        """
-
-
-class ExpansionStrategy(abc.ABC):
-    """
-    Interface representing a network expansion strategy.
-
-    .. deprecated:: 0.3.0
-        ExpansionStrategy will be removed in pickaxe_generic 0.4.0.
-        This definition was determined to be too expansive to capture the wide
-        number and variety of possible expansion operations.  Recommend use of
-        engine.strats.pq() or engine.strats.cartesian().
-
-    Classes implementing this interface use information from a molecule and
-    operator library to generate new reactions, which are then output to a
-    reaction library.
-    """
-
-    __slots__ = ()
-
-    @abc.abstractmethod
-    def __init__(
-        self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
-    ) -> None:
-        pass
-
-    @abc.abstractmethod
-    def expand(
-        self,
-        max_rxns: typing.Optional[int] = None,
-        max_mols: typing.Optional[int] = None,
-        num_gens: typing.Optional[int] = None,
-        custom_filter: typing.Optional[
-            collections.abc.Callable[
-                [
-                    OpDatBase,
-                    collections.abc.Sequence[MolDatBase],
-                    collections.abc.Sequence[MolDatBase],
-                ],
-                bool,
-            ]
-        ] = None,
-        custom_uid_prefilter: typing.Optional[
-            collections.abc.Callable[
-                [Identifier, collections.abc.Sequence[Identifier]], bool
-            ]
-        ] = None,
-    ) -> None:
-        """
-        Expand molecule library.
-
-        Parameters
-        ----------
-        max_rxns : Optional[int] (default: None)
-            Limit of new reactions to add.  If None, no limit.
-        max_mols : Optional[int] (default: None)
-            Limit of new molecules to add.  If None, no limit.
-        num_gens : Optional[int] (default: None)
-            Maximum generations of reactions to enumerate.  If None, no limit.
-        custom_filter: Optional[Callable[[OpDatBase, Sequence[MolDatBase],
-                       Sequence[MolDatBase]], bool]] (default: None)
-            Filter which selects which reactions to retain.
-        custom_uid_prefilter: Optional[Callable[[Identifier,
-                              Sequence[Identifier]], bool]]
-            Filter which selects which operator UID and reactant UIDs to retain.
-        """
-
-    @abc.abstractmethod
-    def refresh(self) -> None:
-        """
-        Refresh active molecules and operators from attached libraries.
-        """
-
-
 class ReactionFilter(abc.ABC):
     @abc.abstractmethod
     def __call__(
@@ -1116,7 +875,7 @@ class NetworkEngine(abc.ABC):
         reactants: typing.Optional[collections.abc.Iterable[Identifier]] = None,
         products: typing.Optional[collections.abc.Iterable[Identifier]] = None,
         reaction: typing.Optional[bytes] = None,
-    ) -> RxnDatBase:
+    ) -> "RxnDatBase":
         """
         Initializes a RxnDatBase object of relevant type.
         """
@@ -1125,9 +884,9 @@ class NetworkEngine(abc.ABC):
     def Libs(
         self,
     ) -> tuple[
-        ObjectLibrary[MolDatBase],
-        ObjectLibrary[OpDatBase],
-        ObjectLibrary[RxnDatBase],
+        "ObjectLibrary"[MolDatBase],
+        "ObjectLibrary"[OpDatBase],
+        "ObjectLibrary"["RxnDatBase"],
     ]:
         """
         Initializes the three basic ObjectLibraries necessary to run a Strategy.
@@ -1136,9 +895,9 @@ class NetworkEngine(abc.ABC):
     @abc.abstractmethod
     def CartesianStrategy(
         self,
-        mol_lib: ObjectLibrary[MolDatBase],
-        op_lib: ObjectLibrary[OpDatBase],
-        rxn_lib: ObjectLibrary[RxnDatBase],
+        mol_lib: "ObjectLibrary"[MolDatBase],
+        op_lib: "ObjectLibrary"[OpDatBase],
+        rxn_lib: "ObjectLibrary"["RxnDatBase"],
     ):
         """
         Initializes a CartesianStrategy of relevant type.
@@ -1464,3 +1223,244 @@ class MetaDataUpdate(typing.Protocol):
         None,
     ]:
         ...
+
+
+class RxnDatBase(DataUnit):
+    """
+    Interface representing reaction data.
+
+    .. deprecated:: 0.3.0
+        Reactions are no longer represented as DataUnits with the advent of
+        the ChemicalNetwork object.  Reactions are instead associations of
+        an operator, ordered reactants, ordered products, and metadata.  If
+        single struct is required, suggest using
+        pickaxe_generic.interfaces.Reaction if network is available or
+        pickaxe_generic.interfaces.ReactionExplicit if not.
+
+    Class implementing this interface manage information about a single reaction
+    between several molecules to produce several molecules, with an associated
+    operator.
+
+    Attributes
+    ----------
+    operator : Identifier
+        Operator object ID.
+    products : Iterable[Identifier]
+        Products of reaction IDs.
+    reactants : Iterable[Identifier]
+        Reactants involved in reaction IDs.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __init__(
+        self,
+        operator: typing.Optional[Identifier] = None,
+        reactants: typing.Optional[collections.abc.Iterable[Identifier]] = None,
+        products: typing.Optional[collections.abc.Iterable[Identifier]] = None,
+        reaction: typing.Optional[bytes] = None,
+    ) -> None:
+        pass
+
+    @typing.final
+    @classmethod
+    def from_bytes(
+        cls,
+        data: bytes,
+        engine: "NetworkEngine",
+    ) -> "RxnDatBase":
+        return engine.Rxn(data)
+
+    @property
+    @abc.abstractmethod
+    def operator(self) -> Identifier:
+        """Return ID of operator involved in reaction."""
+
+    @property
+    @abc.abstractmethod
+    def products(self) -> collections.abc.Iterable[Identifier]:
+        """Return IDs of products involved in reaction."""
+
+    @property
+    @abc.abstractmethod
+    def reactants(self) -> collections.abc.Iterable[Identifier]:
+        """Return IDs of reactants involved in reaction."""
+
+
+class ObjectLibrary(abc.ABC, typing.Generic[T_data]):
+    """
+    Interface representing library of data.
+
+    .. deprecated:: 0.3.0
+        `ObjectLibrary` will be removed in pickaxe_generic 0.4.0.  The pattern
+        of several ObjectLibraries representing a network has been replaced by
+        the ChemicalNetwork object representing all nodes.  However,
+        ObjectLibraries generated through a NetworkEngine will temporarily be
+        available via a facade to ChemicalNetwork.
+
+    Classes implementing this interface manage multiple instances of a hashable
+    object, and may have responsibility for synchronization with external
+    databases which may also manage this information (be volatile).  Contained
+    objects must have a "uid" attribute which contains a hashable unique id.
+
+    Current implementations assume that this library will never shrink or remove
+    entries.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def add(
+        self, obj: typing.Union[collections.abc.Iterable[T_data], T_data]
+    ) -> None:
+        """
+        Add an object or multiple objects to the library.
+
+        This function does not add the new item if it has the same UID as an
+        item already in the library.
+
+        Parameters
+        ----------
+        obj : Union[Iterable[DataUnit], DataUnit]
+            Object(s) to be added.
+        """
+
+    @abc.abstractmethod
+    def ids(self) -> collections.abc.Iterable[Identifier]:
+        """
+        Return a set of keys used in the library.
+
+        Returns
+        -------
+        Iterable[Identifier]
+            Ids of objects in the library.
+        """
+
+    @abc.abstractmethod
+    def __contains__(self, item: T_data) -> bool:
+        """
+        Check if ObjectLibrary contains an object where object.uid == item.uid.
+
+        Parameters
+        ----------
+        item : DataUnit
+            Item to be checked against internal object list.
+
+        Returns
+        -------
+        bool
+            True if ObjectLibrary contains object with same UID.
+        """
+
+    @abc.abstractmethod
+    def __getitem__(self, item: Identifier) -> T_data:
+        """
+        Return object where object.uid == item returns True.
+
+        Parameters
+        ----------
+        item : Identifier
+            Item to be checked against internal object list.
+
+        Returns
+        -------
+        DataUnit
+            Object where uid attribute is equal to item.
+        """
+
+    @abc.abstractmethod
+    def __iter__(self) -> collections.abc.Iterator[T_data]:
+        """
+        Return an iterator over the objects contained in the ObjectLibrary.
+
+        Returns
+        -------
+        Iterator[T_data]
+            Iterator over objects contained in the ObjectLibrary.
+        """
+
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        """
+        Return the number of items contained in the ObjectLibrary.
+
+        Returns
+        -------
+        int
+            Number of items in ObjectLibrary.
+        """
+
+
+class ExpansionStrategy(abc.ABC):
+    """
+    Interface representing a network expansion strategy.
+
+    .. deprecated:: 0.3.0
+        ExpansionStrategy will be removed in pickaxe_generic 0.4.0.
+        This definition was determined to be too expansive to capture the wide
+        number and variety of possible expansion operations.  Recommend use of
+        engine.strats.pq() or engine.strats.cartesian().
+
+    Classes implementing this interface use information from a molecule and
+    operator library to generate new reactions, which are then output to a
+    reaction library.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __init__(
+        self,
+        mol_lib: ObjectLibrary[MolDatBase],
+        op_lib: ObjectLibrary[OpDatBase],
+        rxn_lib: ObjectLibrary[RxnDatBase],
+    ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def expand(
+        self,
+        max_rxns: typing.Optional[int] = None,
+        max_mols: typing.Optional[int] = None,
+        num_gens: typing.Optional[int] = None,
+        custom_filter: typing.Optional[
+            collections.abc.Callable[
+                [
+                    OpDatBase,
+                    collections.abc.Sequence[MolDatBase],
+                    collections.abc.Sequence[MolDatBase],
+                ],
+                bool,
+            ]
+        ] = None,
+        custom_uid_prefilter: typing.Optional[
+            collections.abc.Callable[
+                [Identifier, collections.abc.Sequence[Identifier]], bool
+            ]
+        ] = None,
+    ) -> None:
+        """
+        Expand molecule library.
+
+        Parameters
+        ----------
+        max_rxns : Optional[int] (default: None)
+            Limit of new reactions to add.  If None, no limit.
+        max_mols : Optional[int] (default: None)
+            Limit of new molecules to add.  If None, no limit.
+        num_gens : Optional[int] (default: None)
+            Maximum generations of reactions to enumerate.  If None, no limit.
+        custom_filter: Optional[Callable[[OpDatBase, Sequence[MolDatBase],
+                       Sequence[MolDatBase]], bool]] (default: None)
+            Filter which selects which reactions to retain.
+        custom_uid_prefilter: Optional[Callable[[Identifier,
+                              Sequence[Identifier]], bool]]
+            Filter which selects which operator UID and reactant UIDs to retain.
+        """
+
+    @abc.abstractmethod
+    def refresh(self) -> None:
+        """
+        Refresh active molecules and operators from attached libraries.
+        """
