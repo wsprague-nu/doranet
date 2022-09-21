@@ -179,3 +179,8 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         return self._CartesianStrategy(
             mol_lib=mol_lib, op_lib=op_lib, rxn_lib=rxn_lib, engine=self
         )
+
+    def from_bytes(self, cls, data):
+        raise NotImplementedError(
+            "Generic bytestring initialization hasn't been implemented yet, sorry!"
+        )
