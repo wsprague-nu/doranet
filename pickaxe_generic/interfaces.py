@@ -648,6 +648,7 @@ class DataPacket(typing.Generic[T_data]):
 @dataclasses.dataclass(frozen=True)
 class DataPacketE(DataPacket, typing.Generic[T_data]):
     """mostly unused type???"""
+
     __slots__ = ("item",)
     item: T_data
 
@@ -677,6 +678,11 @@ class MolFilter(abc.ABC):
     def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
         """
         Evaluate a DataPacket using filter function.
+
+        Parameters
+        ----------
+        mol : DataPacket[MolDatBase]
+            DataPacket containing information about a molecule.
 
         Returns
         -------
@@ -748,16 +754,47 @@ class MolFilter(abc.ABC):
 
 @dataclasses.dataclass(frozen=True)
 class MolFilterAnd(MolFilter):
+    """
+    Class which composes the intersection of two filters.
+
+    Notes
+    -----
+    If initialized with filter1 and filter2, when called will return the result
+    of `filter1(mol) and filter2(mol)`.
+    """
+
     __slots__ = ("_filter1", "_filter2")
 
     _filter1: MolFilter
     _filter2: MolFilter
 
     def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+        """
+        Calculate the intersection result of the composed filters.
+
+        Parameters
+        ----------
+        mol : DataPacket[MolDatBase]
+            DataPacket containing information about a molecule.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1 and filter2, returns the result of
+            `filter1(mol) and filter2(mol)`.
+        """
         return self._filter1(mol) and self._filter2(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the union of the specifiers for the composed filter functions.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined metadata key packet for both composed filter functions.
+        """
         return self._filter1.meta_required + self._filter2.meta_required
 
 
@@ -767,38 +804,122 @@ class MolFilterInv(MolFilter):
     _filter: MolFilter
 
     def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+        """
+        Calculate the inverse result of the composed filter.
+
+        Parameters
+        ----------
+        mol : DataPacket[MolDatBase]
+            DataPacket containing information about a molecule.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1, returns the result of
+            `not filter1(mol)`.
+        """
         return not self._filter(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the specifiers of the composed filter function.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The metadata key packet of the composed filter function.
+        """
         return self._filter.meta_required
 
 
 @dataclasses.dataclass(frozen=True)
 class MolFilterOr(MolFilter):
+    """
+    Class which composes the union of two filters.
+
+    Notes
+    -----
+    If initialized with filter1 and filter2, when called will return the result
+    of `filter1(mol) or filter2(mol)`.
+    """
+
     __slots__ = ("_filter1", "_filter2")
     _filter1: MolFilter
     _filter2: MolFilter
 
     def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+        """
+        Calculate the union result of the composed filters.
+
+        Parameters
+        ----------
+        mol : DataPacket[MolDatBase]
+            DataPacket containing information about a molecule.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1 and filter2, returns the result of
+            `filter1(mol) or filter2(mol)`.
+        """
         return self._filter1(mol) or self._filter2(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the union of the specifiers for the composed filter functions.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined metadata key packet for both composed filter functions.
+        """
         return self._filter1.meta_required + self._filter2.meta_required
 
 
 @dataclasses.dataclass(frozen=True)
 class MolFilterXor(MolFilter):
+    """
+    Class which composes the symmetric difference of two filters.
+
+    Notes
+    -----
+    If initialized with filter1 and filter2, when called will return the result
+    of `filter1(mol) != filter2(mol)`.
+    """
+
     __slots__ = ("_filter1", "_filter2")
     _filter1: MolFilter
     _filter2: MolFilter
 
     def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+        """
+        Calculate the symmetric difference result of the composed filters.
+
+        Parameters
+        ----------
+        mol : DataPacket[MolDatBase]
+            DataPacket containing information about a molecule.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1 and filter2, returns the result of
+            `filter1(mol) != filter2(mol)`.
+        """
         return self._filter1(mol) != self._filter2(mol)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the union of the specifiers for the composed filter functions.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined metadata key packet for both composed filter functions.
+        """
         return self._filter1.meta_required + self._filter2.meta_required
 
 
