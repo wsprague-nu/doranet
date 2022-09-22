@@ -978,13 +978,43 @@ class ReactionExplicit:
         )
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class Recipe:
+    """
+    Dataclass containing information about a particular recipe.
+
+    A "recipe" is a combination of an operator and some ordered set of
+    reactants.  If the operator object is called with the reactant objects as
+    arguments, then it will produce sets of products.
+
+    Attributes
+    ----------
+    operator : OpIndex
+        Index of the operator in some ChemNetwork.
+    reactants : tuple[MolIndex, ...]
+        A tuple of reactant indices in some ChemNetwork.
+    """
+
     __slots__ = ("operator", "reactants")
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
 
     def __eq__(self, other: object) -> bool:
+        """
+        Compare the equality of recipes.
+
+        Parameters
+        ----------
+        other : object
+            Object to be compared.
+
+        Returns
+        -------
+        bool
+            If other is a Recipe, return equality of attributes between it and
+            self.  If other is not a Recipe, return False.
+        """
         if (
             isinstance(other, Recipe)
             and self.operator == other.operator
@@ -994,6 +1024,29 @@ class Recipe:
         return False
 
     def __lt__(self, other: "Recipe") -> bool:
+        """
+        Compare Recipes for sorting purposes.
+
+        Determines priority of Recipes by going through this list:
+
+        1. Ordering both reactant sets from highest index to lowest, compare
+           entries one to one until a higher index is found.  The recipe
+           containing that index is ranked lower.  If one recipe runs out of
+           indices before this occurs, then the longer recipe is ranked lower.
+        2. The recipe with a higher operator index is ranked lower.
+        3. The recipe with a reactant tuple ranked lower (according to the
+           default comparison) is ranked higher.
+
+        Parameters
+        ----------
+        other : Recipe
+            Recipe to be compared for ordering purposes.
+
+        Returns
+        -------
+        bool
+            Returns True if other should be sorted higher than self.
+        """
         self_order = sorted(self.reactants, reverse=True)
         other_order = sorted(other.reactants, reverse=True)
         for val_self, val_other in zip(self_order, other_order):
