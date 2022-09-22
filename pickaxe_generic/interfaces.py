@@ -927,8 +927,23 @@ class MolFilterXor(MolFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True, order=True)
 class Reaction:
+    """
+    Dataclass containing information about a particular DataUnit.
+
+    Attributes
+    ----------
+    operator : OpIndex
+        Index of the operator in some ChemNetwork.
+    reactants : tuple[MolIndex, ...]
+        A tuple of reactant indices in some ChemNetwork.
+    products : tuple[MolIndex, ...]
+        A tuple of product indices in some ChemNetwork.  If any is negative,
+        this indicates an unknown provenance.
+    """
+
     __slots__ = ("operator", "reactants", "products")
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
@@ -937,6 +952,10 @@ class Reaction:
 
 @dataclasses.dataclass(frozen=True, order=True)
 class ReactionExplicit:
+    """
+    Unused???
+    """
+
     __slots__ = (
         "operator",
         "reactants",
