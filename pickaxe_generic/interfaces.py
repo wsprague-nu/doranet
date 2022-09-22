@@ -1045,7 +1045,7 @@ class Recipe:
         Returns
         -------
         bool
-            Returns True if other should be sorted higher than self.
+            Returns True if other should be ranked higher than self.
         """
         self_order = sorted(self.reactants, reverse=True)
         other_order = sorted(other.reactants, reverse=True)
@@ -1065,9 +1065,25 @@ class Recipe:
         return other.reactants < self.reactants
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class RecipeExplicit:
-    __slots__ = ("operator", "reactants", "operator_meta", "reactants_meta")
+    """
+    Dataclass containing a particular Recipe's DataUnits.
+
+    A "recipe" is a combination of an operator and some ordered set of
+    reactants.  If the operator object is called with the reactant objects as
+    arguments, then it will produce sets of products.
+
+    Attributes
+    ----------
+    operator : DataPacket[OpDatBase]
+        Operator data.
+    reactants : tuple[DataPacket[MolDatBase], ...]
+        A tuple of reactant data.
+    """
+
+    __slots__ = ("operator", "reactants")
     operator: DataPacket[OpDatBase]
     reactants: tuple[DataPacket[MolDatBase], ...]
 
