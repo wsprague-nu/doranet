@@ -825,7 +825,7 @@ class MolFilterInv(MolFilter):
     @property
     def meta_required(self) -> MetaKeyPacket:
         """
-        Return the specifiers of the composed filter function.
+        Return the specifier of the composed filter function.
 
         Returns
         -------
@@ -1089,45 +1089,151 @@ class RecipeExplicit:
 
 
 class RecipeFilter(abc.ABC):
+    """
+    Interface representing a recipe filter.
+
+    Classes which implement this interface provide a method for evaluating a
+    RecipeExplicit's information and returning True or False.
+
+    Attributes
+    ----------
+    meta_required : MetaKeyPacket
+        Metadata required in order for filter to evaluate recipe.
+
+    Notes
+    -----
+    For developing new RecipeFilters: if metadata is required in order to run
+    the filter, then meta_required must be provided or that metadata is not
+    guaranteed to be included.
+    """
+
     __slots__ = ()
 
     @abc.abstractmethod
     def __call__(self, recipe: RecipeExplicit) -> bool:
-        ...
+        """
+        Evaluate a RecipeExplicit using filter function.
+
+        Parameters
+        ----------
+        recipe : RecipeExplicit
+            RecipeExplicit containing information about a recipe.
+
+        Returns
+        -------
+        bool
+            Whether or not the RecipeExplicit representing a recipe passes the
+            filter.
+        """
 
     @property
     def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
+        """
+        Specifier for information required by filter function.
+
+        Returns
+        -------
+        MetaKeyPacket
+            MetaKeyPacket containing information on which recipe metadata is
+            necessary to run filter, and if live molecules or operators are
+            required.
+        """
 
     @typing.final
     def __and__(self, other: "RecipeFilter") -> "RecipeFilter":
+        """
+        Compose the intersection of two RecipeFilters.
+
+        Returns
+        -------
+        RecipeFilterAnd
+            RecipeFilter which returns the result of
+            `self(recipe) and other(mol)`.
+        """
         return RecipeFilterAnd(self, other)
 
     @typing.final
     def __invert__(self) -> "RecipeFilter":
+        """
+        Invert the value of the RecipeFilter.
+
+        Returns
+        -------
+        RecipeFilterInv
+            RecipeFilter which returns the result of `not self(recipe)`.
+        """
         return RecipeFilterInv(self)
 
     @typing.final
     def __or__(self, other: "RecipeFilter") -> "RecipeFilter":
+        """
+        Compose the union of two RecipeFilters.
+
+        Returns
+        -------
+        RecipeFilterOr
+            RecipeFilter which returns the result of
+            `self(recipe) or other(recipe)`.
+        """
         return RecipeFilterOr(self, other)
 
     @typing.final
     def __xor__(self, other: "RecipeFilter") -> "RecipeFilter":
+        """
+        Compose the symmetric difference of two RecipeFilters.
+
+        Returns
+        -------
+        RecipeFilterXor
+            RecipeFilter which returns the result of
+            `self(recipe) != other(recipe)`.
+        """
         return RecipeFilterXor(self, other)
 
 
 @dataclasses.dataclass(frozen=True)
 class RecipeFilterAnd(RecipeFilter):
+    """
+    Class which composes the intersection of two filters.
+
+    Notes
+    -----
+    If initialized with filter1 and filter2, when called will return the result
+    of `filter1(recipe) and filter2(recipe)`.
+    """
+
     __slots__ = ("_filter1", "_filter2")
 
     _filter1: RecipeFilter
     _filter2: RecipeFilter
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
+        """
+        Calculate the intersection result of the composed filters.
+
+        Parameters
+        ----------
+        recipe : RecipeExplicit
+            RecipeExplicit containing information about a recipe.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1 and filter2, returns the result of
+            `filter1(recipe) and filter2(recipe)`.
+        """
         return self._filter1(recipe) and self._filter2(recipe)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the union of the specifiers for the composed filter functions.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined metadata key packet for both composed filter functions.
+        """
         return self._filter1.meta_required + self._filter2.meta_required
 
 
@@ -1137,38 +1243,122 @@ class RecipeFilterInv(RecipeFilter):
     _filter: RecipeFilter
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
+        """
+        Calculate the inverse result of the composed filter.
+
+        Parameters
+        ----------
+        recipe : RecipeExplicit
+            RecipeExplicit containing information about a recipe.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1, returns the result of
+            `not filter1(recipe)`.
+        """
         return not self._filter(recipe)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the specifier of the composed filter function.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The metadata key packet of the composed filter function.
+        """
         return self._filter.meta_required
 
 
 @dataclasses.dataclass(frozen=True)
 class RecipeFilterOr(RecipeFilter):
+    """
+    Class which composes the union of two filters.
+
+    Notes
+    -----
+    If initialized with filter1 and filter2, when called will return the result
+    of `filter1(recipe) or filter2(recipe)`.
+    """
+
     __slots__ = ("_filter1", "_filter2")
     _filter1: RecipeFilter
     _filter2: RecipeFilter
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
+        """
+        Calculate the union result of the composed filters.
+
+        Parameters
+        ----------
+        recipe : RecipeExplicit
+            RecipeExplicit containing information about a recipe.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1 and filter2, returns the result of
+            `filter1(recipe) or filter2(recipe)`.
+        """
         return self._filter1(recipe) or self._filter2(recipe)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the union of the specifiers for the composed filter functions.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined metadata key packet for both composed filter functions.
+        """
         return self._filter1.meta_required + self._filter2.meta_required
 
 
 @dataclasses.dataclass(frozen=True)
 class RecipeFilterXor(RecipeFilter):
+    """
+    Class which composes the symmetric difference of two filters.
+
+    Notes
+    -----
+    If initialized with filter1 and filter2, when called will return the result
+    of `filter1(recipe) != filter2(recipe)`.
+    """
+
     __slots__ = ("_filter1", "_filter2")
     _filter1: RecipeFilter
     _filter2: RecipeFilter
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
+        """
+        Calculate the symmetric difference result of the composed filters.
+
+        Parameters
+        ----------
+        recipe : RecipeExplicit
+            RecipeExplicit containing information about a recipe.
+
+        Returns
+        -------
+        bool
+            If initialized with filter1 and filter2, returns the result of
+            `filter1(recipe) != filter2(recipe)`.
+        """
         return self._filter1(recipe) != self._filter2(recipe)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
+        """
+        Return the union of the specifiers for the composed filter functions.
+
+        Returns
+        -------
+        MetaKeyPacket
+            The combined metadata key packet for both composed filter functions.
+        """
         return self._filter1.meta_required + self._filter2.meta_required
 
 
