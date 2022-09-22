@@ -752,6 +752,7 @@ class MolFilter(abc.ABC):
         return MolFilterXor(self, other)
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterAnd(MolFilter):
     """
@@ -798,6 +799,7 @@ class MolFilterAnd(MolFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterInv(MolFilter):
     __slots__ = ("_filter",)
@@ -833,6 +835,7 @@ class MolFilterInv(MolFilter):
         return self._filter.meta_required
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterOr(MolFilter):
     """
@@ -878,6 +881,7 @@ class MolFilterOr(MolFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterXor(MolFilter):
     """
