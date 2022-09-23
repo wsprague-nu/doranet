@@ -1140,9 +1140,6 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
     def expand(
         self,
         max_recipes: typing.Optional[int] = None,
-        heap_size: typing.Optional[int] = None,
-        batch_size: typing.Optional[int] = None,
-        beam_size: typing.Optional[int] = 1,
         # mol_filter_local: typing.Optional[MolFilter] = None,
         # mol_filter: typing.Optional[MolFilter] = None,
         recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
@@ -1155,6 +1152,9 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 metadata.LocalPropertyCalc,
             ]
         ] = None,
+        heap_size: typing.Optional[int] = None,
+        beam_size: typing.Optional[int] = 1,
+        batch_size: typing.Optional[int] = None,
         mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
         # mc_update: typing.Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
