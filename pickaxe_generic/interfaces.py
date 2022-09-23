@@ -1608,19 +1608,81 @@ class NetworkEngine(abc.ABC):
             Table of strategy subtypes corresponding with engine configuration.
         """
 
+    @abc.abstractmethod
+    def new_network(self) -> "ChemNetwork":
+        """
+        Create new chemical network.
+
+        Returns
+        -------
+        ChemNetwork
+            Empty chemical network.
+        """
+
 
 class ValueQueryData(typing.Protocol[T_data, T_int]):
+    """
+    Interface class representing queries to data container.
+
+    Intended for use with ChemNetwork to provide access to molecule and operator
+    information.
+    """
+
+    __slots__ = ()
+
     @abc.abstractmethod
     def __contains__(self, item: typing.Union[Identifier, T_data]) -> bool:
-        ...
+        """
+        Check if container has an item with a particular UID or that has a UID
+        equivalent to that of the passed item.
+
+        Parameters
+        ----------
+        item : typing.Union[Identifier, DataUnit]
+            Item to be checked for its presence in the container.  If
+            Identifier, UIDs of objects are checked for the presence of the
+            item.  If a DataUnit, UID of item is compared against those in the
+            container.
+
+        Returns
+        -------
+        bool
+            True if item is in container.
+        """
 
     @typing.overload
     def __getitem__(self, item: slice) -> collections.abc.Sequence[T_data]:
-        ...
+        """
+        Retrieve items from container.
+
+        Parameters
+        ----------
+        item : slice
+            Data representing item indices to be retrieved.
+
+        Returns
+        -------
+        collections.abc.Sequence[DataUnit]
+            Items which correspond to the indices in `item`.
+        """
 
     @typing.overload
     def __getitem__(self, item: typing.Union[T_int, Identifier]) -> T_data:
-        ...
+        """
+        Retrieve item from container.
+
+        Parameters
+        ----------
+        item : typing.Union[int, Identifier]
+            Data representing item to be retrieved.  If int, a single item with
+            that index is returned.  If an Identifier, then the item
+            corresponding with that Identifier is returned.
+
+        Returns
+        -------
+        typing.Union[int, Identifier]
+            Item to be retrieved.
+        """
 
     @abc.abstractmethod
     def __getitem__(self, item: typing.Union[slice, T_int, Identifier]):
@@ -1628,35 +1690,112 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
 
     @abc.abstractmethod
     def i(self, uid: Identifier) -> T_int:
-        ...
+        """
+        Retrieve item index from container.
+
+        Parameters
+        ----------
+        uid : Identifier
+            Identifier representing an item in the container.
+
+        Returns
+        -------
+        int
+            Index of item with UID `uid`.
+        """
 
     @abc.abstractmethod
-    def keys(self) -> collections.abc.Collection[Identifier]:
-        ...
+    def keys(self) -> collections.abc.KeysView[Identifier]:
+        """
+        Retrieve all item keys from container.
+
+        Returns
+        -------
+        collections.abc.KeysView[Identifier]
+            All keys (UIDs) of items in container.
+        """
 
     @abc.abstractmethod
     def uid(self, i: T_int) -> Identifier:
-        ...
+        """
+        Retrieve item UID from container.
+
+        Parameters
+        ----------
+        i : int
+            Index of an item in the container.
+
+        Returns
+        -------
+        Identifier
+            UID of item with index `i`.
+        """
 
     @abc.abstractmethod
     def __len__(self) -> int:
-        ...
+        """
+        Retrieve number of items in container.
+
+        Returns
+        -------
+        int
+            Number of items in container.
+        """
 
     @abc.abstractmethod
     def __iter__(self) -> collections.abc.Iterator[T_data]:
-        ...
+        """
+        Generate an iterator over container contents.
+
+        Returns
+        -------
+        collections.abc.Iterator[DataUnit]
+            Iterator over container contents.
+        """
 
 
 class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
+    """
+    Interface class representing queries to data container.
+
+    Intended for use with ChemNetwork to provide access to reaction information.
+    """
+
+    __slots__ = ()
+
     @typing.overload
     @abc.abstractmethod
     def __getitem__(self, item: slice) -> collections.abc.Sequence[T_id]:
-        ...
+        """
+        Retrieve items from container.
+
+        Parameters
+        ----------
+        item : slice
+            Data representing item indices to be retrieved.
+
+        Returns
+        -------
+        collections.abc.Sequence[DataUnit]
+            Items which correspond to the indices in `item`.
+        """
 
     @typing.overload
     @abc.abstractmethod
     def __getitem__(self, item: T_int) -> T_id:
-        ...
+        """
+        Retrieve item UID from container.
+
+        Parameters
+        ----------
+        item : int
+            Index of item to be retrieved.
+
+        Returns
+        -------
+        Identifier
+            UID of item to be retrieved.
+        """
 
     @abc.abstractmethod
     def __getitem__(self, item: typing.Union[slice, T_int]):
@@ -1664,15 +1803,41 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
 
     @abc.abstractmethod
     def i(self, item: T_id) -> T_int:
-        ...
+        """
+        Retrieve item index from container.
+
+        Parameters
+        ----------
+        uid : Identifier
+            Identifier representing an item in the container.
+
+        Returns
+        -------
+        int
+            Index of item with UID `uid`.
+        """
 
     @abc.abstractmethod
     def __len__(self) -> int:
-        ...
+        """
+        Retrieve number of items in container.
+
+        Returns
+        -------
+        int
+            Number of items in container.
+        """
 
     @abc.abstractmethod
     def __iter__(self) -> collections.abc.Iterator[T_id]:
-        ...
+        """
+        Generate an iterator over container contents.
+
+        Returns
+        -------
+        collections.abc.Iterator[DataUnit]
+            Iterator over container contents.
+        """
 
 
 class ChemNetwork(abc.ABC):
