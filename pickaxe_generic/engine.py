@@ -20,7 +20,7 @@ import typing
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from . import containers, datatypes, interfaces, strategies
+from . import containers, datatypes, interfaces, network, strategies
 
 
 def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
@@ -180,7 +180,20 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             mol_lib=mol_lib, op_lib=op_lib, rxn_lib=rxn_lib, engine=self
         )
 
-    def from_bytes(self, cls, data):
-        raise NotImplementedError(
-            "Generic bytestring initialization hasn't been implemented yet, sorry!"
+    @property
+    def mol(self):
+        return interfaces.MoleculeTypes(self._Mol)
+
+    @property
+    def op(self):
+        return interfaces.OperatorTypes(self._Op)
+
+    @property
+    def strat(self):
+        return interfaces.StrategyTypes(
+            self._CartesianStrategy, strategies.PriorityQueueStrategyBasic
         )
+
+    @property
+    def new_network(self):
+        return network.ChemNetworkBasic()
