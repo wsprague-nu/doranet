@@ -44,8 +44,10 @@ Classes:
 """
 
 import abc
+import collections
 import collections.abc
 import dataclasses
+import pickle
 import typing
 
 import rdkit
@@ -264,7 +266,7 @@ class MolDatRDKit(MolDatBase):
         ----------
         data : bytes
             Bytestring containing sufficient binary information to initialize
-            molecule.
+            molecule.  Should be the binary form of an RDKit molecule.
         engine : pickaxe_generic.interfaces.NetworkEngine
             Engine containing settings for molecule initialization.
 
@@ -273,7 +275,7 @@ class MolDatRDKit(MolDatBase):
         pickaxe_generic.interfaces.MolDatRDKit
             Molecule returned from processing bytestring.
         """
-        return engine.Mol(data)
+        return engine.Mol(rdkit.Chem.Mol(data), sanitize=False)
 
     @property
     @abc.abstractmethod
@@ -454,7 +456,13 @@ class OpDatRDKit(OpDatBase):
     __slots__ = ()
 
     @abc.abstractmethod
-    def __init__(self, operator: rdkit.Chem.rdchem.Mol | str | bytes) -> None:
+    def __init__(
+        self,
+        operator: typing.Union[
+            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
+        ],
+        kekulize: bool = False,
+    ) -> None:
         ...
 
     @classmethod
@@ -480,7 +488,11 @@ class OpDatRDKit(OpDatBase):
         pickaxe_generic.interfaces.OpDatRDKit
             Operator returned from processing bytestring.
         """
-        return engine.Op(data)
+        unpacked: tuple[
+            rdkit.Chem.rdChemReactions.ChemicalReaction, bool
+        ] = pickle.loads(data)
+        operator, kekulize = unpacked
+        return engine.Op(operator, kekulize)
 
     @property
     @abc.abstractmethod
@@ -1362,6 +1374,52 @@ class RecipeFilterXor(RecipeFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
+@typing.final
+class MoleculeTypes(typing.NamedTuple):
+    """
+    Container class which provides initializers for molecule subtypes.
+
+    Attributes
+    ----------
+    rdkit : type[MolDatRDKit]
+        A molecule object which manages a single RDKit molecule.
+    """
+
+    rdkit: type[MolDatRDKit]
+
+
+@typing.final
+class OperatorTypes(typing.NamedTuple):
+    """
+    Container class which provides initializers for operator subtypes.
+
+    Attributes
+    ----------
+    rdkit : type[OpDatRDKit]
+        An operator object which manages a single RDKit operator.
+    """
+
+    rdkit: type[OpDatRDKit]
+
+
+@typing.final
+class StrategyTypes(typing.NamedTuple):
+    """
+    Container class which provides initializers for strategy subtypes.
+
+    Attributes
+    ----------
+    cartesian : type[CartesianStrategy]
+        A strategy which performs Cartesian expansion; that is,
+        generation-by-generation expansion.
+    pq : type[PriorityQueueStrategy]
+        A strategy which expands the "best" recipes first.
+    """
+
+    cartesian: type["ExpansionStrategy"]
+    pq: type["PriorityQueueStrategy"]
+
+
 class NetworkEngine(abc.ABC):
     """
     Interface representing an object which serves up other objects based on
@@ -1371,34 +1429,101 @@ class NetworkEngine(abc.ABC):
     are constructed based on configuration options.
     """
 
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __init__(self, speed: int = 5, np: int = 1) -> None:
+        ...
+
     @property
     @abc.abstractmethod
     def speed(self) -> int:
         """
-        Defined speed of engine configuration.
+        Return speed of engine configuration.
+
+        Returns
+        -------
+        int
+            Integer representing engine speed.
+
+        Notes
+        -----
+        Speed is an integer between 1 and 6 determining speed/memory tradeoff
+        of bulk data.
+            6: Maximum caching in RAM, no disk use.
+            5: Most data in RAM, no disk use.
+            4: Bare minimum data in RAM, no disk use.
+            3: Fast primary keys in RAM, disk caches values.
+            2: Smallest possible primary keys in RAM, disk caches values.
+            1: Fast primary keys and values both stored on disk.
         """
 
     @abc.abstractmethod
     def Mol(
         self,
-        molecule: typing.Union[rdkit.Chem.rdchem.Mol, str, bytes],
+        molecule: typing.Union[rdkit.Chem.rdchem.Mol, str],
         sanitize: bool = True,
         neutralize: bool = False,
     ) -> MolDatRDKit:
         """
-        Initializes a MolDatRDKit object of relevant type.
+        Initialize a MolDatRDKit object of relevant subtype.
+
+        This object manages an RDKit molecule.
+
+        .. deprecated:: 0.3.0
+            Replaced by function format engine.mol.rdkit().  Will be removed in
+            0.4.0.
+
+        Parameters
+        ----------
+        molecule : typing.Union[rdkit.Chem.rdchem.Mol, str]
+            Sufficient information to generate molecule in the form of an RDKit
+            Mol or a SMILES string.
+        sanitize : bool (default: True)
+            Run through RDKit sanitizer first.  Should be True when using input
+            from non-sanitized sources.  Can be disabled for speed improvements
+            but canonicity is not guaranteed.
+
+        Other Parameters
+        ----------------
+        neutralize : bool (default: False)
+            Should be True if you want hydrogens to be added/subtracted to
+            neutralize a molecule and input is a SMILES string or
+            non-neutralized molecule.
         """
 
     @abc.abstractmethod
     def Op(
         self,
         operator: typing.Union[
-            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
+            rdkit.Chem.rdChemReactions.ChemicalReaction, str
         ],
         kekulize: bool = False,
     ) -> OpDatRDKit:
         """
-        Initializes an OpDatRDKit object of relevant type.
+        Initialize an OpDatRDKit object of relevant subtype.
+
+        This object manages an RDKit SMARTS operator in the form of an RDKit
+        ChemicalReaction.  Products created by this operator are initialized
+        using this NetworkEngine's configuration.
+
+        .. deprecated:: 0.3.0
+            Replaced by function format engine.op.rdkit().  Will be removed in
+            0.4.0.
+
+        Parameters
+        ----------
+        operator : typing.Union[rdkit.Chem.rdChemReactions.ChemicalReaction,
+                                str]
+            SMARTS string which is used to generate operator data.  Alternately,
+            the operator itself in RDKit form.
+
+        Other Parameters
+        ----------------
+        kekulize : bool (default: False)
+            Should be True if you want reactants to undergo kekulization before
+            reaction in order to remove aromatic flags.  However, products will
+            not necessarily be in Kekule form.
         """
 
     @abc.abstractmethod
@@ -1411,6 +1536,9 @@ class NetworkEngine(abc.ABC):
     ) -> "RxnDatBase":
         """
         Initializes a RxnDatBase object of relevant type.
+
+        .. deprecated:: 0.3.0
+            RxnDatBase is a deprecated datatype.  Will be removed in 0.4.0.
         """
 
     @abc.abstractmethod
@@ -1423,6 +1551,9 @@ class NetworkEngine(abc.ABC):
     ]:
         """
         Initializes the three basic ObjectLibraries necessary to run a Strategy.
+
+        .. deprecated:: 0.3.0
+            ObjectLibrary is a deprecated datatype.  Will be removed in 0.4.0.
         """
 
     @abc.abstractmethod
@@ -1434,15 +1565,48 @@ class NetworkEngine(abc.ABC):
     ):
         """
         Initializes a CartesianStrategy of relevant type.
+
+        .. deprecated:: 0.3.0
+            ObjectLibrary is a deprecated datatype.  In the future, strategies
+            should be initialized via engine.strat.cartesian().  Will be
+            removed in 0.4.0.
         """
 
+    @property
     @abc.abstractmethod
-    def from_bytes(
-        self,
-        cls: type[T_ci],
-        data: bytes,
-    ) -> T_ci:
-        ...
+    def mol(self) -> MoleculeTypes:
+        """
+        Get table of molecule initializers.
+
+        Returns
+        -------
+        MoleculeTypes
+            Table of molecule subtypes corresponding with engine configuration.
+        """
+
+    @property
+    @abc.abstractmethod
+    def op(self) -> OperatorTypes:
+        """
+        Get table of operator initializers.
+
+        Returns
+        -------
+        OperatorTypes
+            Table of operator subtypes corresponding with engine configuration.
+        """
+
+    @property
+    @abc.abstractmethod
+    def strat(self) -> StrategyTypes:
+        """
+        Get table of strategy initializers.
+
+        Returns
+        -------
+        StrategyTypes
+            Table of strategy subtypes corresponding with engine configuration.
+        """
 
 
 class ValueQueryData(typing.Protocol[T_data, T_int]):
@@ -1451,12 +1615,10 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         ...
 
     @typing.overload
-    @abc.abstractmethod
     def __getitem__(self, item: slice) -> collections.abc.Sequence[T_data]:
         ...
 
     @typing.overload
-    @abc.abstractmethod
     def __getitem__(self, item: typing.Union[T_int, Identifier]) -> T_data:
         ...
 
