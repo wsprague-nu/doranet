@@ -85,7 +85,7 @@ class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
     def i(self, uid: interfaces.Identifier) -> interfaces.T_int:
         return self._map[uid]
 
-    def keys(self) -> collections.abc.Collection[interfaces.Identifier]:
+    def keys(self) -> collections.abc.KeysView[interfaces.Identifier]:
         return self._map.keys()
 
     def uid(self, i: interfaces.T_int) -> interfaces.Identifier:

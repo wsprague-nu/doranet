@@ -1628,8 +1628,6 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
     information.
     """
 
-    __slots__ = ()
-
     @abc.abstractmethod
     def __contains__(self, item: typing.Union[Identifier, T_data]) -> bool:
         """
@@ -1651,6 +1649,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         """
 
     @typing.overload
+    @abc.abstractmethod
     def __getitem__(self, item: slice) -> collections.abc.Sequence[T_data]:
         """
         Retrieve items from container.
@@ -1667,6 +1666,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         """
 
     @typing.overload
+    @abc.abstractmethod
     def __getitem__(self, item: typing.Union[T_int, Identifier]) -> T_data:
         """
         Retrieve item from container.
@@ -1760,8 +1760,6 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
 
     Intended for use with ChemNetwork to provide access to reaction information.
     """
-
-    __slots__ = ()
 
     @typing.overload
     @abc.abstractmethod
