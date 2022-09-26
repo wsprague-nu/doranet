@@ -1423,6 +1423,99 @@ class StrategyTypes(typing.NamedTuple):
     pq: type["PriorityQueueStrategy"]
 
 
+@typing.final
+class MolFilterTypes(typing.NamedTuple):
+    """
+    Container class which provides molecule filters.
+
+    Attributes
+    ----------
+    meta : MolFilter
+        Filter which filters based on matching metadata.
+    meta_exist : MolFilter
+        Filter which returns True if a particular metadata key exists for the
+        molecule.
+    """
+
+    meta: MolFilter
+    meta_exist: MolFilter
+
+
+@typing.final
+class OpFilterTypes(typing.NamedTuple):
+    """
+    Container class which provides operator filters.
+
+    Attributes
+    ----------
+    """
+
+
+@typing.final
+class BundleFilterTypes(typing.NamedTuple):
+    """
+    Container class which provides bundle filters.
+
+    Attributes
+    ----------
+    """
+
+
+@typing.final
+class RecipeFilterTypes(typing.NamedTuple):
+    """
+    Container class which provides recipe filters.
+
+    Attributes
+    ----------
+    coreactant : RecipeFilter
+        Filter which requires at least one non-coreactant in every reaction.
+    """
+
+
+@typing.final
+class ReactionFilterTypes(typing.NamedTuple):
+    """
+    Container class which provides reaction filters.
+
+    Attributes
+    ----------
+    """
+
+
+@typing.final
+class FilterTypes(typing.NamedTuple):
+    """
+    Container class which provides filter containers for filter subtypes.
+
+    Attributes
+    ----------
+    mol : MolFilterTypes
+        Filters which filter on a single molecule from the reagents list.
+    bundle : BundleFilterTypes
+        Filters which filter a bundle of possible reagent molecules.
+    recipe : RecipeFilterTypes
+        Filters which filter entire recipes.
+    reaction : ReactionFilterTypes
+        Filters which filter entire reactions.
+    """
+
+    mol: MolFilterTypes
+    bundle: BundleFilterTypes
+    recipe: RecipeFilterTypes
+    reaction: ReactionFilterTypes
+
+
+@typing.final
+class MetaCalcTypes(typing.NamedTuple):
+    """
+    Container class which provides metadata calculation subtypes.
+
+    Attributes
+    ----------
+    """
+
+
 class NetworkEngine(abc.ABC):
     """
     Interface representing an object which serves up other objects based on
@@ -1609,6 +1702,31 @@ class NetworkEngine(abc.ABC):
         -------
         StrategyTypes
             Table of strategy subtypes corresponding with engine configuration.
+        """
+
+    @property
+    @abc.abstractmethod
+    def filter(self) -> FilterTypes:
+        """
+        Get table of filters.
+
+        Returns
+        -------
+        FilterTypes
+            Table of filter types corresponding with engine configuration.
+        """
+
+    @property
+    @abc.abstractmethod
+    def meta(self) -> MetaCalcTypes:
+        """
+        Get table of metadata calculators.
+
+        Returns
+        -------
+        MetaCalcTypes
+            Table of metadata calculation subtypes corresponding with engine
+            configuration.
         """
 
     @abc.abstractmethod

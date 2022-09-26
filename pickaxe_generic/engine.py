@@ -20,7 +20,7 @@ import typing
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from . import containers, datatypes, interfaces, network, strategies
+from . import containers, datatypes, filters, interfaces, network, strategies
 
 
 def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
@@ -193,6 +193,21 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         return interfaces.StrategyTypes(
             self._CartesianStrategy, strategies.PriorityQueueStrategyBasic
         )
+
+    @property
+    def filter(self):
+        return interfaces.FilterTypes(
+            interfaces.MolFilterTypes(
+                filters.MolFilterMetaVal, filters.MolFilterMetaExist
+            ),
+            interfaces.BundleFilterTypes(),
+            interfaces.RecipeFilterTypes(filters.CoreactantFilter),
+            interfaces.ReactionFilterTypes(),
+        )
+
+    @property
+    def meta(self):
+        return interfaces.MetaCalcTypes()
 
     @property
     def new_network(self):
