@@ -2093,13 +2093,39 @@ class ChemNetwork(abc.ABC):
     def consumers(
         self, mol: typing.Union[int, MolDatBase, Identifier]
     ) -> collections.abc.Collection[RxnIndex]:
-        ...
+        """
+        Return reactions which consume a particular molecule as a reagent.
+
+        Parameters
+        ----------
+        mol : typing.Union[int, Identifier, MolDatBase]
+            A molecule, represented by either its index in the network, its UID,
+            or the molecule object itself.
+
+        Returns
+        -------
+        collections.abc.Collection[RxnIndex]
+            Indices of reactions which consume this molecule.
+        """
 
     @abc.abstractmethod
     def producers(
         self, mol: typing.Union[int, MolDatBase, Identifier]
     ) -> collections.abc.Collection[RxnIndex]:
-        ...
+        """
+        Return reactions which produce a particular molecule as a product.
+
+        Parameters
+        ----------
+        mol : typing.Union[int, Identifier, MolDatBase]
+            A molecule, represented by either its index in the network, its UID,
+            or the molecule object itself.
+
+        Returns
+        -------
+        collections.abc.Collection[RxnIndex]
+            Indices of reactions which produce this molecule.
+        """
 
     @abc.abstractmethod
     def add_mol(
@@ -2111,7 +2137,35 @@ class ChemNetwork(abc.ABC):
             collections.abc.Collection[tuple[OpIndex, int]]
         ] = None,
     ) -> MolIndex:
-        ...
+        """
+        Add a molecule to the network.
+
+        If the molecule is already in the network, then it will be made
+        reactive if reactive is set to True and its metadata will be replaced
+        with the value of parameter `meta` unless set to None.
+
+        Parameters
+        ----------
+        mol : MolDatBase
+            Molecule to be added.
+        meta : typing.Optional[collections.abc.Mapping] (default: None)
+            Metadata associated with molecule.
+        reactive : bool (default: True)
+            Whether the molecule is to be tested for operator compatibility and
+            added to the compatibility table.  Strategies which rely on this
+            table will not react this molecule if this is set to False.
+
+        Returns
+        -------
+        MolIndex
+            Index of molecule in table.
+
+        Other Parameters
+        ----------------
+        custom_compat : typing.Optional[collections.abc.Collection[tuple[OpIndex,int]]]
+            Custom compatibility table.  Prevents default compatibility testing.
+            Intended for internal use.  Not recommended for end users.
+        """
 
     @abc.abstractmethod
     def add_op(
@@ -2119,7 +2173,24 @@ class ChemNetwork(abc.ABC):
         mol: OpDatBase,
         meta: typing.Optional[collections.abc.Mapping] = None,
     ) -> OpIndex:
-        ...
+        """
+        Add an operator to the network.
+
+        If the operator is already in the network, then its metadata will be
+        replaced with the value of parameter `meta` unless set to None.
+
+        Parameters
+        ----------
+        mol : OpDatBase
+            Operator to be added.
+        meta : typing.Optional[collections.abc.Mapping] (default: None)
+            Metadata associated with operator.
+
+        Returns
+        -------
+        OpIndex
+            Index of operator in table.
+        """
 
     @abc.abstractmethod
     def add_rxn(
@@ -2130,13 +2201,73 @@ class ChemNetwork(abc.ABC):
         products: typing.Optional[collections.abc.Sequence[MolIndex]] = None,
         meta: typing.Optional[collections.abc.Mapping] = None,
     ) -> RxnIndex:
-        ...
+        """
+        Add a reaction to the network.
+
+        If the reaction is already in the network, then its metadata will be
+        replaced with the value of parameter `meta` unless set to None.  Can be
+        input in two different forms: via `Reaction` dataclass or by inputting
+        all relevant indices directly.
+
+        Parameters
+        ----------
+        rxn : typing.Optional[Reaction] (default: None)
+            Reaction to be added, in dataclass form.  Mutually exclusive with
+            use of arguments `op`, `reactants`, or `products`.
+        op : typing.Optional[OpIndex] (default: None)
+            Index of operator involved in reaction.
+        reactants : typing.Optional[collections.abc.Sequence[MolIndex]] (default: None)
+            Indices of reactants involved in the reaction.
+        products : typing.Optional[collections.abc.Sequence[MolIndex]] (default: None)
+            Indices of products involved in the reaction.
+        meta : typing.Optional[collections.abc.Mapping] (default: None)
+            Metadata associated with reaction.
+
+        Returns
+        -------
+        RxnIndex
+            Index of reaction in table.
+        """
 
 
 class RankValue(typing.Protocol):
+    """
+    Protocol which guarantees support for sorting.
+    """
+
     @abc.abstractmethod
     def __lt__(self, other: "RankValue") -> bool:
-        ...
+        """
+        Guarantees support for sorting.  Should be canonical.
+
+        Parameters
+        ----------
+        other : RankValue
+            Object for comparison with `self`.
+
+        Returns
+        -------
+        bool
+            Whether `self` ought to be ranked less than `other`.
+        """
+
+    @abc.abstractmethod
+    def __eq__(self, other: object) -> bool:
+        """
+        Guarantees support for sorting.  Should be canonical.
+
+        Parameters
+        ----------
+        other : object
+            Object for comparison with `self`.  Should return `False` if `other`
+            is not compatible with RankValue protocol or is not exactly
+            equivalent with `self`.
+
+        Returns
+        -------
+        bool
+            Whether `self` is equivalent to `other`.
+        """
 
 
 class RecipeRanker(typing.Protocol):
