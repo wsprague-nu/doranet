@@ -1841,6 +1841,15 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
 
 
 class ChemNetwork(abc.ABC):
+    """
+    Interface representing a chemical network.
+
+    Classes which implement this interface provide methods for accessing
+    chemical network information.  This interface is also intended to permit
+    use of a transactional database "under the hood" for larger networks where
+    RAM is not sufficient to store the entire network.
+    """
+
     __slots__ = ()
 
     @abc.abstractmethod
@@ -1850,17 +1859,38 @@ class ChemNetwork(abc.ABC):
     @property
     @abc.abstractmethod
     def mols(self) -> ValueQueryData[MolDatBase, MolIndex]:
-        ...
+        """
+        Return facade for molecule node information.
+
+        Returns
+        -------
+        ValueQueryData[MolDatBase, MolIndex]
+            Object which provides access to molecule nodes and their metadata.
+        """
 
     @property
     @abc.abstractmethod
     def ops(self) -> ValueQueryData[OpDatBase, OpIndex]:
-        ...
+        """
+        Return facade for operator node information.
+
+        Returns
+        -------
+        ValueQueryData[OpDatBase, OpIndex]
+            Object which provides access to operator nodes and their metadata.
+        """
 
     @property
     @abc.abstractmethod
     def rxns(self) -> ValueQueryAssoc[Reaction, RxnIndex]:
-        ...
+        """
+        Return facade for reaction node information.
+
+        Returns
+        -------
+        ValueQueryAssoc[RxnDatBase, RxnIndex]
+            Object which provides access to reaction nodes and their metadata.
+        """
 
     @abc.abstractmethod
     def mol_meta(
