@@ -1784,7 +1784,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
     @abc.abstractmethod
     def __getitem__(self, item: T_int) -> T_id:
         """
-        Retrieve item UID from container.
+        Retrieve item from container.
 
         Parameters
         ----------
@@ -1794,7 +1794,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         Returns
         -------
         Identifier
-            UID of item to be retrieved.
+            Item to be retrieved.
         """
 
     @abc.abstractmethod
@@ -1808,13 +1808,13 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
 
         Parameters
         ----------
-        uid : Identifier
-            Identifier representing an item in the container.
+        item : Identifier
+            Item in the container.
 
         Returns
         -------
         int
-            Index of item with UID `uid`.
+            Index of item with value `item`.
         """
 
     @abc.abstractmethod
@@ -1835,7 +1835,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
 
         Returns
         -------
-        collections.abc.Iterator[DataUnit]
+        collections.abc.Iterator[Identifier]
             Iterator over container contents.
         """
 
