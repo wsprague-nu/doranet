@@ -54,7 +54,8 @@ import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from . import metadata
+if typing.TYPE_CHECKING:
+    from . import metadata
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)
@@ -2299,8 +2300,8 @@ class RecipeRanker(typing.Protocol):
             `min_rank`.
         """
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         """
         Return metadata which is required in order to rank recipe.
