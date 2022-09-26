@@ -1198,7 +1198,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         # initialize loop variables
         network = self._network
         compat_indices_table = [
-            [0 for _ in network.compat_table(i)]
+            [0 for _ in network.compat_table(interfaces.OpIndex(i))]
             for i in range(len(network.ops))
         ]
         updated_mols_set: set[interfaces.MolIndex] = set()
@@ -1211,7 +1211,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 any(
                     i_tested < len(compat_mols)
                     for i_tested, compat_mols in zip(
-                        op_index_table, network.compat_table(op_index)
+                        op_index_table,
+                        network.compat_table(interfaces.OpIndex(op_index)),
                     )
                 )
                 for op_index, op_index_table in enumerate(compat_indices_table)
@@ -1228,7 +1229,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
             # for each operator, create recipe batches
             for opIndex, _ in enumerate(network.ops):
                 # for each argument, accumulate a total of old_mols and new_mols
-                compat_table = network.compat_table(opIndex)
+                compat_table = network.compat_table(interfaces.OpIndex(opIndex))
                 compat_indices = compat_indices_table[opIndex]
                 if not all(compat_table):
                     continue
@@ -1256,7 +1257,10 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
             # update compat_indices_table
             compat_indices_table = [
-                [len(mol_list) for mol_list in network.compat_table(i)]
+                [
+                    len(mol_list)
+                    for mol_list in network.compat_table(interfaces.OpIndex(i))
+                ]
                 for i in range(len(network.ops))
             ]
 
@@ -1365,7 +1369,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
             if len(recipe_heap) == 0:
                 compat_indices_table = [
-                    [0 for _ in network.compat_table(i)]
+                    [0 for _ in network.compat_table(interfaces.OpIndex(i))]
                     for i in range(len(network.ops))
                 ]
 

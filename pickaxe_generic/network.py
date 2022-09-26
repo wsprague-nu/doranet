@@ -132,6 +132,7 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
     __slots__ = ("_list", "_map")
     _list: collections.abc.Sequence[interfaces.T_id]
     _map: collections.abc.Mapping[interfaces.T_id, interfaces.T_int]
+    _meta: collections.abc.Sequence[collections.abc.MutableMapping]
 
     @typing.overload
     def __getitem__(
@@ -150,6 +151,34 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
 
     def i(self, item: interfaces.T_id) -> interfaces.T_int:
         return self._map[item]
+
+    def meta(self, indices, keys=None, values=None):
+        if keys is None:
+            if values is None:
+                return self._meta
+            if len(indices) != len(values):
+                raise ValueError(
+                    "Length of `values` must equal length of `indices`"
+                )
+            for m, v in zip(indices, values):
+                for key in m.keys():
+                    m[key] = v
+        if values is None:
+            return tuple(
+                {
+                    key: (self._meta[i][key] if key in m else None)
+                    for key in keys
+                }
+                for i in indices
+            )
+        if len(indices) != len(values):
+            raise ValueError(
+                "Length of `values` must equal length of `indices`"
+            )
+        for i, v in zip(indices, values):
+            m = self._meta[i]
+            for key in keys:
+                m[key] = v
 
     def __len__(self) -> int:
         return len(self._list)
@@ -233,7 +262,9 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         self,
     ) -> _ValueQueryAssoc[interfaces.Reaction, interfaces.RxnIndex]:
         if self._rxn_query is None:
-            self._rxn_query = _ValueQueryAssoc(self._rxn_list, self._rxn_map)
+            self._rxn_query = _ValueQueryAssoc(
+                self._rxn_list, self._rxn_map, self._rxn_meta
+            )
         return self._rxn_query
 
     def mol_meta(

@@ -1878,6 +1878,67 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
             Index of item with value `item`.
         """
 
+    @typing.overload
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: collections.abc.Iterable[T_int],
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ],
+        values: None,
+    ) -> collections.abc.Iterable[collections.abc.MappingView]:
+        ...
+
+    @typing.overload
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: collections.abc.Iterable[T_int],
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ],
+        values: collections.abc.Iterable[typing.Any],
+    ) -> None:
+        ...
+
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: collections.abc.Iterable[T_int],
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+        values: typing.Optional[collections.abc.Iterable[typing.Any]] = None,
+    ) -> typing.Optional[collections.abc.Iterable[collections.abc.MappingView]]:
+        """
+        Retrieve/set metadata for contained objects.
+
+        If no keys are specified, entire metadata map for each object is
+        selected.  If `keys` is specified, only those values are selected.  If
+        value is not specified, selected keys are returned.  If `values` is
+        specified, selected objects will have ALL their selected keys set to
+        the correponding values in `values` and nothing will be returned.
+
+        Parameters
+        ----------
+        indices : collections.abc.Iterable[int]
+            Indices of objects to be queried.
+        keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] = None
+            Keys to be queried.  `None` indicates all key-value pairs will be
+            returned.
+        values : typing.Optional[collections.abc.Iterable[typing.Any]]
+            Values to be set.  `None` indicates to return values from query
+            instead of setting.  Otherwise, iterate through each pairs of
+            `zip(indices,values)` and set all keys to the value contained.
+
+        Returns
+        -------
+        typing.Optional[collections.abc.Iterable[collections.abc.MappingView]]
+            Returns None if no values have been passed.  Otherwise, return
+            iterable over objects of corresponding selected key-value pairs.
+        """
+
     @abc.abstractmethod
     def __len__(self) -> int:
         """
@@ -2009,9 +2070,24 @@ class ChemNetwork(abc.ABC):
 
     @abc.abstractmethod
     def compat_table(
-        self, index: int
+        self, index: OpIndex
     ) -> collections.abc.Sequence[collections.abc.Sequence[MolIndex]]:
-        ...
+        """
+        Return compatibility table for specific operator.
+
+        Parameters
+        ----------
+        index : OpIndex
+            Index of operator.
+
+        Returns
+        -------
+        collections.abc.Sequence[collections.abc.Sequence[MolIndex]]
+            Compatibility table for operator with index `index`.  The first
+            subscript is the argument position, and the second accesses the list
+            of molecules which are compatible with that argument in the
+            operator.
+        """
 
     @abc.abstractmethod
     def consumers(
