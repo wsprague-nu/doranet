@@ -55,7 +55,7 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 if typing.TYPE_CHECKING:
-    from . import metadata
+    from . import filters, metadata
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)
@@ -1430,15 +1430,15 @@ class MolFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
-    meta : MolFilter
+    meta : filters.MolFilterMetaVal
         Filter which filters based on matching metadata.
-    meta_exist : MolFilter
+    meta_exist : filters.MolFilterMetaExist
         Filter which returns True if a particular metadata key exists for the
         molecule.
     """
 
-    meta: MolFilter
-    meta_exist: MolFilter
+    meta: "filters.MolFilterMetaVal"
+    meta_exist: "filters.MolFilterMetaExist"
 
 
 @typing.final
@@ -1468,9 +1468,11 @@ class RecipeFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
-    coreactant : RecipeFilter
+    coreactant : filters.CoreactantFilter
         Filter which requires at least one non-coreactant in every reaction.
     """
+
+    coreactant: "filters.CoreactantFilter"
 
 
 @typing.final
