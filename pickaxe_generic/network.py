@@ -50,9 +50,10 @@ def recipe_from_explicit(
 
 @dataclasses.dataclass(frozen=True)
 class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
-    __slots__ = ("_list", "_map")
+    __slots__ = ("_list", "_map", "_meta")
     _list: collections.abc.Sequence[interfaces.T_data]
     _map: collections.abc.Mapping[interfaces.Identifier, interfaces.T_int]
+    _meta: collections.abc.Sequence[collections.abc.MutableMapping]
 
     def __contains__(
         self, item: typing.Union[interfaces.Identifier, interfaces.T_data]
@@ -87,6 +88,34 @@ class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
 
     def keys(self) -> collections.abc.KeysView[interfaces.Identifier]:
         return self._map.keys()
+
+    def meta(self, indices, keys=None, values=None):
+        if keys is None:
+            if values is None:
+                return self._meta
+            if len(indices) != len(values):
+                raise ValueError(
+                    "Length of `values` must equal length of `indices`"
+                )
+            for m, v in zip(indices, values):
+                for key in m.keys():
+                    m[key] = v
+        if values is None:
+            return tuple(
+                {
+                    key: (self._meta[i][key] if key in m else None)
+                    for key in keys
+                }
+                for i in indices
+            )
+        if len(indices) != len(values):
+            raise ValueError(
+                "Length of `values` must equal length of `indices`"
+            )
+        for i, v in zip(indices, values):
+            m = self._meta[i]
+            for key in keys:
+                m[key] = v
 
     def uid(self, i: interfaces.T_int) -> interfaces.Identifier:
         return self._list[i].uid
@@ -186,13 +215,17 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         self,
     ) -> _ValueQueryData[interfaces.MolDatBase, interfaces.MolIndex]:
         if self._mol_query is None:
-            self._mol_query = _ValueQueryData(self._mol_list, self._mol_map)
+            self._mol_query = _ValueQueryData(
+                self._mol_list, self._mol_map, self._mol_meta
+            )
         return self._mol_query
 
     @property
     def ops(self) -> _ValueQueryData[interfaces.OpDatBase, interfaces.OpIndex]:
         if self._op_query is None:
-            self._op_query = _ValueQueryData(self._op_list, self._op_map)
+            self._op_query = _ValueQueryData(
+                self._op_list, self._op_map, self._mol_meta
+            )
         return self._op_query
 
     @property

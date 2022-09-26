@@ -1717,6 +1717,67 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
             All keys (UIDs) of items in container.
         """
 
+    @typing.overload
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: collections.abc.Iterable[T_int],
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ],
+        values: None,
+    ) -> collections.abc.Iterable[collections.abc.MappingView]:
+        ...
+
+    @typing.overload
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: collections.abc.Iterable[T_int],
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ],
+        values: collections.abc.Iterable[typing.Any],
+    ) -> None:
+        ...
+
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: collections.abc.Iterable[T_int],
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+        values: typing.Optional[collections.abc.Iterable[typing.Any]] = None,
+    ) -> typing.Optional[collections.abc.Iterable[collections.abc.MappingView]]:
+        """
+        Retrieve/set metadata for contained objects.
+
+        If no keys are specified, entire metadata map for each object is
+        selected.  If `keys` is specified, only those values are selected.  If
+        value is not specified, selected keys are returned.  If `values` is
+        specified, selected objects will have ALL their selected keys set to
+        the correponding values in `values` and nothing will be returned.
+
+        Parameters
+        ----------
+        indices : collections.abc.Iterable[int]
+            Indices of objects to be queried.
+        keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] = None
+            Keys to be queried.  `None` indicates all key-value pairs will be
+            returned.
+        values : typing.Optional[collections.abc.Iterable[typing.Any]]
+            Values to be set.  `None` indicates to return values from query
+            instead of setting.  Otherwise, iterate through each pairs of
+            `zip(indices,values)` and set all keys to the value contained.
+
+        Returns
+        -------
+        typing.Optional[collections.abc.Iterable[collections.abc.MappingView]]
+            Returns None if no values have been passed.  Otherwise, return
+            iterable over objects of corresponding selected key-value pairs.
+        """
+
     @abc.abstractmethod
     def uid(self, i: T_int) -> Identifier:
         """
