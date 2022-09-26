@@ -2271,17 +2271,45 @@ class RankValue(typing.Protocol):
 
 
 class RecipeRanker(typing.Protocol):
+    """
+    Protocol which defines recipe ranking function.
+    """
+
     @abc.abstractmethod
     def __call__(
         self,
         recipe: RecipeExplicit,
         min_rank: typing.Optional[RankValue] = None,
     ) -> typing.Optional[RankValue]:
-        ...
+        """
+        Produce rank of `recipe`.
 
+        Parameters
+        ----------
+        recipe : RecipeExplicit
+            Recipe to be ranked.
+        min_rank : typing.Optional[RankValue] (default: None)
+            If calculated rank is below this value, then the function may
+            optionally return None.
+
+        Returns
+        -------
+        typing.Optional[RankValue]
+            Rank of recipe.  If None, no rank available or rank is below
+            `min_rank`.
+        """
+
+    @abc.abstractmethod
     @property
     def meta_required(self) -> MetaKeyPacket:
-        return MetaKeyPacket()
+        """
+        Return metadata which is required in order to rank recipe.
+
+        Returns
+        -------
+        MetaKeyPacket
+            Metadata required in order to rank recipe.
+        """
 
 
 class PriorityQueueStrategy(abc.ABC):
