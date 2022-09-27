@@ -1529,10 +1529,6 @@ class NetworkEngine(abc.ABC):
 
     __slots__ = ()
 
-    @abc.abstractmethod
-    def __init__(self, speed: int = 5, np: int = 1) -> None:
-        ...
-
     @property
     @abc.abstractmethod
     def speed(self) -> int:
@@ -2139,19 +2135,31 @@ class ChemNetwork(abc.ABC):
     def mol_meta(
         self, index: MolIndex, key: collections.abc.Hashable, value=None
     ):
-        ...
+        """
+        .. deprecated:: 0.3.0
+            Replaced by function format network.mols.meta().  Will be removed in
+            0.4.0.
+        """
 
     @abc.abstractmethod
     def op_meta(
         self, index: OpIndex, key: collections.abc.Hashable, value=None
     ):
-        ...
+        """
+        .. deprecated:: 0.3.0
+            Replaced by function format network.ops.meta().  Will be removed in
+            0.4.0.
+        """
 
     @abc.abstractmethod
     def rxn_meta(
         self, index: RxnIndex, key: collections.abc.Hashable, value=None
     ):
-        ...
+        """
+        .. deprecated:: 0.3.0
+            Replaced by function format network.rxns.meta().  Will be removed in
+            0.4.0.
+        """
 
     @abc.abstractmethod
     def mol_metas(
@@ -2163,7 +2171,11 @@ class ChemNetwork(abc.ABC):
     ) -> collections.abc.Sequence[
         collections.abc.Mapping[collections.abc.Hashable, typing.Any]
     ]:
-        ...
+        """
+        .. deprecated:: 0.3.0
+            Replaced by function format network.mols.meta().  Will be removed in
+            0.4.0.
+        """
 
     @abc.abstractmethod
     def op_metas(
@@ -2175,7 +2187,11 @@ class ChemNetwork(abc.ABC):
     ) -> collections.abc.Sequence[
         collections.abc.Mapping[collections.abc.Hashable, typing.Any]
     ]:
-        ...
+        """
+        .. deprecated:: 0.3.0
+            Replaced by function format network.ops.meta().  Will be removed in
+            0.4.0.
+        """
 
     @abc.abstractmethod
     def rxn_metas(
@@ -2187,7 +2203,11 @@ class ChemNetwork(abc.ABC):
     ) -> collections.abc.Sequence[
         collections.abc.Mapping[collections.abc.Hashable, typing.Any]
     ]:
-        ...
+        """
+        .. deprecated:: 0.3.0
+            Replaced by function format network.rxns.meta().  Will be removed in
+            0.4.0.
+        """
 
     @abc.abstractmethod
     def compat_table(
