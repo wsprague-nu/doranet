@@ -17,6 +17,7 @@ dependencies:
  - numpydoc
  - pandas
  - pymongo
+ - pyproject-flake8
  - pylint
  - pytest
  - pytest-cov

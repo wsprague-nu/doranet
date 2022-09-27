@@ -9,6 +9,7 @@ line-length = 80
 max-line-length = 80
 extend-ignore = ["E203"]
 docstring-convention = "numpy"
+exclude = ["./docs/**","./test/**"]
 
 [tool.isort]
 profile = "black"
