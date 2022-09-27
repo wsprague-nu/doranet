@@ -1,13 +1,5 @@
 """
 Contains classes which define and implement network expansion strategies.
-
-Classes:
-
-    interfaces.ExpansionStrategy
-      CartesianStrategy*
-      CartesianStrategyParallel*
-    interfaces.PriorityQueueStrategy
-      PriorityQueueStrategyBasic*
 """
 
 import collections.abc

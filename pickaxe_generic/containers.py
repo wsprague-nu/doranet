@@ -1,11 +1,5 @@
 """
 Contains classes which define and implement relevant smart containers.
-
-Classes:
-
-    interfaces.ObjectLibrary (deprecated)
-      ObjectLibraryBasic*
-      ObjectLibraryKeyVal*
 """
 
 import collections.abc

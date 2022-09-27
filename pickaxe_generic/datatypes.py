@@ -1,15 +1,5 @@
 """
 Contains classes which define and implement molecule-operator data units.
-
-Classes:
-
-    interfaces.MolDatRDKit
-      MolDatBasicV1*
-      MolDatBasicV2*
-    interfaces.OpDatRDKit
-      OpDatBasic*
-    interfaces.RxnDatBase (deprecated)
-      RxnDatBasic* (deprecated)
 """
 
 import builtins

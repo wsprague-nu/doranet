@@ -1,14 +1,5 @@
 """
 Contains classes which define and implement utility functions.
-
-Functions:
-
-    logreduce
-
-Classes:
-
-    interfaces.RxnTracker
-      RxnTrackerDepthFirst*
 """
 
 import collections.abc

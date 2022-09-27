@@ -1,46 +1,5 @@
 """
 Contains interfaces for major datatypes in Pickaxe-Generic.
-
-Classes:
-
-    Identifier(Protocol)
-    DataUnit
-      MolDatBase
-        MolDatRDKit
-      OpDatBase
-        OpDatRDKit
-      RxnDatBase (deprecated)
-    MetaKeyPacket
-    DataPacket
-    DataPacketE
-    MolFilter
-      MolFilterAnd*
-      MolFilterInv*
-      MolFilterOr*
-      MolFilterXor*
-    Reaction
-    ReactionExplicit
-    Recipe
-    RecipeExplicit
-    RecipeFilter
-      RecipeFilterAnd*
-      RecipeFilterInv*
-      RecipeFilterOr*
-      RecipeFilterXor*
-    NetworkEngine
-    ValueQueryData
-    ValueQueryAssoc
-    ChemNetwork
-    RankValue
-    RecipeRanker
-    PriorityQueueStrategy
-    RxnTracker
-    MetaDataCalculatorLocal
-    MetaDataUpdate
-    ObjectLibrary (deprecated)
-    ExpansionStrategy (deprecated)
-    ReactionFilter (deprecated)
-    UIDPreFilter (deprecated)
 """
 
 import abc
