@@ -21,6 +21,13 @@ class ObjectLibraryBasic(
     """
     Minimal class implementing the ObjectLibrary interface.
 
+    .. deprecated:: 0.3.0
+        `ObjectLibrary` will be removed in pickaxe_generic 0.4.0.  The pattern
+        of several ObjectLibraries representing a network has been replaced by
+        the ChemNetwork object representing all nodes.  However,
+        ObjectLibraries generated through a NetworkEngine will temporarily be
+        available via a facade to ChemNetwork.
+
     This class wraps a dict.
 
     Parameters
