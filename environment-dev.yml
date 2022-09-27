@@ -27,5 +27,6 @@ dependencies:
  - scipy
  - snakeviz
  - sphinxcontrib-napoleon
+ - sphinx_rtd_theme
  - sqlalchemy
  - tox
