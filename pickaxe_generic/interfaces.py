@@ -172,7 +172,7 @@ class DataUnit(abc.ABC):
     @abc.abstractmethod
     def uid(self) -> Identifier:
         """
-        Unique identifier of object.
+        Return unique identifier of object.
 
         Must be hashable in order to facilitate lookup tables utilizing hashes.
         """
@@ -262,8 +262,9 @@ class MolDatRDKit(MolDatBase):
         cls: type["MolDatRDKit"], data: bytes, engine: "NetworkEngine"
     ) -> "MolDatRDKit":
         """
-        Generate new RDKit molecule from bytestring, according to engine
-        configuration.
+        Generate new RDKit molecule from bytestring.
+
+        Molecule is produced according to engine configuration.
 
         Parameters
         ----------
