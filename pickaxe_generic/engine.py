@@ -43,8 +43,9 @@ def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
 
 class NetworkEngineBasic(interfaces.NetworkEngine):
     """
-    Implements NetworkEngine class for different speed efficiencies.  Default
-    for module.
+    Implements NetworkEngine class for different speed efficiencies.
+    
+    Default for module.
 
     Parameters
     ----------
