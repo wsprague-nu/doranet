@@ -9,7 +9,7 @@ import typing
 import rdkit
 import rdkit.Chem
 
-from . import interfaces
+from . import interfaces, metadata
 
 
 class AlwaysTrueFilter(interfaces.ReactionFilter):
@@ -80,11 +80,9 @@ class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
         return True
 
 
+@dataclasses.dataclass(frozen=True)
 class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
-    def __init__(
-        self, coreactants: collections.abc.Collection[interfaces.Identifier]
-    ):
-        self._coreactants = frozenset(coreactants)
+    coreactants: collections.abc.Container[interfaces.Identifier]
 
     def __call__(
         self,
@@ -92,64 +90,83 @@ class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
         reactants: collections.abc.Sequence[interfaces.Identifier],
     ) -> bool:
         for uid in reactants:
-            if uid not in self._coreactants:
+            if uid not in self.coreactants:
                 return True
         return False
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterMetaVal(interfaces.MolFilter):
-    __slots__ = ("_key", "_val")
-    _key: collections.abc.Hashable
-    _val: typing.Any
+    __slots__ = ("key", "val")
+    key: collections.abc.Hashable
+    val: typing.Any
 
     def __call__(
         self, mol: interfaces.DataPacket[interfaces.MolDatBase]
     ) -> bool:
         if mol.meta is None:
             return False
-        if self._key not in mol.meta:
+        if self.key not in mol.meta:
             return False
-        return mol.meta[self._key] == self._val
+        return mol.meta[self.key] == self.val
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(frozenset(), frozenset((self._key,)))
+        return interfaces.MetaKeyPacket(frozenset(), frozenset((self.key,)))
 
 
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterMetaExist(interfaces.MolFilter):
-    __slots__ = ("_key", "_val")
-    _key: collections.abc.Hashable
+    __slots__ = "key"
+    key: collections.abc.Hashable
 
     def __call__(
         self, mol: interfaces.DataPacket[interfaces.MolDatBase]
     ) -> bool:
-        if mol.meta is None:
-            return False
-        if self._key not in mol.meta:
+        if mol.meta is None or self.key not in mol.meta:
             return False
         return True
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(frozenset(), frozenset((self._key,)))
+        return interfaces.MetaKeyPacket(frozenset(), frozenset((self.key,)))
 
 
-@dataclasses.dataclass
+@typing.final
+@dataclasses.dataclass(frozen=True)
 class CoreactantFilter(interfaces.RecipeFilter):
-    __slots__ = "_coreactants"
-    _coreactants: set[interfaces.MolIndex]
-
-    def __init__(
-        self, coreactants: typing.Iterable[interfaces.MolIndex]
-    ) -> None:
-        self._coreactants = set(coreactants)
+    __slots__ = "coreactants"
+    coreactants: collections.abc.Container[interfaces.MolIndex]
 
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
-        if all(mol.i in self._coreactants for mol in recipe.reactants):
+        if all(mol.i in self.coreactants for mol in recipe.reactants):
             return False
         return True
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True)
+class GenerationFilter(metadata.ReactionFilterBase):
+    __slots__ = ("max_gens", "gen_key")
+
+    max_gens: int
+    gen_key: interfaces.Identifier
+
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if all(
+            mol.meta is None
+            or self.gen_key not in mol.meta
+            or mol.meta[self.gen_key] + 1 < self.max_gens
+            for mol in recipe.reactants
+        ):
+            return True
+        return False
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(frozenset((self.gen_key,)))
 
 
 def ReplaceNewValue(

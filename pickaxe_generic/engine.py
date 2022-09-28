@@ -208,7 +208,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             ),
             interfaces.BundleFilterTypes(),
             interfaces.RecipeFilterTypes(filters.CoreactantFilter),
-            interfaces.ReactionFilterTypes(),
+            interfaces.ReactionFilterTypes(filters.GenerationFilter),
         )
 
     @property

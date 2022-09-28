@@ -1442,7 +1442,11 @@ class ReactionFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
+    generation : filters.GenerationFilter
+        Filter which limits the maximum number of "generations."
     """
+
+    generation: "filters.GenerationFilter"
 
 
 @typing.final
