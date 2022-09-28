@@ -57,13 +57,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         "_Rxn_Lib",
         "_CartesianStrategy",
         "_speed",
+        "_np",
     )
     _Mol: typing.Any
     _Mol_Lib: typing.Any
     _Op_Lib: typing.Any
     _Rxn_Lib: typing.Any
 
-    def __init__(self, speed: int = 5):
+    def __init__(self, speed: int = 5, np: int = 1):
         if speed == 1:
             # type: ignore
             self._Mol = datatypes.MolDatBasicV2
@@ -100,10 +101,15 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         self._Rxn = datatypes.RxnDatBasic
         self._CartesianStrategy = strategies.CartesianStrategy
         self._speed = speed
+        self._np = np
 
     @property
     def speed(self) -> int:
         return self._speed
+
+    @property
+    def np(self) -> int:
+        return self._np
 
     def Mol(
         self,

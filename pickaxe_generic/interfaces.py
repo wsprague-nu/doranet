@@ -1512,6 +1512,23 @@ class NetworkEngine(abc.ABC):
             1: Fast primary keys and values both stored on disk.
         """
 
+    @property
+    @abc.abstractmethod
+    def np(self) -> int:
+        """
+        Return number of processes of engine configuration.
+
+        Returns
+        -------
+        int
+            Integer representing number of processes to be used by strategies.
+
+        Notes
+        -----
+        Number of processes is different from number of MPI nodes (at least for
+        now).
+        """
+
     @abc.abstractmethod
     def Mol(
         self,
