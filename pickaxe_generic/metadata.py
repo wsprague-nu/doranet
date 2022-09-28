@@ -1,5 +1,6 @@
 """
-Contains logic and interfaces for metadata processing, plus reaction filter.
+Contains logic and interfaces for metadata processing, plus reaction filter
+interface class.
 """
 
 import abc
