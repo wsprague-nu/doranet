@@ -9,7 +9,15 @@ import typing
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from . import containers, datatypes, filters, interfaces, network, strategies
+from . import (
+    containers,
+    datatypes,
+    filters,
+    interfaces,
+    metacalc,
+    network,
+    strategies,
+)
 
 
 def create_engine(speed: int = 5, np: int = 1) -> interfaces.NetworkEngine:
@@ -213,7 +221,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     @property
     def meta(self):
-        return interfaces.MetaCalcTypes()
+        return interfaces.MetaCalcTypes(metacalc.GenerationCalculator)
 
     @property
     def new_network(self):

@@ -14,7 +14,7 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 if typing.TYPE_CHECKING:
-    from . import filters, metadata
+    from . import filters, metacalc, metadata
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)
@@ -1479,7 +1479,11 @@ class MetaCalcTypes(typing.NamedTuple):
 
     Attributes
     ----------
+    generation : metacalc.GenerationCalculator
+        Calculates the "generation" of a molecule.
     """
+
+    generation: "metacalc.GenerationCalculator"
 
 
 class NetworkEngine(abc.ABC):
