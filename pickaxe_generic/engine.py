@@ -12,7 +12,7 @@ import rdkit.Chem.rdChemReactions
 from . import containers, datatypes, filters, interfaces, network, strategies
 
 
-def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
+def create_engine(speed: int = 5, np: int = 1) -> interfaces.NetworkEngine:
     """
     Initialize and return a NetworkEngine based on configuration parameters.
 
@@ -26,8 +26,12 @@ def create_engine(speed: int = 5) -> interfaces.NetworkEngine:
             3: Fast primary keys in RAM, disk caches values.
             2: Smallest possible primary keys in RAM, disk caches values.
             1: Fast primary keys and values both stored on disk.
+    np : int (default: 1)
+        Number of processes to be used by strategies.
     """
-    return NetworkEngineBasic(speed=speed)
+    if np < 1:
+        raise ValueError("Must have number of processes greater than 0.")
+    return NetworkEngineBasic(speed=speed, np=np)
 
 
 class NetworkEngineBasic(interfaces.NetworkEngine):
@@ -46,6 +50,8 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             3: Fast primary keys in RAM, disk caches values.
             2: Smallest possible primary keys in RAM, disk caches values.
             1: Fast primary keys and values both stored on disk.
+    np : int (default: 1)
+        Number of processes to be used by strategies.
     """
 
     __slots__ = (
@@ -101,6 +107,10 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         self._Rxn = datatypes.RxnDatBasic
         self._CartesianStrategy = strategies.CartesianStrategy
         self._speed = speed
+        if np != 1:
+            raise NotImplementedError(
+                "Multiprocessing has not yet been implemented"
+            )
         self._np = np
 
     @property
