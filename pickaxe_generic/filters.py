@@ -152,7 +152,7 @@ class GenerationFilter(metadata.ReactionFilterBase):
     __slots__ = ("max_gens", "gen_key")
 
     max_gens: int
-    gen_key: interfaces.Identifier
+    gen_key: collections.abc.Hashable
 
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if all(
