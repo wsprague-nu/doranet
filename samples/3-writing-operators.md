@@ -48,7 +48,7 @@ The answer is because, when matching the first template to butanone, RDKit has a
 
 RDKit expands all permutations of reaction sites.  Note also that in the second experiment, acetone was not matched to the first template, because it was the second argument.
 
-Ultimately, if two product sets are the same, they will be considered the same and will not be stored differently.  However, if degenerate template matches are of interest to you, there are opportunities to include this information during a network expansion.  This will be discussed later in the metadata section.
+Ultimately, if two product sets are the same, they will be considered the same and will not be stored differently.  However, if degenerate template matches are of interest to you, there are opportunities to consider this information during a network expansion.  This will be discussed later in the metadata section.
 
 ## Testing Compatibility
 
