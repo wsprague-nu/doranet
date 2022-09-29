@@ -1291,7 +1291,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 )
 
                 # add reaction to network
-                rxn_index = network.add_rxn(rxn_implicit)
+                rxn_index = network.add_rxn(rxn=rxn_implicit)
 
                 updated_mols_set = set()
                 updated_ops_set = set()

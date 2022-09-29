@@ -527,7 +527,6 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def add_rxn(
         self,
-        rxn: typing.Optional[interfaces.Reaction] = None,
         op: typing.Optional[interfaces.OpIndex] = None,
         reactants: typing.Optional[
             collections.abc.Sequence[interfaces.MolIndex]
@@ -536,6 +535,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             collections.abc.Sequence[interfaces.MolIndex]
         ] = None,
         meta: typing.Optional[collections.abc.Mapping] = None,
+        rxn: typing.Optional[interfaces.Reaction] = None,
     ) -> interfaces.RxnIndex:
 
         if rxn is None:

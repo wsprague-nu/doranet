@@ -2349,11 +2349,11 @@ class ChemNetwork(abc.ABC):
     @abc.abstractmethod
     def add_rxn(
         self,
-        rxn: typing.Optional[Reaction] = None,
         op: typing.Optional[OpIndex] = None,
         reactants: typing.Optional[collections.abc.Sequence[MolIndex]] = None,
         products: typing.Optional[collections.abc.Sequence[MolIndex]] = None,
         meta: typing.Optional[collections.abc.Mapping] = None,
+        rxn: typing.Optional[Reaction] = None,
     ) -> RxnIndex:
         """
         Add a reaction to the network.
@@ -2365,9 +2365,6 @@ class ChemNetwork(abc.ABC):
 
         Parameters
         ----------
-        rxn : typing.Optional[Reaction] (default: None)
-            Reaction to be added, in dataclass form.  Mutually exclusive with
-            use of arguments `op`, `reactants`, or `products`.
         op : typing.Optional[OpIndex] (default: None)
             Index of operator involved in reaction.
         reactants : typing.Optional[collections.abc.Sequence[MolIndex]] (default: None)
@@ -2376,6 +2373,9 @@ class ChemNetwork(abc.ABC):
             Indices of products involved in the reaction.
         meta : typing.Optional[collections.abc.Mapping] (default: None)
             Metadata associated with reaction.
+        rxn : typing.Optional[Reaction] (default: None)
+            Reaction to be added, in dataclass form.  Mutually exclusive with
+            use of arguments `op`, `reactants`, or `products`.
 
         Returns
         -------
