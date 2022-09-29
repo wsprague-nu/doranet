@@ -424,6 +424,7 @@ class OpDatRDKit(OpDatBase):
         operator: typing.Union[
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
+        engine: "NetworkEngine",
         kekulize: bool = False,
     ) -> None:
         ...
@@ -1351,6 +1352,33 @@ class MoleculeTypes(typing.NamedTuple):
     rdkit: type[MolDatRDKit]
 
 
+class _op_init_type_rdkit(typing.Protocol):
+    @abc.abstractmethod
+    def __call__(
+        self,
+        operator: typing.Union[
+            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
+        ],
+        kekulize: bool = False,
+    ):
+        """
+        Creates an object which manages an RDKit SMARTS operator.
+
+        Agents are treated as arguments following reagent arguments.  Classes
+        implementing this interface manage information about a single
+        rdkit-compatible SMARTS operator.
+
+        Parameters
+        ----------
+        operator : typing.Union[rdkit.Chem.rdChemReactions.ChemicalReaction,
+                                str, bytes]
+            SMARTS string which is used to generate operator data, otherwise an
+            RDKit operator itself.
+        kekulize : bool (default: False)
+            Whether to kekulize reactants before reaction.
+        """
+
+
 @typing.final
 class OperatorTypes(typing.NamedTuple):
     """
@@ -1362,7 +1390,7 @@ class OperatorTypes(typing.NamedTuple):
         An operator object which manages a single RDKit operator.
     """
 
-    rdkit: type[OpDatRDKit]
+    rdkit: _op_init_type_rdkit
 
 
 @typing.final

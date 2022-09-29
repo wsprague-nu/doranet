@@ -209,16 +209,16 @@ class OpDatBasic(interfaces.OpDatRDKit):
         self,
         operator: rdkit.Chem.rdchem.Mol | str | bytes,
         engine: interfaces.NetworkEngine,
-        kekulize_before_operation: bool = False,
+        kekulize: bool = False,
     ) -> None:
         if isinstance(operator, rdkit.Chem.rdChemReactions.ChemicalReaction):
             self._rdkitrxn = operator
-            self._kekulize = kekulize_before_operation
+            self._kekulize = kekulize
         elif isinstance(operator, str):
             self._rdkitrxn = rdkit.Chem.rdChemReactions.ReactionFromSmarts(
                 operator
             )
-            self._kekulize = kekulize_before_operation
+            self._kekulize = kekulize
             # SanitizeRxn(self._rdkitrxn)
         elif isinstance(operator, bytes):
             self._rdkitrxn, self._kekulize = loads(operator)

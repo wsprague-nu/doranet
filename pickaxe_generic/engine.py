@@ -4,6 +4,7 @@ Contains classes which define and implement dependency-injection engines.
 
 
 import collections.abc
+import dataclasses
 import typing
 
 import rdkit.Chem
@@ -40,6 +41,38 @@ def create_engine(speed: int = 5, np: int = 1) -> interfaces.NetworkEngine:
     if np < 1:
         raise ValueError("Must have number of processes greater than 0.")
     return NetworkEngineBasic(speed=speed, np=np)
+
+
+class _rdkit_op_init(typing.NamedTuple):
+    engine: interfaces.NetworkEngine
+    optype: type[interfaces.OpDatRDKit]
+
+    def __call__(
+        self,
+        operator: typing.Union[
+            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
+        ],
+        kekulize: bool = False,
+    ) -> interfaces.OpDatRDKit:
+        """
+        Creates an object which manages an RDKit SMARTS operator.
+
+        Agents are treated as arguments following reagent arguments.  Classes
+        implementing this interface manage information about a single
+        rdkit-compatible SMARTS operator.
+
+        Parameters
+        ----------
+        operator : typing.Union[rdkit.Chem.rdChemReactions.ChemicalReaction,
+                                str, bytes]
+            SMARTS string which is used to generate operator data, otherwise an
+            RDKit operator itself.
+        kekulize : bool (default: False)
+            Whether to kekulize reactants before reaction.
+        """
+        return self.optype(
+            operator=operator, engine=self.engine, kekulize=kekulize
+        )
 
 
 class NetworkEngineBasic(interfaces.NetworkEngine):
@@ -200,7 +233,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     @property
     def op(self):
-        return interfaces.OperatorTypes(self._Op)
+        return interfaces.OperatorTypes(_rdkit_op_init(self, self._Op))
 
     @property
     def strat(self):
