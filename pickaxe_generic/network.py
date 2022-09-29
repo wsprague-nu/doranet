@@ -527,7 +527,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
     def add_rxn(
         self,
-        op: typing.Optional[interfaces.OpIndex] = None,
+        operator: typing.Optional[interfaces.OpIndex] = None,
         reactants: typing.Optional[
             collections.abc.Sequence[interfaces.MolIndex]
         ] = None,
@@ -539,11 +539,13 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
     ) -> interfaces.RxnIndex:
 
         if rxn is None:
-            if op is None or reactants is None or products is None:
+            if operator is None or reactants is None or products is None:
                 raise ValueError(
-                    f"op ({op}), reactants ({reactants}), and products ({products}) must all be specified if reaction is None"
+                    f"op ({operator}), reactants ({reactants}), and products ({products}) must all be specified if reaction is None"
                 )
-            rxn = interfaces.Reaction(op, tuple(reactants), tuple(products))
+            rxn = interfaces.Reaction(
+                operator, tuple(reactants), tuple(products)
+            )
 
         # if already in database, return existing index
         if rxn in self._rxn_map:

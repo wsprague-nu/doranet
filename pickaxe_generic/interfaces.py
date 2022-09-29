@@ -2349,7 +2349,7 @@ class ChemNetwork(abc.ABC):
     @abc.abstractmethod
     def add_rxn(
         self,
-        op: typing.Optional[OpIndex] = None,
+        operator: typing.Optional[OpIndex] = None,
         reactants: typing.Optional[collections.abc.Sequence[MolIndex]] = None,
         products: typing.Optional[collections.abc.Sequence[MolIndex]] = None,
         meta: typing.Optional[collections.abc.Mapping] = None,
@@ -2365,7 +2365,7 @@ class ChemNetwork(abc.ABC):
 
         Parameters
         ----------
-        op : typing.Optional[OpIndex] (default: None)
+        operator : typing.Optional[OpIndex] (default: None)
             Index of operator involved in reaction.
         reactants : typing.Optional[collections.abc.Sequence[MolIndex]] (default: None)
             Indices of reactants involved in the reaction.
