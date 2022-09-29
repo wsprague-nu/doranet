@@ -95,7 +95,7 @@ From this, we can easily see that there are two reactant templates, separated by
 2
 ```
 
-This shows that the operator has exactly two arguments.  If we try to call this operator to react acetone, but expect it to infer that both are acetone, it will raise an Exception.
+This shows that the operator has exactly two arguments.  If we try to call this operator to react acetone, but expect it to infer that both are acetone, it will raise an exception.
 
 
 ```sh
