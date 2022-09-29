@@ -254,6 +254,5 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     def meta(self):
         return interfaces.MetaCalcTypes(metacalc.GenerationCalculator)
 
-    @property
     def new_network(self):
         return network.ChemNetworkBasic()
