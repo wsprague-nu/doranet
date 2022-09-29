@@ -119,7 +119,7 @@ class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
 
 @dataclasses.dataclass(frozen=True)
 class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
-    __slots__ = ("_list", "_map")
+    __slots__ = ("_list", "_map", "_meta")
     _list: collections.abc.Sequence[interfaces.T_id]
     _map: collections.abc.Mapping[interfaces.T_id, interfaces.T_int]
     _meta: collections.abc.Sequence[collections.abc.MutableMapping]
