@@ -170,7 +170,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
 
     Parameters
     ----------
-    operator : rdkit.Chem.rdchem.Mol | str | bytes
+    operator : rdkit.Chem.rdChemReactions.ChemicalReaction | str | bytes
         SMARTS string which is used to generate operator data, otherwise some
         encoding of relevant data.
 
