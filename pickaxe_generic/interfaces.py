@@ -1360,7 +1360,7 @@ class _op_init_type_rdkit(typing.Protocol):
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
-    ):
+    ) -> OpDatRDKit:
         """
         Creates an object which manages an RDKit SMARTS operator.
 
