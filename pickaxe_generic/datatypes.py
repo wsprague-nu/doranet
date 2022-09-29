@@ -302,12 +302,8 @@ class OpDatBasic(interfaces.OpDatRDKit):
                     rdkitmols, maxProducts=0
                 )
             )
-        except rdkit.Chem.rdchem.AtomValenceException as err:
-            raise ValueError(
-                f"Error occurred when using operator {self} on {reactants}"
-            ) from err
-        except rdkit.Chem.rdchem.KekulizeException as err:
-            raise ValueError(
+        except Exception as err:
+            raise RuntimeError(
                 f"Error occurred when using operator {self} on {reactants}"
             ) from err
 
