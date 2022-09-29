@@ -342,7 +342,7 @@ class OpDatBase(DataUnit):
 
     @abc.abstractmethod
     def __call__(
-        self, reactants: collections.abc.Sequence[MolDatBase]
+        self, *reactants: MolDatBase
     ) -> collections.abc.Iterable[collections.abc.Iterable[MolDatBase]]:
         """
         React a sequence of MolDatBase objects using internal operator.
@@ -353,7 +353,7 @@ class OpDatBase(DataUnit):
 
         Parameters
         ----------
-        reactants : collections.abc.Sequence[pickaxe_generic.interfaces.MolDatBase]
+        *reactants : pickaxe_generic.interfaces.MolDatBase
             Reactants which match the arguments in the operator.
 
         Returns

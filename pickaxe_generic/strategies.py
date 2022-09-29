@@ -90,7 +90,7 @@ def _evaluate_reaction(
     rejectslist: list[
         tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]]
     ] = []
-    for productset in operator(reactants):
+    for productset in operator(*reactants):
         productset = tuple(productset)
         if rxn_filter is not None and not rxn_filter(
             operator, reactants, productset

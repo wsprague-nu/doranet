@@ -284,7 +284,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
             raise err
 
     def __call__(
-        self, reactants: collections.abc.Sequence[interfaces.MolDatBase]
+        self, *reactants: interfaces.MolDatBase
     ) -> tuple[tuple[interfaces.MolDatBase, ...], ...]:
         rdkitmols: list[rdkit.Chem.rdchem.Mol] = [
             reactant.rdkitmol
