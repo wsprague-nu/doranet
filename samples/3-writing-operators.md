@@ -119,26 +119,23 @@ However, you might be realizing a potential problem with this expectation of exa
 
 ## Ring-Forming Reactions in RDKit
 
-While something like aldol condensation is technically capable of ring-forming, we will use a different reaction for this part.
+Testing one example of esterification, ethanol with 5-hydroxyvaleric acid, shows that the expected products are generated.
 
 ```python
 esterification = engine.op.rdkit("[O&+0:1]=[C&+0:2]-[O&+0&H1:3].[O&+0&H1:4]>>[*:1]=[*:2]-[*:4].[*:3]")
 ```
-
-Testing one example of esterification, ethanol with 5-hydroxyvaleric acid, shows that the expected products are generated.
-
 ```sh
 >>> esterification(hydroxyvaleric_acid,ethanol)
 ((MolDatBasic('CCOC(=O)CCCCO'), MolDatBasic('O')),)
 ```
 
-However, there is an additional reaction which is possible given these reactants.  This would be the intramolecular esterification to produce δ-valerolactone.  How would this be represented within this system?  While you could produce a custom operator type that operates on all subsets of reactants, the easier method is to simply create a new operator which performs the intramolecular variant.
+However, there is an additional reaction which is possible given these reactants.  This would be the intramolecular esterification to produce δ-valerolactone.  How would such an operation be represented within this system?  While you could produce a custom operator type that operates on all subsets of reactants, the easier method is to simply create a new operator which performs the intramolecular variant.
 
 ```python
 esterification_intra = engine.op.rdkit("([O&+0:1]=[C&+0:2]-[O&+0&H1:3].[O&+0&H1:4])>>[*:1]=[*:2]-[*:4].[*:3]")
 ```
 
-Note the parentheses surrounding the reactants.  This indicates that while the `.` character is present, it indicates only a disconnect within the template, not that there are separate templates for independent molecules.  We can see that the result is the intramolecular condensation.
+Note the parentheses surrounding the reactants.  Their presence indicates that even though the `.` character is present, it indicates only a disconnect within the template, but there is ultimately only one reactant template.  We can show that the result of this formulation is the intramolecular condensation.
 
 ```sh
 >>> esterification_intra(hydroxyvaleric_acid)
@@ -200,7 +197,7 @@ The results of using these two are shown below.
 ((MolDatBasic('O=C(O)CCCCO'),),)
 ```
 
-As you can see, the operators correctly recognize the presence/non-presence of ring bonds and perform their role accordingly.
+This demonstrates that, with some additional syntax, the operators will correctly recognize the presence/non-presence of ring bonds and perform their role accordingly.
 
 ## Product Specificity and Explicit Hydrogens
 
