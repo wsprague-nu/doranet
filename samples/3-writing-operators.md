@@ -81,7 +81,7 @@ The only guarantee is that if a molecule is compatible via `.compat`, it will pr
 
 ## # of Reactants
 
-If we had an operator, but didn't know the SMARTS used to make it, how would we know how many arguments it has?  One thing we could try would be to query the `.smarts` property (only available on RDKIt SMARTS objects).
+If we had an operator, but didn't know the SMARTS used to make it, how would we know how many arguments it has?  One thing we could try would be to query the `.smarts` property (only available on RDKit SMARTS objects).
 
 ```sh
 >>> print(aldol_condensation.smarts)
