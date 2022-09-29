@@ -179,9 +179,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         ],
         kekulize: bool = False,
     ) -> datatypes.OpDatBasic:
-        return self._Op(
-            operator=operator, engine=self, kekulize_before_operation=kekulize
-        )
+        return self._Op(operator=operator, engine=self, kekulize=kekulize)
 
     def Rxn(
         self,
