@@ -276,7 +276,6 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
                 subversion = int(data.getAttribute("subversion"))
                 if subversion == 0:
                     bvals = base64.urlsafe_b64decode(data.firstChild.data)
-                    print(bvals)
                     network: interfaces.ChemNetwork = pickle.loads(bvals)
                     return network
                 else:

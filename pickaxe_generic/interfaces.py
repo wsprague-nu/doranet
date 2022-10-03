@@ -2523,7 +2523,6 @@ class ChemNetwork(abc.ABC):
         data.text = str(
             base64.urlsafe_b64encode(pickle.dumps(self)), encoding="ascii"
         )
-        testnet = pickle.loads(pickle.dumps(self))
         tree = ET.ElementTree(data)
         with gzip.open(temp_filepath, "w", compress_level) as fout:
             tree.write(fout)

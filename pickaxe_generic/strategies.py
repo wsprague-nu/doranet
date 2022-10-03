@@ -1366,12 +1366,17 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 ]
 
             continue
-    
+
 
 class CartesianStrategyUpdated:
     __slots__ = "_network"
+
     def __init__(self, network: interfaces.ChemNetwork) -> None:
         self._network = network
-    
-    def expand(self, num_gens: typing.Optional[int] = None, max_mols: typing.Optional[int] = None):
+
+    def expand(
+        self,
+        num_gens: typing.Optional[int] = None,
+        max_mols: typing.Optional[int] = None,
+    ):
         ...
