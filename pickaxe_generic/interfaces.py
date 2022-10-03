@@ -1938,7 +1938,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Mapping[collections.abc.Hashable, typing.Any]:
+    ) -> collections.abc.Mapping:
         ...
 
     @typing.overload
@@ -1948,9 +1948,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Iterable[
-        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-    ]:
+    ) -> collections.abc.Iterable[collections.abc.Mapping]:
         ...
 
     @abc.abstractmethod
@@ -1963,38 +1961,32 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
     ) -> typing.Union[
-        collections.abc.Iterable[
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-        ],
-        collections.abc.Mapping[collections.abc.Hashable, typing.Any],
+        collections.abc.Iterable[collections.abc.Mapping],
+        collections.abc.Mapping,
     ]:
         """
-        Retrieve/set metadata for contained objects.
+        Retrieve metadata for contained objects.
 
-        If no keys are specified, entire metadata map for each object is
-        selected.  If `keys` is specified, only those values are selected.  If
-        value is not specified, selected keys are returned.  If an object does
-        not have a value for a specified key, it will not appear in the
-        returned Mapping.
+        Metadata is returned as Mappings.  If a single index is specified, a single Mapping will be returned.  If None or an iterable of indices is specified, an iterable of Mappings will be returned corresponding to those indices.
 
         Parameters
         ----------
         indices : typing.Optional[typing.Union[T_int, collections.abc.Iterable[T_int]]] (default: None)
             Indices of objects to be queried.  A single value (not in an Iterable) will return a single Mapping.  `None` indicates all objects are to be queried.
         keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] (default: None)
-            Keys to be queried.  `None` indicates all key-value pairs will be
-            returned.
+            Subset of keys to be queried.  `None` indicates all key-value pairs
+            will be returned.
 
         Returns
         -------
-        typing.Union[
-            collections.abc.Iterable[
-                collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-            ],
-            collections.abc.Mapping[collections.abc.Hashable, typing.Any],
-        ]
-            Returns Mappings relevant to specified object indices, or the
-            Mapping relevant to the single specified object index.
+        typing.Union[collections.abc.Iterable[collections.abc.Mapping],collections.abc.Mapping]
+            Mappings relevant to specified object indices, or the Mapping
+            relevant to the single specified object index.
+
+        Notes
+        -----
+        Keys which do not have a corresponding value within the metadata will
+        not appear in the returned Mappings.
         """
 
     @abc.abstractmethod
@@ -2098,64 +2090,61 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         """
 
     @typing.overload
-    @abc.abstractmethod
     def meta(
         self,
-        indices: collections.abc.Iterable[T_int],
-        keys: typing.Optional[
-            collections.abc.Iterable[collections.abc.Hashable]
-        ],
-    ) -> collections.abc.Iterable[collections.abc.Mapping]:
-        ...
-
-    @typing.overload
-    @abc.abstractmethod
-    def meta(
-        self,
-        indices: collections.abc.Iterable[T_int],
-        keys: typing.Optional[
-            collections.abc.Iterable[collections.abc.Hashable]
-        ],
-        values: collections.abc.Iterable[typing.Any],
-    ) -> None:
-        ...
-
-    @abc.abstractmethod
-    def meta(
-        self,
-        indices: collections.abc.Iterable[T_int],
+        indices: T_int,
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-        values: typing.Optional[collections.abc.Iterable[typing.Any]] = None,
-    ) -> typing.Optional[collections.abc.Iterable[collections.abc.Mapping]]:
-        """
-        Retrieve/set metadata for contained objects.
+    ) -> collections.abc.Mapping:
+        ...
 
-        If no keys are specified, entire metadata map for each object is
-        selected.  If `keys` is specified, only those values are selected.  If
-        value is not specified, selected keys are returned.  If `values` is
-        specified, selected objects will have ALL their selected keys set to
-        the correponding values in `values` and nothing will be returned.
+    @typing.overload
+    def meta(
+        self,
+        indices: typing.Optional[collections.abc.Iterable[T_int]] = None,
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+    ) -> collections.abc.Iterable[collections.abc.Mapping]:
+        ...
+
+    @abc.abstractmethod
+    def meta(
+        self,
+        indices: typing.Optional[
+            typing.Union[T_int, collections.abc.Iterable[T_int]]
+        ] = None,
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+    ) -> typing.Union[
+        collections.abc.Iterable[collections.abc.Mapping],
+        collections.abc.Mapping,
+    ]:
+        """
+        Retrieve metadata for contained objects.
+
+        Metadata is returned as Mappings.  If a single index is specified, a single Mapping will be returned.  If None or an iterable of indices is specified, an iterable of Mappings will be returned corresponding to those indices.
 
         Parameters
         ----------
-        indices : collections.abc.Iterable[int]
-            Indices of objects to be queried.
-        keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] = None
-            Keys to be queried.  `None` indicates all key-value pairs will be
-            returned.
-        values : typing.Optional[collections.abc.Iterable[typing.Any]]
-            Values to be set.  Leaving unspecified indicates to return values
-            from query instead of setting them.  Otherwise, iterate through each
-            pair of `zip(indices,values)` and set all keys to the value
-            contained.
+        indices : typing.Optional[typing.Union[T_int, collections.abc.Iterable[T_int]]] (default: None)
+            Indices of objects to be queried.  A single value (not in an Iterable) will return a single Mapping.  `None` indicates all objects are to be queried.
+        keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] (default: None)
+            Subset of keys to be queried.  `None` indicates all key-value pairs
+            will be returned.
 
         Returns
         -------
-        typing.Optional[collections.abc.Iterable[collections.abc.Mapping]]
-            Returns None if no values have been passed.  Otherwise, return
-            iterable over objects of corresponding selected key-value pairs.
+        typing.Union[collections.abc.Iterable[collections.abc.Mapping],collections.abc.Mapping]
+            Mappings relevant to specified object indices, or the Mapping
+            relevant to the single specified object index.
+
+        Notes
+        -----
+        Keys which do not have a corresponding value within the metadata will
+        not appear in the returned Mappings.
         """
 
     @abc.abstractmethod
