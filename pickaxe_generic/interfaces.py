@@ -1507,9 +1507,9 @@ class MolFilterTypes(typing.NamedTuple):
         True when evaluating the value of the metadata.
     """
 
-    meta: "filters.MolFilterMetaVal"
-    meta_exist: "filters.MolFilterMetaExist"
-    meta_func: "filters.MolFilterMetaFunc"
+    meta: "type[filters.MolFilterMetaVal]"
+    meta_exist: "type[filters.MolFilterMetaExist]"
+    meta_func: "type[filters.MolFilterMetaFunc]"
 
 
 @typing.final
