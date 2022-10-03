@@ -8,6 +8,7 @@ import collections.abc
 import dataclasses
 import gzip
 import pickle
+import shutil
 import typing
 import xml.etree.ElementTree
 
@@ -2426,6 +2427,7 @@ class ChemNetwork(abc.ABC):
             File extension.
         """
         filepath = path + filename + ext
+        temp_filepath = path + "." + filename + ext + ".tmp"
         compress_level = 6
         if minimal:
             compress_level = 9
@@ -2440,8 +2442,9 @@ class ChemNetwork(abc.ABC):
         )
         data.text = str(pickle.dumps(self))
         tree = ET.ElementTree(data)
-        with gzip.open(filepath, "w", compress_level) as fout:
+        with gzip.open(temp_filepath, "w", compress_level) as fout:
             tree.write(fout)
+        shutil.move(temp_filepath, filepath)
 
 
 class RankValue(typing.Protocol):
