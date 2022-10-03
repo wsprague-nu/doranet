@@ -472,7 +472,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         )
 
     def compat_table(
-        self, index: int
+        self, index: interfaces.OpIndex
     ) -> collections.abc.Sequence[
         collections.abc.Sequence[interfaces.MolIndex]
     ]:
@@ -508,7 +508,9 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         ] = None,
     ) -> interfaces.MolIndex:
         if _custom_compat is not None and reactive is False:
-            raise ValueError("`_custom_compat` cannot be specified when `reactive` is False")
+            raise ValueError(
+                "`_custom_compat` cannot be specified when `reactive` is False"
+            )
         # if already in database, return existing index
         mol_uid = mol.uid
         if mol_uid in self._mol_map:
