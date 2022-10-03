@@ -677,6 +677,97 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         return self._reactive_list
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
+    network: interfaces.ChemNetwork
+    metakeys: interfaces.MetaKeyPacket
+    updated_mol_meta: set[interfaces.MolIndex] = set()
+    updated_op_meta: set[interfaces.MolIndex] = set()
+
+    @property
+    def mols(self):
+        return self.network.mols
+
+    @property
+    def ops(self):
+        return self.network.ops
+
+    @property
+    def rxns(self):
+        return self.network.rxns
+
+    def mol_meta(self, index, key, value=None):
+        raise NotImplementedError(
+            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+        )
+
+    def op_meta(self, index, key, value=None):
+        raise NotImplementedError(
+            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+        )
+
+    def rxn_meta(self, index, key, value=None):
+        raise NotImplementedError(
+            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+        )
+
+    def mol_metas(self, indices=None, keys=None):
+        raise NotImplementedError(
+            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+        )
+
+    def op_metas(self, indices=None, keys=None):
+        raise NotImplementedError(
+            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+        )
+
+    def rxn_metas(self, indices=None, keys=None):
+        raise NotImplementedError(
+            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+        )
+
+    def compat_table(self, index):
+        return self.network.compat_table(index)
+
+    def consumers(self, index):
+        return self.network.consumers(index)
+
+    def producers(self, index):
+        return self.network.producers(index)
+
+    def add_mol(self, mol, meta=None, reactive=None, _custom_compat=None):
+        if meta is not None:
+            if mol in self.network:
+                i = self.network.mols.i(mol.uid)
+                exist_keys = self.network.mols.meta(i, meta.keys())
+                for key in exist_keys.keys():
+                    if exist_keys[key] != meta[key]:
+                        self.updated_mol_meta.add(i)
+                        continue
+        return self.network.add_mol(mol, meta, reactive, _custom_compat)
+
+    def add_op(self, op, meta=None):
+        if meta is not None:
+            if op in self.network:
+                i = self.network.ops.i(op.uid)
+                exist_keys = self.network.ops.meta(i, meta.keys())
+                for key in exist_keys.keys():
+                    if exist_keys[key] != meta[key]:
+                        self.updated_op_meta.add(i)
+                        continue
+        return self.network.add_op(op, meta)
+
+    def add_rxn(self, operator, reactants, products, meta=None, rxn=None):
+        return self.network.add_mol(operator, reactants, products, meta, rxn)
+
+    @property
+    def reactivity(self):
+        return self.network.reactivity
+
+    def save_to_file(self, filename, path, minimal, ext):
+        self.network.save_to_file(filename, path, minimal, ext)
+
+
 def dump_network_to_file(
     network: interfaces.ChemNetwork, filepath: str = "network.dat"
 ) -> None:
