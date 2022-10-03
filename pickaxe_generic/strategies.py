@@ -1168,6 +1168,10 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         # passed to parallel processes
         recipe_keyset: interfaces.MetaKeyPacket = interfaces.MetaKeyPacket()
         reaction_keyset: interfaces.MetaKeyPacket = interfaces.MetaKeyPacket()
+        if mol_filter is not None:
+            recipe_keyset = recipe_keyset + mol_filter.meta_required
+        if bundle_filter is not None:
+            recipe_keyset = recipe_keyset + bundle_filter.meta_required
         if recipe_filter is not None:
             recipe_keyset = recipe_keyset + recipe_filter.meta_required
         if recipe_ranker is not None:
