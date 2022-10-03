@@ -51,7 +51,7 @@ We've successfully added water to the network.  When you add an object to the ne
 MolDatBasic('O')
 ```
 
-### Notes for Programmers
+### Notes for Developers
 
 The index always starts at zero and increases for every subsequent addition.  Objects cannot be removed from the network once added.  Pruning is accomplished by creating a new network with a more limited subset of items.
 
@@ -197,34 +197,63 @@ network_loaded = engine.network_from_file("saved_network")
 [MolDatBasic('O'), MolDatBasic('O=C1CCCCO1'), MolDatBasic('O=C(O)CCCCO')]
 ```
 
+## Molecule-Operator Compatibility on the Network
+
+The network stores information about which molecules are compatible with which operators.  This information is inherent to the molecules and operators used, and can be computationally intensive to verify, so caching it makes sense.  The way to access this compatibility information is via the `.compat_table()` method.
+
+```sh
+>>> network.compat_table(ester_hydrolysis_ring_i)
+([1], [0])
+```
+
+What the above information demonstrates is that for the ester hydrolysis ring-opening operator, the first argument is compatible with molecule 1 (delta-valerolactone) and the second is compatible with molecule 0 (water).
+
+If you do not want this information to be calculated (for example, if certain molecules will not participate in reactions and you want to save time on compatibility tests), then when adding the molecule, simply add the keyword argument `reactive=False`.  If the molecule has already been tested for compatibility, however, it will remain in the compatibility table forever.
+
+```python
+network.add_mol(water, reactive=False)
+```
+
+### Notes For Developers
+
+The compatibility table will never shrink and is guaranteed due to the "pure" nature of molecules and operators in Pickaxe-Generic.  Each argument's listed compatible molecules are also in order of tested compatibility, so they may not be ordered with respect to molecule index.
+
 ## Metadata
 
 The network also stores "metadata," which consists of [Mappings](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict) associated with every object in the network, including reactions.  Using metadata, you can store a key-value pair associated with a particular molecule, like enthalpy, or a cumulative cost calculation based on a particular network expansion method.
 
-To access metadata assigned to an object, we must first add metadata to the object.  The easiest way to do this is when the object is added to the network, via the `meta` argument.  As seen below, this can also be done for objects which are already in the network, though key collisions will be resolved by overwriting with the newest value.
+To access metadata assigned to an object, we must first add metadata to the object.  The easiest way to do this is when the object is added to the network, via the `meta` argument.  As seen below, this can also be done for objects which are already in the network, though key collisions will be resolved by overwriting with the newest value.  However, for objects which are already in the network, and for which you already have the index, there is a faster method below.
 
 ```python
 ethanol_i = network.add_mol(ethanol, meta={"is_alcohol": True})
 water_i = network.add_mol(water, meta={"is_alcohol": False, "solvent": True})
 ```
 
-Metadata can be then accessed via the `.mols.meta()` method.  This can either be
-targeted at a specific molecule, or by having all the molecules print their information.
+The `.set_meta()` method preferred to access and set molecule metadata.  Its use is very similar to that of `.add_mol()`, except that it is accessed through `.mols` and uses the index.  It also runs no risk of accidentally creating a new molecule.
 
-```sh
->>> print(network.mols.meta(water_i))
-{'is_alcohol': False, 'solvent': True}
->>> print(network.mols.meta(water_i, ["is_alcohol"]))
-{'is_alcohol': False}
->>> print(network.mols.meta([ethanol_i], ["is_alcohol"]))
-({'is_alcohol': True},)
->>> print(network.mols.meta([water_i, ethanol_i], keys=["is_alcohol"]))
-({'is_alcohol': False}, {'is_alcohol': True})
->>> print(network.mols.meta([water_i, ethanol_i], keys=["solvent"]))
-({'solvent': True}, {})
->>> print(network.mols.meta(keys=["is_alcohol"]))
-({'is_alcohol': False}, {}, {}, {'is_alcohol': True})
->>> print(network.mols.meta())
-({'is_alcohol': False, 'solvent': True}, {}, {}, {'is_alcohol': True})
+```python
+network.mols.set_meta(water_i,{"is_water": True, "is_toxic": False})
 ```
 
+Metadata can be then accessed via the `.mols.meta()` method.  This can either be targeted at a specific molecule, or by having all the molecules print their information in order of index.
+
+```sh
+>>> network.mols.meta(water_i)
+{'is_alcohol': False, 'solvent': True, 'is_water': True, 'is_toxic': False}
+>>> network.mols.meta(water_i, ["is_alcohol"])
+{'is_alcohol': False}
+>>> network.mols.meta([ethanol_i], ["is_alcohol"])
+({'is_alcohol': True},)
+>>> network.mols.meta([water_i, ethanol_i], keys=["is_alcohol"])
+({'is_alcohol': False}, {'is_alcohol': True})
+>>> network.mols.meta([ethanol_i, water_i], keys=["solvent"])
+({}, {'solvent': True})
+>>> network.mols.meta(keys=["is_alcohol"])
+({'is_alcohol': False}, {}, {}, {'is_alcohol': True})
+>>> network.mols.meta()
+({'is_alcohol': False, 'solvent': True, 'is_water': True, 'is_toxic': False}, {}, {}, {'is_alcohol': True})
+```
+
+All of the above operations apply equivalently to operators and reactions, just via their slightly different interfaces of `network.add_op()`, `network.add_rxn()`, `network.ops.meta()`, `network.rxns.meta()`, `network.ops.set_meta()`, and `network.rxns.set_meta()`.
+
+Congratulations!  You have finished the fourth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./5-cartesian-expansion.md) to learn how to perform a basic automated network expansion.
