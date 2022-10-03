@@ -2397,7 +2397,7 @@ class ChemNetwork(abc.ABC):
         mol: MolDatBase,
         meta: typing.Optional[collections.abc.Mapping] = None,
         reactive: typing.Optional[bool] = None,
-        custom_compat: typing.Optional[
+        _custom_compat: typing.Optional[
             collections.abc.Collection[tuple[OpIndex, int]]
         ] = None,
     ) -> MolIndex:
@@ -2429,9 +2429,10 @@ class ChemNetwork(abc.ABC):
 
         Other Parameters
         ----------------
-        custom_compat : typing.Optional[collections.abc.Collection[tuple[OpIndex,int]]]
+        _custom_compat : typing.Optional[collections.abc.Collection[tuple[OpIndex,int]]]
             Custom compatibility table.  Prevents default compatibility testing.
-            Intended for internal use.  Not recommended for end users.
+            Intended ONLY for internal use within strategies to parallelize
+            compatibility testing.
         """
 
     @abc.abstractmethod

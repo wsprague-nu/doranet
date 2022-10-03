@@ -503,10 +503,12 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         mol: interfaces.MolDatBase,
         meta: typing.Optional[collections.abc.Mapping] = None,
         reactive: typing.Optional[bool] = None,
-        custom_compat: typing.Optional[
+        _custom_compat: typing.Optional[
             collections.abc.Collection[tuple[interfaces.OpIndex, int]]
         ] = None,
     ) -> interfaces.MolIndex:
+        if _custom_compat is not None and reactive is False:
+            raise ValueError("`_custom_compat` cannot be specified when `reactive` is False")
         # if already in database, return existing index
         mol_uid = mol.uid
         if mol_uid in self._mol_map:
@@ -520,13 +522,13 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             # if newly reactive, fill in compat table
             if not self._reactive_list[mol_index]:
                 self._reactive_list[mol_index] = True
-                if custom_compat is None:
+                if _custom_compat is None:
                     for i, op in enumerate(self.ops):
                         for argnum in range(len(op)):
                             if op.compat(mol, argnum):
                                 self._compat_table[i][argnum].append(mol_index)
                 else:
-                    for op_index, argnum in custom_compat:
+                    for op_index, argnum in _custom_compat:
                         self._compat_table[op_index][argnum].append(mol_index)
             return mol_index
 
@@ -549,14 +551,14 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
         self._reactive_list.append(reactive is not False)
         if reactive is not False:
-            if custom_compat is None:
+            if _custom_compat is None:
                 # test operator compatibility and add to table
                 for i, op in enumerate(self.ops):
                     for argnum in range(len(op)):
                         if op.compat(mol, argnum):
                             self._compat_table[i][argnum].append(mol_index)
             else:
-                for op_index, argnum in custom_compat:
+                for op_index, argnum in _custom_compat:
                     self._compat_table[op_index][argnum].append(mol_index)
 
         return mol_index
