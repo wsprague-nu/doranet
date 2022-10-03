@@ -136,6 +136,27 @@ class MolFilterMetaExist(interfaces.MolFilter):
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
+class MolFilterMetaFunc(interfaces.MolFilter):
+    __slots__ = ("key", "pred")
+    key: collections.abc.Hashable
+    pred: collections.abc.Callable[[typing.Any], bool]
+
+    def __call__(
+        self, mol: interfaces.DataPacket[interfaces.MolDatBase]
+    ) -> bool:
+        meta = mol.meta
+        key = self.key
+        if meta is None or key not in meta:
+            return False
+        return self.pred(meta[key])
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(frozenset(), frozenset((self.key,)))
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True)
 class CoreactantFilter(interfaces.RecipeFilter):
     __slots__ = "coreactants"
     coreactants: collections.abc.Container[interfaces.MolIndex]

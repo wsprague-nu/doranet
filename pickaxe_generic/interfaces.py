@@ -1502,10 +1502,14 @@ class MolFilterTypes(typing.NamedTuple):
     meta_exist : filters.MolFilterMetaExist
         Filter which returns True if a particular metadata key exists for the
         molecule.
+    meta_func : filters.MolFilterMetaFunc
+        Filter which returns True is a particular predicate function returns
+        True when evaluating the value of the metadata.
     """
 
     meta: "filters.MolFilterMetaVal"
     meta_exist: "filters.MolFilterMetaExist"
+    meta_func: "filters.MolFilterMetaFunc"
 
 
 @typing.final

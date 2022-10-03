@@ -247,7 +247,9 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     def filter(self):
         return interfaces.FilterTypes(
             interfaces.MolFilterTypes(
-                filters.MolFilterMetaVal, filters.MolFilterMetaExist
+                filters.MolFilterMetaVal,
+                filters.MolFilterMetaExist,
+                filters.MolFilterMetaFunc,
             ),
             interfaces.BundleFilterTypes(),
             interfaces.RecipeFilterTypes(filters.CoreactantFilter),

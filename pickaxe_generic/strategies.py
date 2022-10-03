@@ -1419,14 +1419,19 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
 
 class CartesianStrategyUpdated:
-    __slots__ = "_network"
-
-    def __init__(self, network: interfaces.ChemNetwork) -> None:
+    def __init__(
+        self,
+        network: interfaces.ChemNetwork,
+        engine: interfaces.NetworkEngine,
+        gen_key: collections.abc.Hashable = "generation",
+    ) -> None:
         self._network = network
+        self._engine = engine
+        self._gen_key = gen_key
 
     def expand(
         self,
         num_gens: typing.Optional[int] = None,
-        max_mols: typing.Optional[int] = None,
+        max_recipes: typing.Optional[int] = None,
     ):
-        ...
+        p_strat = self._engine.strat.pq(self._network)
