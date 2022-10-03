@@ -79,6 +79,20 @@ class _rdkit_op_init(typing.NamedTuple):
         )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class _cartesian_op_init:
+    _engine: interfaces.NetworkEngine
+
+    def __call__(
+        self,
+        network: interfaces.ChemNetwork,
+        gen_key: collections.abc.Hashable = "generation",
+    ) -> strategies.CartesianStrategyUpdated:
+        return strategies.CartesianStrategyUpdated(
+            network, self._engine, gen_key
+        )
+
+
 class NetworkEngineBasic(interfaces.NetworkEngine):
     """
     Implements NetworkEngine class for different speed efficiencies.
@@ -240,7 +254,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     @property
     def strat(self):
         return interfaces.StrategyTypes(
-            strategies.CartesianStrategyUpdated,
+            _cartesian_op_init,
             strategies.PriorityQueueStrategyBasic,
         )
 

@@ -1458,6 +1458,30 @@ class _op_init_type_rdkit(typing.Protocol):
         """
 
 
+class _strat_init_type_cartesian(typing.Protocol):
+    @abc.abstractmethod
+    def __call__(
+        self,
+        network: "ChemNetwork",
+        gen_key: collections.abc.Hashable = "generation",
+    ) -> "strategies.CartesianStrategyUpdated":
+        """
+        Creates a Cartesian Strategy object.
+
+        This strategy separates molecules into "generations."  When molecules
+        react, their products have a generation equal to the highest generation
+        of the reactants plus one, unless any of the products has previously
+        been assigned a lower generation.
+
+        Parameters
+        ----------
+        network : ChemNetwork
+            Chemical network to be expanded.
+        gen_key : collections.abc.Hashable (default: 'generation')
+            Metadata key representing the generation of a molecule.
+        """
+
+
 @typing.final
 class OperatorTypes(typing.NamedTuple):
     """
@@ -1486,7 +1510,7 @@ class StrategyTypes(typing.NamedTuple):
         A strategy which expands the "best" recipes first.
     """
 
-    cartesian: type["strategies.CartesianStrategyUpdated"]
+    cartesian: _strat_init_type_cartesian
     pq: type["PriorityQueueStrategy"]
 
 
