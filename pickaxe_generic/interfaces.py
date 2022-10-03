@@ -2642,6 +2642,25 @@ class RecipeRanker(typing.Protocol):
         """
 
 
+class GlobalUpdateHook(typing.Protocol):
+    @abc.abstractmethod
+    def __call__(self, network: ChemNetwork) -> typing.Optional[bool]:
+        """
+        Protocol defining format for global update hook.
+
+        Parameters
+        ----------
+        network : ChemNetwork
+            Chemical network which is to be updated/checked for value.
+
+        Returns
+        -------
+        bool
+            If True, terminate expansion after hook returns.  If False,
+            terminate expansion after remaining hooks run.
+        """
+
+
 class PriorityQueueStrategy(abc.ABC):
     """
     Strategy which prioritizes certain directions in the synthetic tree.
@@ -2671,7 +2690,7 @@ class PriorityQueueStrategy(abc.ABC):
         bundle_filter: typing.Optional[BundleFilter] = None,
         recipe_filter: typing.Optional[RecipeFilter] = None,
         recipe_ranker: typing.Optional[RecipeRanker] = None,
-        mc_local: typing.Optional[
+        reaction_plan: typing.Optional[
             typing.Union[
                 "metadata.RxnAnalysisStep",
                 "metadata.PropertyCompositor",
@@ -2679,7 +2698,10 @@ class PriorityQueueStrategy(abc.ABC):
                 "metadata.LocalPropertyCalc",
             ]
         ] = None,
-        # mc_update: Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
+        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
+        global_hooks: typing.Optional[
+            collections.abc.Sequence[GlobalUpdateHook]
+        ] = None,
         heap_size: typing.Optional[int] = None,
         beam_size: typing.Optional[int] = 1,
         batch_size: typing.Optional[int] = None,
@@ -2697,7 +2719,7 @@ class PriorityQueueStrategy(abc.ABC):
             be a composition of filters using basic logic operators.
         recipe_ranker : typing.Optional[RecipeRanker] (default: None)
             Function which evaluates recipes and assigns them a sortable rank.
-        mc_local : typing.Optional[
+        reaction_plan : typing.Optional[
                        typing.Union[
                            pickaxe_generic.metadata.RxnAnalysisStep,
                            pickaxe_generic.metadata.PropertyCompositor,
@@ -2707,6 +2729,19 @@ class PriorityQueueStrategy(abc.ABC):
                    ] (default: None)
             Metadata calculator and reaction filter.  Should be a "Reaction
             Analysis Flow" as detailed in examples.
+        mc_update : typing.Optional[metadata.MetaUpdateResolver] (default: None)
+            Dataclass containing non-default metadata resolution functions
+            between metadata from different processes and between new metadata
+            and existing network data.  `None` or missing functions indicate
+            that metadata will never conflict, otherwise an error will be
+            raised.
+        global_hooks : typing.Optional[collections.abc.Sequence[GlobalUpdateHook]] (default: None)
+            Hook functions to run after a loop has completed.  If any return a
+            boolean, expansion will terminate before running any more reactions.
+            Return value of True terminates immediately, whereas return value
+            of False terminates after remaining hooks also run.  `None`
+            indicates expansion will continue until all recipes have been
+            exhausted.
 
         Other Parameters
         ----------------
@@ -2728,7 +2763,7 @@ class PriorityQueueStrategy(abc.ABC):
         batch_size : typing.Optional[int] (default: None)
             Maximum number of recipes to permit each parallel recipe ranking
             job to evaluate at once.  Affects how recipes are bundled.  Value
-            of `None` ndicates no limit on number of recipes.  Tune when using
+            of `None` indicates no limit on number of recipes.  Tune when using
             parallel processes.
 
         Notes

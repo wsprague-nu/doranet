@@ -1136,7 +1136,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         bundle_filter: typing.Optional[interfaces.BundleFilter] = None,
         recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
         recipe_ranker: typing.Optional[interfaces.RecipeRanker] = None,
-        mc_local: typing.Optional[
+        reaction_plan: typing.Optional[
             typing.Union[
                 metadata.RxnAnalysisStep,
                 metadata.PropertyCompositor,
@@ -1144,16 +1144,18 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 metadata.LocalPropertyCalc,
             ]
         ] = None,
+        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
+        global_hooks: typing.Optional[
+            collections.abc.Sequence[interfaces.GlobalUpdateHook]
+        ] = None,
         heap_size: typing.Optional[int] = None,
         beam_size: typing.Optional[int] = 1,
         batch_size: typing.Optional[int] = None,
-        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
-        # mc_update: typing.Optional[MetaDataUpdate] = DefaultMetaDataUpdate(),
     ) -> None:
 
         rxn_analysis_task: typing.Optional[metadata.RxnAnalysisStep] = None
-        if mc_local is not None:
-            rxn_analysis_task = metadata.as_rxn_analysis_step(mc_local)
+        if reaction_plan is not None:
+            rxn_analysis_task = metadata.as_rxn_analysis_step(reaction_plan)
         if mc_update is None:
             mc_update = metadata.MetaUpdateResolver({}, {}, {})
 
