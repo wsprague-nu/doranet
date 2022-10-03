@@ -576,6 +576,8 @@ class RecipeRankingJob:
     __slots__ = (
         "operator",
         "op_args",
+        "mol_filter",
+        "bundle_filter",
         "recipe_filter",
         "recipe_ranker",
         "heap_size",
@@ -585,6 +587,8 @@ class RecipeRankingJob:
     op_args: tuple[
         tuple[interfaces.DataPacket[interfaces.MolDatBase], ...], ...
     ]
+    mol_filter: typing.Optional[interfaces.MolFilter]
+    bundle_filter: typing.Optional[interfaces.BundleFilter]
     recipe_filter: typing.Optional[interfaces.RecipeFilter]
     recipe_ranker: typing.Optional[interfaces.RecipeRanker]
     heap_size: typing.Optional[int]
@@ -750,6 +754,8 @@ def assemble_recipe_batch_job(
     recipe_ranker: typing.Optional[interfaces.RecipeRanker] = None,
     heap_size: typing.Optional[int] = None,
     recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
+    mol_filter: typing.Optional[interfaces.MolFilter] = None,
+    bundle_filter: typing.Optional[interfaces.BundleFilter] = None,
 ) -> RecipeRankingJob:
     mol_data: typing.Union[
         collections.abc.Generator[
@@ -797,7 +803,13 @@ def assemble_recipe_batch_job(
         for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
     )
     return RecipeRankingJob(
-        op, mol_batch, recipe_filter, recipe_ranker, heap_size
+        op,
+        mol_batch,
+        mol_filter,
+        bundle_filter,
+        recipe_filter,
+        recipe_ranker,
+        heap_size,
     )
 
 
@@ -870,17 +882,44 @@ def execute_recipe_ranking(
     min_val: typing.Optional[RecipePriorityItem],
     recipes_tested: collections.abc.Collection[interfaces.Recipe],
 ) -> "RecipeHeap":
+
+    # filter molecules
+    args_edited: tuple[
+        tuple[interfaces.DataPacket[interfaces.MolDatBase], ...], ...
+    ]
+    if job.mol_filter is not None:
+        args_edited = tuple(
+            tuple(mol for mol in arg_mols if job.mol_filter(mol))
+            for arg_mols in job.op_args
+        )
+    else:
+        args_edited = job.op_args
+
+    # perform bundle filtering
+    bundles: collections.abc.Iterable[interfaces.RecipeBundle]
+    if job.bundle_filter is not None:
+        bundles = job.bundle_filter(
+            interfaces.RecipeBundle(job.operator, job.op_args)
+        )
+    else:
+        bundles = (interfaces.RecipeBundle(job.operator, job.op_args),)
+
     recipe_generator = (
         (interfaces.RecipeExplicit(job.operator, reactants_data), recipe)
-        for reactants_data, recipe in (
-            (
-                reactants_data,
-                interfaces.Recipe(
-                    interfaces.OpIndex(job.operator.i),
-                    tuple(reactant.i for reactant in reactants_data),
-                ),
+        for reactants_data, recipe in itertools.chain(
+            *(
+                (
+                    (
+                        reactants_data,
+                        interfaces.Recipe(
+                            interfaces.OpIndex(job.operator.i),
+                            tuple(reactant.i for reactant in reactants_data),
+                        ),
+                    )
+                    for reactants_data in itertools.product(*bundle.args)
+                )
+                for bundle in bundles
             )
-            for reactants_data in itertools.product(*job.op_args)
         )
         if recipe not in recipes_tested
     )
@@ -1231,6 +1270,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                         recipe_ranker,
                         heap_size,
                         recipe_filter,
+                        mol_filter,
+                        bundle_filter,
                     )
                     cur_min = recipe_heap.min
                     new_recipe_heap = execute_recipe_ranking(
