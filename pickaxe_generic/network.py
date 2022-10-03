@@ -143,6 +143,11 @@ class _ValueQueryData(
             {key: mt[i][key] for key in keys if key in mt[i]} for i in targets
         )
 
+    def set_meta(
+        self, index: interfaces.T_int, values: collections.abc.Mapping
+    ) -> None:
+        self._meta[index].update(values)
+
     def uid(self, i: interfaces.T_int) -> interfaces.Identifier:
         return self._list[i].uid
 
@@ -238,6 +243,11 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
         return tuple(
             {key: mt[i][key] for key in keys if key in mt[i]} for i in targets
         )
+
+    def set_meta(
+        self, index: interfaces.T_int, values: collections.abc.Mapping
+    ) -> None:
+        self._meta[index].update(values)
 
     def __len__(self) -> int:
         return len(self._list)

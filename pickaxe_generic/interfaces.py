@@ -1990,6 +1990,22 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         """
 
     @abc.abstractmethod
+    def set_meta(self, index: T_int, values: collections.abc.Mapping) -> None:
+        """
+        Set metadata for specific object.
+
+        If there is a key collision, values will be overwritten, otherwise the
+        data will be merged.
+
+        Parameters
+        ----------
+        index : int
+            Index of object to have its metadata set.
+        values : collections.abc.Mapping
+            Metadata mapping containing new key-value pairs.
+        """
+
+    @abc.abstractmethod
     def uid(self, i: T_int) -> Identifier:
         """
         Retrieve item UID from container.
@@ -2145,6 +2161,22 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         -----
         Keys which do not have a corresponding value within the metadata will
         not appear in the returned Mappings.
+        """
+
+    @abc.abstractmethod
+    def set_meta(self, index: T_int, values: collections.abc.Mapping) -> None:
+        """
+        Set metadata for specific object.
+
+        If there is a key collision, values will be overwritten, otherwise the
+        data will be merged.
+
+        Parameters
+        ----------
+        index : int
+            Index of object to have its metadata set.
+        values : collections.abc.Mapping
+            Metadata mapping containing new key-value pairs.
         """
 
     @abc.abstractmethod
