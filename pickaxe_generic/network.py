@@ -31,8 +31,18 @@ def recipe_from_explicit(
     )
 
 
+def index_iterable_guard(
+    item: typing.Union[
+        interfaces.T_int, collections.abc.Iterable[interfaces.T_int]
+    ]
+) -> typing.TypeGuard[collections.abc.Iterable[interfaces.T_int]]:
+    return hasattr(item, "__iter__")
+
+
 @dataclasses.dataclass(frozen=True, slots=True)
-class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
+class _ValueQueryData(
+    interfaces.ValueQueryData[interfaces.T_data, interfaces.T_int]
+):
     _list: collections.abc.Sequence[interfaces.T_data]
     _map: collections.abc.Mapping[interfaces.Identifier, interfaces.T_int]
     _meta: collections.abc.Sequence[collections.abc.MutableMapping]
@@ -71,33 +81,67 @@ class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
     def keys(self) -> collections.abc.KeysView[interfaces.Identifier]:
         return self._map.keys()
 
-    def meta(self, indices, keys=None, values=None):
+    @typing.overload
+    def meta(
+        self,
+        indices: interfaces.T_int,
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+    ) -> collections.abc.Mapping[collections.abc.Hashable, typing.Any]:
+        ...
+
+    @typing.overload
+    def meta(
+        self,
+        indices: typing.Optional[
+            collections.abc.Iterable[interfaces.T_int]
+        ] = None,
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+    ) -> collections.abc.Iterable[
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+    ]:
+        ...
+
+    def meta(
+        self,
+        indices: typing.Optional[
+            typing.Union[
+                interfaces.T_int, collections.abc.Iterable[interfaces.T_int]
+            ]
+        ] = None,
+        keys: typing.Optional[
+            collections.abc.Iterable[collections.abc.Hashable]
+        ] = None,
+    ) -> typing.Union[
+        collections.abc.Iterable[
+            collections.abc.Mapping[collections.abc.Hashable, typing.Any]
+        ],
+        collections.abc.Mapping[collections.abc.Hashable, typing.Any],
+    ]:
+        targets: collections.abc.Iterable[int]
+        if indices is None:
+            targets = range(len(self._meta))
+        elif index_iterable_guard(indices):
+            targets = indices
+        elif isinstance(indices, int):
+            if keys is None:
+                return self._meta[indices]
+            else:
+                m: collections.abc.Mapping = self._meta[indices]
+                return {key: m[key] for key in keys if key in m}
+        else:
+            raise TypeError(
+                f"Invalid argument type for `indices`: {type(indices)}"
+            )
         if keys is None:
-            if values is None:
-                return self._meta
-            if len(indices) != len(values):
-                raise ValueError(
-                    "Length of `values` must equal length of `indices`"
-                )
-            for m, v in zip(indices, values):
-                for key in m.keys():
-                    m[key] = v
-        if values is None:
-            return tuple(
-                {
-                    key: (self._meta[i][key] if key in m else None)
-                    for key in keys
-                }
-                for i in indices
-            )
-        if len(indices) != len(values):
-            raise ValueError(
-                "Length of `values` must equal length of `indices`"
-            )
-        for i, v in zip(indices, values):
-            m = self._meta[i]
-            for key in keys:
-                m[key] = v
+            return tuple(self._meta[i] for i in targets)
+        mt = self._meta
+        return (
+            {key: mt[i][key] for key in keys if key in mt[i]} for i in targets
+        )
 
     def uid(self, i: interfaces.T_int) -> interfaces.Identifier:
         return self._list[i].uid
