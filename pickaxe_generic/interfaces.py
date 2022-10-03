@@ -1053,6 +1053,78 @@ class RecipeExplicit:
     reactants: tuple[DataPacket[MolDatBase], ...]
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class RecipeBundle:
+    """
+    Bundle of possible reactants for recipes.
+
+    Each entry in `.args` represents an argument to the operator in `.operator`.
+
+    Attributes
+    ----------
+    operator : DataPacket[OpDatBase]
+        The operator attached to the bundle.
+    args : tuple[tuple[DataPacket[MolDatBase],...],...]
+        Possible molecules to be used as arguments to the operator.
+    """
+
+    operator: DataPacket[OpDatBase]
+    args: tuple[tuple[DataPacket[MolDatBase], ...], ...]
+
+
+class BundleFilter(abc.ABC):
+    """
+    Interface representing a bundle filter.
+
+    Classes which implement this interface provide a method for evaluating a
+    bundle of possible reactants and pruning it into smaller bundles.
+
+    Attributes
+    ----------
+    meta_required : MetaKeyPacket
+        Metadata required in order for filter to evaluate recipe.
+
+    Notes
+    -----
+    For developing new BundleFilters: if metadata is required in order to run
+    the filter, then meta_required must be provided or that metadata is not
+    guaranteed to be included.
+    """
+
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def __call__(
+        self, bundle: RecipeBundle
+    ) -> collections.abc.Iterable[RecipeBundle]:
+        """
+        Prune or slice a RecipeBundle.
+
+        Parameters
+        ----------
+        bundle : RecipeBundle
+            RecipeBundle containing information about possible reactants.
+
+        Returns
+        -------
+        collections.abc.Iterable[RecipeBundle]
+            Bundles created by pruning or partitioning the initial bundle
+        """
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        """
+        Specifier for information required by filter function.
+
+        Returns
+        -------
+        MetaKeyPacket
+            MetaKeyPacket containing information on which recipe metadata is
+            necessary to run filter, and if live molecules or operators are
+            required.
+        """
+
+
 class RecipeFilter(abc.ABC):
     """
     Interface representing a recipe filter.
@@ -2565,8 +2637,8 @@ class PriorityQueueStrategy(abc.ABC):
     def expand(
         self,
         max_recipes: typing.Optional[int] = None,
-        # mol_filter_local: Optional[MolFilter] = None,
-        # mol_filter: Optional[MolFilter] = None,
+        mol_filter: typing.Optional[MolFilter] = None,
+        bundle_filter: typing.Optional[BundleFilter] = None,
         recipe_filter: typing.Optional[RecipeFilter] = None,
         recipe_ranker: typing.Optional[RecipeRanker] = None,
         mc_local: typing.Optional[
