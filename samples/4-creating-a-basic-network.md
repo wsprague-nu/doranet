@@ -256,4 +256,11 @@ Metadata can be then accessed via the `.mols.meta()` method.  This can either be
 
 All of the above operations apply equivalently to operators and reactions, just via their slightly different interfaces of `network.add_op()`, `network.add_rxn()`, `network.ops.meta()`, `network.rxns.meta()`, `network.ops.set_meta()`, and `network.rxns.set_meta()`.
 
+## Takeaways
+
+1. The network provides access to molecules, operators, reactions, and their associations.
+2. The primary way to identify these items is via their index in the network; between networks, the UID will uniquely identify equivalent objects.
+3. The network stores molecule-operator compatibility data, which can be accessed via `.compat_table`.
+4. The network provides access to metadata, where arbitrary information may be associated with and assigned to various objects without altering the objects themselves.
+
 Congratulations!  You have finished the fourth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./5-cartesian-expansion.md) to learn how to perform a basic automated network expansion.
