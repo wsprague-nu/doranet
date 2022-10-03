@@ -1132,8 +1132,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
     def expand(
         self,
         max_recipes: typing.Optional[int] = None,
-        # mol_filter_local: typing.Optional[MolFilter] = None,
-        # mol_filter: typing.Optional[MolFilter] = None,
+        mol_filter: typing.Optional[interfaces.MolFilter] = None,
+        bundle_filter: typing.Optional[interfaces.BundleFilter] = None,
         recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
         recipe_ranker: typing.Optional[interfaces.RecipeRanker] = None,
         mc_local: typing.Optional[
