@@ -12,6 +12,7 @@ import math
 import typing
 
 from . import interfaces, metadata
+from . import network as pgnetworks
 
 
 class _ReactionProvider(typing.Protocol):
@@ -1398,6 +1399,21 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     [0 for _ in network.compat_table(interfaces.OpIndex(i))]
                     for i in range(len(network.ops))
                 ]
+
+            # run global hooks
+            if global_hooks is not None:
+                fake_network = pgnetworks.ChemNetworkFacadeMetaTrigger(
+                    self._network, total_keyset
+                )
+                end_on_completion: bool = False
+                for hook_func in global_hooks:
+                    rval = hook_func(fake_network)
+                    if rval is True:
+                        return
+                    if rval is False:
+                        end_on_completion = True
+                if end_on_completion:
+                    return
 
             continue
 
