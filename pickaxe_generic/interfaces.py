@@ -6,8 +6,10 @@ import abc
 import collections
 import collections.abc
 import dataclasses
+import gzip
 import pickle
 import typing
+import xml.etree.ElementTree
 
 import rdkit
 import rdkit.Chem
@@ -2382,6 +2384,64 @@ class ChemNetwork(abc.ABC):
         RxnIndex
             Index of reaction in table.
         """
+
+    @property
+    @abc.abstractmethod
+    def reactivity(self) -> collections.abc.Sequence[bool]:
+        """
+        Returns bool vector determining reactivity for molecules.
+
+        Returns
+        -------
+        collections.abc.Sequence[bool]
+            If a molecule has index `i`, then that index in the returned
+            sequence represents whether that molecule has had its compatibility
+            information calculated and stored within the network.
+        """
+
+    def save_to_file(
+        self,
+        filename: str,
+        path: str = "./",
+        minimal: bool = False,
+        ext: str = ".pgnet",
+    ) -> None:
+        """
+        Save network to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of file, not including extension.
+        path : str (default: './')
+            Path to file directory.
+        minimal : bool (default: False)
+            Whether to minimize space usage.  Takes more processing power to
+            generate and to read from, but may be useful for transmitting large
+            networks.
+
+        Other Parameters
+        ----------------
+        ext : str (default: '.pgnet')
+            File extension.
+        """
+        filepath = path + filename + ext
+        compress_level = 6
+        if minimal:
+            compress_level = 9
+        ET = xml.etree.ElementTree
+        data = ET.Element(
+            "data",
+            attrib={
+                "title": "Pickaxe-Generic network file",
+                "version": "0",
+                "subversion": "0",
+            },
+        )
+        data.text = str(pickle.dumps(self))
+        tree = ET.ElementTree(data)
+        with gzip.open(filepath, "w", compress_level) as fout:
+            tree.write(fout)
 
 
 class RankValue(typing.Protocol):

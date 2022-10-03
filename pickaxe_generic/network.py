@@ -589,6 +589,10 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
         return rxn_index
 
+    @property
+    def reactivity(self) -> collections.abc.Sequence[bool]:
+        return self._reactive_list
+
 
 def dump_network_to_file(
     network: interfaces.ChemNetwork, filepath: str = "network.dat"

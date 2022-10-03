@@ -59,3 +59,5 @@ print(network.rxns[reaction_i])
 print(network.consumers(0))
 print(network.producers(0))
 print(network.producers(2))
+
+network.save_to_file("network")
