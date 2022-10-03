@@ -1179,19 +1179,6 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         if rxn_analysis_task is not None:
             reaction_keyset = reaction_keyset + rxn_analysis_task.meta_required
         total_keyset = recipe_keyset + reaction_keyset
-        # if mol_filter_local is not None:
-        #     mol_filter_local_keyset = (
-        #         mol_filter_local_keyset + mol_filter_local.meta_required
-        #     )
-        # if mol_filter is not None:
-        #     recipe_keyset = recipe_keyset + mol_filter.meta_required
-        # if recipe_filter is not None:
-        #     recipe_keyset = recipe_keyset + recipe_filter.meta_required
-        # if recipe_ranker is not None:
-        #     recipe_keyset = recipe_keyset + recipe_ranker.meta_required
-        # if mc_local is not None:
-        #    reaction_keyset = mc_local.meta_required
-        # total_keyset = mol_filter_local_keyset + recipe_keyset + reaction_keyset
 
         # initialize loop variables
         network = self._network
