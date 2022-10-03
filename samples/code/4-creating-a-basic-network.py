@@ -1,3 +1,6 @@
+import dataclasses
+import typing
+
 import pickaxe_generic as pg
 
 engine = pg.create_engine()
@@ -30,9 +33,6 @@ network = engine.new_network()
 
 water_i = network.add_mol(water)
 
-ester_hydrolysis_ring = engine.op.rdkit(
-    "[O&+0:1]=[C&+0:2]-&@[O&+0&H0:3].[O&+0&H2:4]>>([*:1]=[*:2]-[*:4].[*:3])"
-)
 network.add_op(ester_hydrolysis_ring)
 
 network.add_mol(delta_valerolactone)
@@ -52,12 +52,31 @@ reaction_i = network.add_rxn(
     products=(hydroxyvaleric_acid_i,),
 )
 
-print(reaction_i)
+network.save_to_file("saved_network")
 
-print(network.rxns[reaction_i])
+network_loaded = engine.network_from_file("saved_network")
 
-print(network.consumers(0))
-print(network.producers(0))
-print(network.producers(2))
+ethanol_i = network.add_mol(ethanol, meta={"is_alcohol": True})
+water_i = network.add_mol(water, meta={"is_alcohol": False, "solvent": True})
 
-network.save_to_file("network")
+print(network.mols.meta(water_i))
+print(network.mols.meta(water_i, ["is_alcohol"]))
+print(network.mols.meta([ethanol_i], ["is_alcohol"]))
+print(network.mols.meta([water_i, ethanol_i], keys=["is_alcohol"]))
+print(network.mols.meta([water_i, ethanol_i], keys=["solvent"]))
+print(network.mols.meta(keys=["is_alcohol"]))
+print(network.mols.meta())
+
+T = typing.TypeVar("T")
+
+# tweaked Util class, thus:
+@dataclasses.dataclass
+class Util(typing.Generic[T]):
+    proto: typing.Type
+    impl: typing.Type[T]
+
+
+# then using it as such, with an explicit generic type:
+util = Util[pg.interfaces.ValueQueryData](
+    pg.interfaces.ValueQueryData, pg.network._ValueQueryData
+)

@@ -103,8 +103,11 @@ You can also check the number of molecules in the network using `len()`.
 Interacting with operators on the network is largely the same as for molecules.
 
 ```python
-ester_hydrolysis_ring = engine.op.rdkit("[O&+0:1]=[C&+0:2]-&@[O&+0&H0:3].[O&+0&H2:4]>>([*:1]=[*:2]-[*:4].[*:3])")
-network.add_op(ester_hydrolysis_ring)
+ester_hydrolysis_ring_i = network.add_op(ester_hydrolysis_ring)
+```
+```sh
+>>> print(ester_hydrolysis_ring_i)
+0
 ```
 
 ### Reactions on the Network
@@ -170,8 +173,58 @@ The results shown are the indices of the reactions which produce or consume the 
 
 ## Saving Network to a File
 
+It is very straightforward to save a chemical network to a file using the `.save_to_file()` method.  Simply provide a filename (without extension) and an optional path, and the function will save all network information.
+
+```python
+network.save_to_file("saved_network")
+```
+```sh
+> ls saved_network*
+saved_network.pgnet
+```
+
 ## Loading Network from File
+
+Network files are version-controlled, so networks saved using an older version of Pickaxe-Generic should be loaded properly.  Loading a network file from a newer version of Pickaxe-Generic should either work properly or raise an error.  Please report bugs to the GitHub.
+
+Networks may be loaded from files via the engine.
+
+```python
+network_loaded = engine.network_from_file("saved_network")
+```
+```sh
+>>> print(list(network_loaded.mols))
+[MolDatBasic('O'), MolDatBasic('O=C1CCCCO1'), MolDatBasic('O=C(O)CCCCO')]
+```
 
 ## Metadata
 
-The network also provides access to "metadata," which consists of [Mappings](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict) associated with every object in the network, including reactions.  Using metadata, you can store a key-value pair associated with a particular molecule, like enthalpy, or a cumulative cost calculation based on a particular network expansion method.
+The network also stores "metadata," which consists of [Mappings](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict) associated with every object in the network, including reactions.  Using metadata, you can store a key-value pair associated with a particular molecule, like enthalpy, or a cumulative cost calculation based on a particular network expansion method.
+
+To access metadata assigned to an object, we must first add metadata to the object.  The easiest way to do this is when the object is added to the network, via the `meta` argument.  As seen below, this can also be done for objects which are already in the network, though key collisions will be resolved by overwriting with the newest value.
+
+```python
+ethanol_i = network.add_mol(ethanol, meta={"is_alcohol": True})
+water_i = network.add_mol(water, meta={"is_alcohol": False, "solvent": True})
+```
+
+Metadata can be then accessed via the `.mols.meta()` method.  This can either be
+targeted at a specific molecule, or by having all the molecules print their information.
+
+```sh
+>>> print(network.mols.meta(water_i))
+{'is_alcohol': False, 'solvent': True}
+>>> print(network.mols.meta(water_i, ["is_alcohol"]))
+{'is_alcohol': False}
+>>> print(network.mols.meta([ethanol_i], ["is_alcohol"]))
+({'is_alcohol': True},)
+>>> print(network.mols.meta([water_i, ethanol_i], keys=["is_alcohol"]))
+({'is_alcohol': False}, {'is_alcohol': True})
+>>> print(network.mols.meta([water_i, ethanol_i], keys=["solvent"]))
+({'solvent': True}, {})
+>>> print(network.mols.meta(keys=["is_alcohol"]))
+({'is_alcohol': False}, {}, {}, {'is_alcohol': True})
+>>> print(network.mols.meta())
+({'is_alcohol': False, 'solvent': True}, {}, {}, {'is_alcohol': True})
+```
+
