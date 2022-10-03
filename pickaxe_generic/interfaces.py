@@ -1590,11 +1590,11 @@ class MetaCalcTypes(typing.NamedTuple):
 
     Attributes
     ----------
-    generation : metacalc.GenerationCalculator
+    generation : type[metacalc.GenerationCalculator]
         Calculates the "generation" of a molecule.
     """
 
-    generation: "metacalc.GenerationCalculator"
+    generation: "type[metacalc.GenerationCalculator]"
 
 
 class NetworkEngine(abc.ABC):
