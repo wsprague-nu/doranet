@@ -2396,7 +2396,7 @@ class ChemNetwork(abc.ABC):
         self,
         mol: MolDatBase,
         meta: typing.Optional[collections.abc.Mapping] = None,
-        reactive: bool = True,
+        reactive: typing.Optional[bool] = None,
         custom_compat: typing.Optional[
             collections.abc.Collection[tuple[OpIndex, int]]
         ] = None,
@@ -2414,10 +2414,13 @@ class ChemNetwork(abc.ABC):
             Molecule to be added.
         meta : typing.Optional[collections.abc.Mapping] (default: None)
             Metadata associated with molecule.
-        reactive : bool (default: True)
+        reactive : typing.Optional[bool] (default: None)
             Whether the molecule is to be tested for operator compatibility and
-            added to the compatibility table.  Strategies which rely on this
-            table will not react this molecule if this is set to False.
+            added to the compatibility table.  If `molecule does not yet exist,
+            its reactivity is set to True unless `reactive` is False.  If the
+            molecule already exists, it will only change its value if it is
+            currently False and `reactive` is True.  Once its value is True
+            internally, it cannot be changed back to False.
 
         Returns
         -------

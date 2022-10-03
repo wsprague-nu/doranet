@@ -502,7 +502,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         self,
         mol: interfaces.MolDatBase,
         meta: typing.Optional[collections.abc.Mapping] = None,
-        reactive: bool = True,
+        reactive: typing.Optional[bool] = None,
         custom_compat: typing.Optional[
             collections.abc.Collection[tuple[interfaces.OpIndex, int]]
         ] = None,
@@ -514,7 +514,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             if meta is not None:
                 self._mol_meta[mol_index].update(meta)
 
-            if not reactive:
+            if reactive is not True:
                 return mol_index
 
             # if newly reactive, fill in compat table
@@ -547,8 +547,8 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         else:
             self._mol_meta.append(dict(meta))
 
-        self._reactive_list.append(reactive)
-        if reactive:
+        self._reactive_list.append(reactive is not False)
+        if reactive is not False:
             if custom_compat is None:
                 # test operator compatibility and add to table
                 for i, op in enumerate(self.ops):
