@@ -21,7 +21,7 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 if typing.TYPE_CHECKING:
-    from . import filters, metacalc, metadata
+    from . import filters, metacalc, metadata, strategies
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)
@@ -1479,14 +1479,14 @@ class StrategyTypes(typing.NamedTuple):
 
     Attributes
     ----------
-    cartesian : type[CartesianStrategy]
+    cartesian : type[CartesianStrategyUpdated]
         A strategy which performs Cartesian expansion; that is,
         generation-by-generation expansion.
     pq : type[PriorityQueueStrategy]
         A strategy which expands the "best" recipes first.
     """
 
-    cartesian: type["ExpansionStrategy"]
+    cartesian: type["strategies.CartesianStrategyUpdated"]
     pq: type["PriorityQueueStrategy"]
 
 
@@ -2724,7 +2724,7 @@ class PriorityQueueStrategy(abc.ABC):
                 "metadata.LocalPropertyCalc",
             ]
         ] = None,
-        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
+        mc_update: typing.Optional["metadata.MetaUpdateResolver"] = None,
         global_hooks: typing.Optional[
             collections.abc.Sequence[GlobalUpdateHook]
         ] = None,

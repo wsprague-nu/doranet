@@ -681,8 +681,12 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
     network: interfaces.ChemNetwork
     metakeys: interfaces.MetaKeyPacket
-    updated_mol_meta: set[interfaces.MolIndex] = set()
-    updated_op_meta: set[interfaces.MolIndex] = set()
+    updated_mol_meta: set[interfaces.MolIndex] = dataclasses.field(
+        default_factory=set
+    )
+    updated_op_meta: set[interfaces.MolIndex] = dataclasses.field(
+        default_factory=set
+    )
 
     @property
     def mols(self):

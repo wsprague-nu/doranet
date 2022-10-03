@@ -1419,6 +1419,17 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
 
 class CartesianStrategyUpdated:
+    @dataclasses.dataclass(frozen=True, slots=True)
+    class gen_test:
+        max_gen: int
+
+        def __call__(self, val) -> bool:
+            if not isinstance(val, int):
+                raise TypeError(
+                    f"Wrong type for generation metadata; must be `int` (type: {type(val)}; value: {val})"
+                )
+            return val < self.max_gen
+
     def __init__(
         self,
         network: interfaces.ChemNetwork,
@@ -1431,7 +1442,24 @@ class CartesianStrategyUpdated:
 
     def expand(
         self,
-        num_gens: typing.Optional[int] = None,
+        max_gen: typing.Optional[int] = None,
         max_recipes: typing.Optional[int] = None,
     ):
-        p_strat = self._engine.strat.pq(self._network)
+        engine = self._engine
+        p_strat = engine.strat.pq(self._network)
+        mol_filter: typing.Optional[interfaces.MolFilter] = None
+        calc: typing.Optional[metadata.MolPropertyFromRxnCalc] = None
+        resolver: typing.Optional[metadata.MetaUpdateResolver] = None
+        if max_gen is not None:
+            mol_filter = engine.filter.mol.meta_func(
+                self._gen_key, self.gen_test(max_gen)
+            )
+            calc = engine.meta.generation(self._gen_key)
+            resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})
+        p_strat.expand(
+            max_recipes,
+            mol_filter,
+            reaction_plan=calc,
+            mc_update=resolver,
+            beam_size=None,
+        )
