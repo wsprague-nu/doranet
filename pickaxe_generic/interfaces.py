@@ -3,10 +3,12 @@ Contains interfaces for major datatypes in Pickaxe-Generic.
 """
 
 import abc
+import base64
 import collections
 import collections.abc
 import dataclasses
 import gzip
+import os
 import pickle
 import shutil
 import typing
@@ -550,7 +552,7 @@ class RxnDatBase(DataUnit):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MetaKeyPacket:
     """
     Dataclass containing information about metadata keys necessary for filters
@@ -603,7 +605,7 @@ class MetaKeyPacket:
         )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class DataPacket(typing.Generic[T_data]):
     """
     Dataclass containing information about a particular DataUnit.
@@ -618,17 +620,15 @@ class DataPacket(typing.Generic[T_data]):
         Metadata associated with the DataUnit.
     """
 
-    __slots__ = ("i", "item", "meta")
     i: int
     item: typing.Optional[T_data]
     meta: typing.Optional[collections.abc.Mapping]
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class DataPacketE(DataPacket, typing.Generic[T_data]):
     """mostly unused type???"""
 
-    __slots__ = ("item",)
     item: T_data
 
 
@@ -732,7 +732,7 @@ class MolFilter(abc.ABC):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterAnd(MolFilter):
     """
     Class which composes the intersection of two filters.
@@ -742,8 +742,6 @@ class MolFilterAnd(MolFilter):
     If initialized with filter1 and filter2, when called will return the result
     of `filter1(mol) and filter2(mol)`.
     """
-
-    __slots__ = ("_filter1", "_filter2")
 
     _filter1: MolFilter
     _filter2: MolFilter
@@ -779,9 +777,8 @@ class MolFilterAnd(MolFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterInv(MolFilter):
-    __slots__ = ("_filter",)
     _filter: MolFilter
 
     def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
@@ -815,7 +812,7 @@ class MolFilterInv(MolFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterOr(MolFilter):
     """
     Class which composes the union of two filters.
@@ -826,7 +823,6 @@ class MolFilterOr(MolFilter):
     of `filter1(mol) or filter2(mol)`.
     """
 
-    __slots__ = ("_filter1", "_filter2")
     _filter1: MolFilter
     _filter2: MolFilter
 
@@ -861,7 +857,7 @@ class MolFilterOr(MolFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterXor(MolFilter):
     """
     Class which composes the symmetric difference of two filters.
@@ -872,7 +868,6 @@ class MolFilterXor(MolFilter):
     of `filter1(mol) != filter2(mol)`.
     """
 
-    __slots__ = ("_filter1", "_filter2")
     _filter1: MolFilter
     _filter2: MolFilter
 
@@ -907,7 +902,7 @@ class MolFilterXor(MolFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True, order=True)
+@dataclasses.dataclass(frozen=True, slots=True, order=True)
 class Reaction:
     """
     Dataclass containing information about a particular DataUnit.
@@ -923,24 +918,17 @@ class Reaction:
         this indicates an unknown provenance.
     """
 
-    __slots__ = ("operator", "reactants", "products")
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
     products: tuple[MolIndex, ...]
 
 
-@dataclasses.dataclass(frozen=True, order=True)
+@dataclasses.dataclass(frozen=True, slots=True, order=True)
 class ReactionExplicit:
     """
     Unused???
     """
 
-    __slots__ = (
-        "operator",
-        "reactants",
-        "products",
-        "reaction_meta",
-    )
     operator: DataPacketE[OpDatBase]
     reactants: tuple[DataPacketE[MolDatBase], ...]
     products: tuple[DataPacketE[MolDatBase], ...]
@@ -958,7 +946,7 @@ class ReactionExplicit:
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Recipe:
     """
     Dataclass containing information about a particular recipe.
@@ -975,7 +963,6 @@ class Recipe:
         A tuple of reactant indices in some ChemNetwork.
     """
 
-    __slots__ = ("operator", "reactants")
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
 
@@ -1045,7 +1032,7 @@ class Recipe:
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class RecipeExplicit:
     """
     Dataclass containing a particular Recipe's DataUnits.
@@ -1062,7 +1049,6 @@ class RecipeExplicit:
         A tuple of reactant data.
     """
 
-    __slots__ = ("operator", "reactants")
     operator: DataPacket[OpDatBase]
     reactants: tuple[DataPacket[MolDatBase], ...]
 
@@ -1170,7 +1156,7 @@ class RecipeFilter(abc.ABC):
         return RecipeFilterXor(self, other)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class RecipeFilterAnd(RecipeFilter):
     """
     Class which composes the intersection of two filters.
@@ -1180,8 +1166,6 @@ class RecipeFilterAnd(RecipeFilter):
     If initialized with filter1 and filter2, when called will return the result
     of `filter1(recipe) and filter2(recipe)`.
     """
-
-    __slots__ = ("_filter1", "_filter2")
 
     _filter1: RecipeFilter
     _filter2: RecipeFilter
@@ -1216,9 +1200,8 @@ class RecipeFilterAnd(RecipeFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class RecipeFilterInv(RecipeFilter):
-    __slots__ = ("_filter",)
     _filter: RecipeFilter
 
     def __call__(self, recipe: RecipeExplicit) -> bool:
@@ -1251,7 +1234,7 @@ class RecipeFilterInv(RecipeFilter):
         return self._filter.meta_required
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class RecipeFilterOr(RecipeFilter):
     """
     Class which composes the union of two filters.
@@ -1262,7 +1245,6 @@ class RecipeFilterOr(RecipeFilter):
     of `filter1(recipe) or filter2(recipe)`.
     """
 
-    __slots__ = ("_filter1", "_filter2")
     _filter1: RecipeFilter
     _filter2: RecipeFilter
 
@@ -1296,7 +1278,7 @@ class RecipeFilterOr(RecipeFilter):
         return self._filter1.meta_required + self._filter2.meta_required
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class RecipeFilterXor(RecipeFilter):
     """
     Class which composes the symmetric difference of two filters.
@@ -1307,7 +1289,6 @@ class RecipeFilterXor(RecipeFilter):
     of `filter1(recipe) != filter2(recipe)`.
     """
 
-    __slots__ = ("_filter1", "_filter2")
     _filter1: RecipeFilter
     _filter2: RecipeFilter
 
@@ -1752,6 +1733,33 @@ class NetworkEngine(abc.ABC):
         -------
         ChemNetwork
             Empty chemical network.
+        """
+
+    def network_from_file(
+        self,
+        filename: str,
+        path: str = "./",
+        ext: str = ".pgnet",
+    ) -> "ChemNetwork":
+        """
+        Create network from file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of file, not including extension.
+        path : str (default: './')
+            Path to file directory.
+
+        Other Parameters
+        ----------------
+        ext : str (default: '.pgnet')
+            File extension.
+
+        Returns
+        -------
+        ChemNetwork
+            Chemical network initialized from a file.
         """
 
 
@@ -2440,7 +2448,10 @@ class ChemNetwork(abc.ABC):
                 "subversion": "0",
             },
         )
-        data.text = str(pickle.dumps(self))
+        data.text = str(
+            base64.urlsafe_b64encode(pickle.dumps(self)), encoding="ascii"
+        )
+        testnet = pickle.loads(pickle.dumps(self))
         tree = ET.ElementTree(data)
         with gzip.open(temp_filepath, "w", compress_level) as fout:
             tree.write(fout)

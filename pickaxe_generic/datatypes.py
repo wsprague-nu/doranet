@@ -98,10 +98,6 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
     def __repr__(self) -> str:
         return f"MolDatBasic('{self.smiles}')"
 
-    def __setstate__(self, arg: bytes) -> None:
-        self._blob = arg
-        self._smiles = rdkit.Chem.MolToSmiles(rdkit.Chem.Mol(arg))
-
 
 @typing.final
 class MolDatBasicV2(interfaces.MolDatRDKit):

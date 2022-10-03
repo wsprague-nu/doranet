@@ -11,15 +11,8 @@ import typing
 from . import interfaces
 
 
-@dataclasses.dataclass(frozen=True, order=True)
+@dataclasses.dataclass(frozen=True, slots=True, order=True)
 class MolSlot:
-    __slots__ = (
-        "operator",
-        "molecule",
-        "argnum",
-        "operator_meta",
-        "molecule_meta",
-    )
     operator: interfaces.OpDatBase
     molecule: interfaces.MolDatBase
     argnum: int
@@ -38,9 +31,8 @@ def recipe_from_explicit(
     )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
-    __slots__ = ("_list", "_map", "_meta")
     _list: collections.abc.Sequence[interfaces.T_data]
     _map: collections.abc.Mapping[interfaces.Identifier, interfaces.T_int]
     _meta: collections.abc.Sequence[collections.abc.MutableMapping]
@@ -117,9 +109,8 @@ class _ValueQueryData(typing.Generic[interfaces.T_data, interfaces.T_int]):
         return iter(self._list)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
-    __slots__ = ("_list", "_map", "_meta")
     _list: collections.abc.Sequence[interfaces.T_id]
     _map: collections.abc.Mapping[interfaces.T_id, interfaces.T_int]
     _meta: collections.abc.Sequence[collections.abc.MutableMapping]

@@ -3,9 +3,13 @@ Contains classes which define and implement dependency-injection engines.
 """
 
 
+import base64
 import collections.abc
 import dataclasses
+import gzip
+import pickle
 import typing
+import xml.dom.minidom
 
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
@@ -256,3 +260,30 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     def new_network(self):
         return network.ChemNetworkBasic()
+
+    def network_from_file(
+        self,
+        filename: str,
+        path: str = "./",
+        ext: str = ".pgnet",
+    ) -> interfaces.ChemNetwork:
+        filepath = path + filename + ext
+        with gzip.open(filepath, "r") as fin:
+            md = xml.dom.minidom
+            data = md.parse(fin).documentElement
+            version = int(data.getAttribute("version"))
+            if version == 0:
+                subversion = int(data.getAttribute("subversion"))
+                if subversion == 0:
+                    bvals = base64.urlsafe_b64decode(data.firstChild.data)
+                    print(bvals)
+                    network: interfaces.ChemNetwork = pickle.loads(bvals)
+                    return network
+                else:
+                    raise NotImplementedError(
+                        f"File at {filepath} is incompatible with this version of Pickaxe_Generic, please update (file version={version}.{subversion}, max supported=0.0)"
+                    )
+            else:
+                raise NotImplementedError(
+                    f"File at {filepath} is incompatible with this version of Pickaxe_Generic, please update (file version={version}, max supported=0)"
+                )
