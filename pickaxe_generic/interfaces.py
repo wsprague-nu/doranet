@@ -8,6 +8,7 @@ import collections
 import collections.abc
 import dataclasses
 import gzip
+import itertools
 import os
 import pickle
 import shutil
@@ -1124,6 +1125,27 @@ class BundleFilter(abc.ABC):
             necessary to run filter, and if live molecules or operators are
             required.
         """
+
+    @typing.final
+    def __rshift__(self, other: "BundleFilter") -> "BundleFilter":
+        return BundleFilterChain(self, other)
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class BundleFilterChain(BundleFilter):
+    _filter1: BundleFilter
+    _filter2: BundleFilter
+
+    def __call__(
+        self, bundle: RecipeBundle
+    ) -> collections.abc.Iterable[RecipeBundle]:
+        return itertools.chain(
+            *(self._filter2(b) for b in self._filter1(bundle))
+        )
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return self._filter1.meta_required + self._filter2.meta_required
 
 
 class RecipeFilter(abc.ABC):
