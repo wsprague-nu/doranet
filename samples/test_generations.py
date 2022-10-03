@@ -130,7 +130,7 @@ strategy.expand(
     max_recipes=20,
     heap_size=20,
     recipe_filter=CoreactantFilter(coreagents),
-    mc_local=GenerationCalculator("gen") >> GenerationFilter("gen", 2),
+    reaction_plan=GenerationCalculator("gen") >> GenerationFilter("gen", 2),
     mc_update=MetaUpdateResolver({"gen": lambda x, y: min(x, y)}, {}, {}),
 )
 

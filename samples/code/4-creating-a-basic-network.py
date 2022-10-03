@@ -51,6 +51,7 @@ reaction_i = network.add_rxn(
     reactants=(delta_valerolactone_i, water_i),
     products=(hydroxyvaleric_acid_i,),
 )
+print(network.compat_table(ester_hydrolysis_ring_i))
 
 network.save_to_file("saved_network")
 
@@ -58,6 +59,7 @@ network_loaded = engine.network_from_file("saved_network")
 
 ethanol_i = network.add_mol(ethanol, meta={"is_alcohol": True})
 water_i = network.add_mol(water, meta={"is_alcohol": False, "solvent": True})
+network.mols.set_meta(water_i, {"is_water": True, "is_toxic": False})
 
 print(network.mols.meta(water_i))
 print(network.mols.meta(water_i, ["is_alcohol"]))
