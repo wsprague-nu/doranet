@@ -139,7 +139,7 @@ class _ValueQueryData(
         if keys is None:
             return tuple(self._meta[i] for i in targets)
         mt = self._meta
-        return (
+        return tuple(
             {key: mt[i][key] for key in keys if key in mt[i]} for i in targets
         )
 
@@ -235,7 +235,7 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
         if keys is None:
             return tuple(self._meta[i] for i in targets)
         mt = self._meta
-        return (
+        return tuple(
             {key: mt[i][key] for key in keys if key in mt[i]} for i in targets
         )
 
