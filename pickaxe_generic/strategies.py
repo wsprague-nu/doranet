@@ -1231,7 +1231,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         recipe_heap: RecipeHeap = RecipeHeap(maxsize=heap_size)
         recipes_tested: set[interfaces.Recipe] = set()
 
-        while (max_recipes is None or len(recipes_tested) < max_recipes) and (
+        while (max_recipes is None or max_recipes > 0) and (
             any(
                 any(
                     i_tested < len(compat_mols)
@@ -1296,6 +1296,13 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
             if len(recipes_to_be_expanded) == 0:
                 break
+
+            if max_recipes is not None:
+                if len(recipes_to_be_expanded) > max_recipes:
+                    recipes_to_be_expanded = recipes_to_be_expanded[
+                        :max_recipes
+                    ]
+                max_recipes = max_recipes - len(recipes_to_be_expanded)
 
             reaction_jobs = tuple(
                 assemble_reaction_job(
