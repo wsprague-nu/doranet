@@ -254,7 +254,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     @property
     def strat(self):
         return interfaces.StrategyTypes(
-            _cartesian_op_init,
+            _cartesian_op_init(self),
             strategies.PriorityQueueStrategyBasic,
         )
 

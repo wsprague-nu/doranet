@@ -1122,7 +1122,7 @@ def execute_reaction(
     reactants = tuple(mol.item for mol in rxn_job.op_args)
     if rxn_job.operator.item is None or any(mol is None for mol in reactants):
         raise ValueError("ReactionJob has non-None item components!")
-    product_packets = rxn_job.operator.item(reactants)  # type: ignore
+    product_packets = rxn_job.operator.item(*reactants)
     reactant_datapackets = tuple(
         interfaces.DataPacketE(p.i, p.item, p.meta) for p in rxn_job.op_args
     )
@@ -1148,7 +1148,7 @@ def execute_reactions(
     rxn_analysis: typing.Optional[metadata.RxnAnalysisStep] = None,
 ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
     rxn_generator = functools.reduce(
-        chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
+        itertools.chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
     )
     if rxn_analysis is None:
         return rxn_generator
