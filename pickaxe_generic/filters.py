@@ -135,11 +135,11 @@ class MolFilterMetaExist(interfaces.MolFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterMetaFunc(interfaces.MolFilter):
-    __slots__ = ("key", "pred")
     key: collections.abc.Hashable
     pred: collections.abc.Callable[[typing.Any], bool]
+    unknown_pass: bool = False
 
     def __call__(
         self, mol: interfaces.DataPacket[interfaces.MolDatBase]
@@ -147,7 +147,7 @@ class MolFilterMetaFunc(interfaces.MolFilter):
         meta = mol.meta
         key = self.key
         if meta is None or key not in meta:
-            return False
+            return self.unknown_pass
         return self.pred(meta[key])
 
     @property

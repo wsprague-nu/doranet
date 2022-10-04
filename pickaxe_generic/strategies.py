@@ -935,14 +935,7 @@ def execute_recipe_ranking(
                             None,
                             recipe,
                         )
-                        for recipe in (
-                            interfaces.Recipe(
-                                interfaces.OpIndex(job.operator.i),
-                                tuple(reactant.i for reactant in reactants),
-                            )
-                            for reactants in itertools.product(*job.op_args)
-                        )
-                        if recipe not in recipes_tested
+                        for _, recipe in recipe_generator
                     )
                     if min_val is None or not (recipe_item < min_val)
                 ),
@@ -1459,7 +1452,7 @@ class CartesianStrategyUpdated:
         resolver: typing.Optional[metadata.MetaUpdateResolver] = None
         if max_gen is not None:
             mol_filter = engine.filter.mol.meta_func(
-                self._gen_key, self.gen_test(max_gen)
+                self._gen_key, self.gen_test(max_gen), True
             )
             calc = engine.meta.generation(self._gen_key)
             resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})
