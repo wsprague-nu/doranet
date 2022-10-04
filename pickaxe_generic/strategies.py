@@ -900,10 +900,10 @@ def execute_recipe_ranking(
     bundles: collections.abc.Iterable[interfaces.RecipeBundle]
     if job.bundle_filter is not None:
         bundles = job.bundle_filter(
-            interfaces.RecipeBundle(job.operator, job.op_args)
+            interfaces.RecipeBundle(job.operator, args_edited)
         )
     else:
-        bundles = (interfaces.RecipeBundle(job.operator, job.op_args),)
+        bundles = (interfaces.RecipeBundle(job.operator, args_edited),)
 
     recipe_generator = (
         (interfaces.RecipeExplicit(job.operator, reactants_data), recipe)
