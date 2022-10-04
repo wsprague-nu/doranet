@@ -322,7 +322,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
     def ops(self) -> _ValueQueryData[interfaces.OpDatBase, interfaces.OpIndex]:
         if self._op_query is None:
             self._op_query = _ValueQueryData(
-                self._op_list, self._op_map, self._mol_meta
+                self._op_list, self._op_map, self._op_meta
             )
         return self._op_query
 
