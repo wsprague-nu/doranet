@@ -44,11 +44,18 @@ for name, smarts in operator_smarts.items():
     network.add_op(engine.op.rdkit(smarts), meta={"name": name})
 ```
 
+We will save this initial network to a file, so that we may restore it for testing out new strategies and configuration options.
+
+```python
+network.save_to_file("5-cartesian-expansion-initial")
+```
+
 ## Running a Basic Expansion
 
 A strategy is initialized with some configurational elements, including the target network.
 
 ```python
+network = engine.network_from_file("5-cartesian-expansion-initial")
 strat = engine.strat.cartesian(network)
 ```
 
@@ -84,4 +91,10 @@ strat.expand()
  Reaction(operator=0, reactants=(7, 0), products=(8,))]
 ```
 
-As you can see, all possible molecules were dehydrogenated, and butadiene was dehydrogenated twice to form butane.
+As you can see, all possible molecules were hydrogenated, and butadiene was hydrogenated twice to form butane.
+
+## Limiting Network Size
+
+The example above was fairly simple.  Hydrogenation is, by definition, limited by the saturation of the targeted molecules.  However, with operators which create larger molecules or operate on very generic reaction sites, the number of molecules generated can quickly explode.
+
+The cartesian expansion, and indeed most expansion strategies, comes with several ways to limit the number of reactions.  The first is by limiting the number of recipes which are tested.
