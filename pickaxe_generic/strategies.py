@@ -1452,7 +1452,7 @@ class CartesianStrategyUpdated:
         resolver: typing.Optional[metadata.MetaUpdateResolver] = None
         if max_gen is not None:
             mol_filter = engine.filter.mol.meta_func(
-                self._gen_key, self.gen_test(max_gen), True
+                self._gen_key, self.gen_test(max_gen)
             )
             calc = engine.meta.generation(self._gen_key)
             resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})

@@ -38,10 +38,15 @@ class GenerationCalculator(metadata.MolPropertyFromRxnCalc[int]):
     ) -> typing.Optional[int]:
         if data in rxn.reactants:
             return None
-        cur_gen = 1
+        cur_gen = None
         for reactant in rxn.reactants:
-            if reactant.meta is not None and self.gen_key in reactant.meta:
-                cur_gen = max(cur_gen, reactant.meta[self.gen_key] + 1)
+            if reactant.meta is None or self.gen_key not in reactant.meta:
+                return None
+            if cur_gen is None:
+                cur_gen = reactant.meta[self.gen_key] + 1
+            cur_gen = max(cur_gen, reactant.meta[self.gen_key] + 1)
+        if cur_gen is None:
+            return None
         if prev_value is not None and prev_value < cur_gen:
             return None
         if (

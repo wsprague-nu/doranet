@@ -177,9 +177,9 @@ class GenerationFilter(metadata.ReactionFilterBase):
 
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if all(
-            mol.meta is None
-            or self.gen_key not in mol.meta
-            or mol.meta[self.gen_key] + 1 < self.max_gens
+            mol.meta is not None
+            and self.gen_key in mol.meta
+            and mol.meta[self.gen_key] + 1 < self.max_gens
             for mol in recipe.reactants
         ):
             return True
