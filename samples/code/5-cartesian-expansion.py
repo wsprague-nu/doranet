@@ -5,11 +5,11 @@ import pickaxe_generic as pg
 engine = pg.create_engine()
 
 initial_reactant_smiles = [
-    "[H][H]",
-    "CC=O",
-    "CC(C)=O",
-    "CCCO",
-    "C=CC=C",
+    "[H][H]",  # hydrogen
+    "CC=O",  # acetaldehyde
+    "CC(C)=O",  # acetone
+    "CCCO",  # propanol
+    "C=CC=C",  # butadiene
 ]
 
 operator_smarts = {
@@ -22,8 +22,12 @@ for smiles in initial_reactant_smiles:
 for name, smarts in operator_smarts.items():
     network.add_op(engine.op.rdkit(smarts), meta={"name": name})
 
-strat = engine.strat.cartesian(network)
-strat.expand(2)
+for i in range(len(network.mols)):
+    network.mols.set_meta(i, {"generation": 0})
+network.mols.set_meta(0, {"generation": -1})
+network.mols.set_meta(4, {"generation": -1})
+strat = engine.strat.cartesian(network, gen_key="generation")
+strat.expand(num_iter=2)
 pprint.pprint(list(enumerate(network.mols)))
 pprint.pprint(list(network.rxns))
 pprint.pprint(list(network.mols.meta()))
