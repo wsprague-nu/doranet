@@ -7,8 +7,10 @@ import base64
 import collections
 import collections.abc
 import dataclasses
+import functools
 import gzip
 import itertools
+import operator
 import os
 import pickle
 import shutil
@@ -29,6 +31,7 @@ T_ci_co = typing.TypeVar("T_ci_co", covariant=True)
 T_data = typing.TypeVar("T_data", bound="DataUnit")
 T_id = typing.TypeVar("T_id", bound="Identifier")
 T_int = typing.TypeVar("T_int", bound=int)
+T_rank = typing.TypeVar("T_rank", bound="RankValue")
 
 
 MolIndex = typing.NewType("MolIndex", int)
@@ -2650,17 +2653,44 @@ class RankValue(typing.Protocol):
         """
 
 
-class RecipeRanker(typing.Protocol):
+class SizedTuple(tuple[typing.Optional[RankValue], ...]):
+    __slots__ = ()
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, SizedTuple):
+            return all(a == b for a, b in zip(self, other, strict=True))
+        return False
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, SizedTuple):
+            for a, b in zip(self, other, strict=True):
+                if b is None:
+                    return False
+                if a is None:
+                    return True
+                if a < b:
+                    return True
+                if b < a:
+                    return False
+            return False
+        raise NotImplementedError(
+            f"Comparison between {type(self)} and {type(other)} not supported."
+        )
+
+
+class RecipeRanker(abc.ABC, typing.Generic[T_rank]):
     """
     Protocol which defines recipe ranking function.
     """
+
+    __slots__ = ()
 
     @abc.abstractmethod
     def __call__(
         self,
         recipe: RecipeExplicit,
-        min_rank: typing.Optional[RankValue] = None,
-    ) -> typing.Optional[RankValue]:
+        min_rank: typing.Optional[T_rank] = None,
+    ) -> typing.Optional[T_rank]:
         """
         Produce rank of `recipe`.
 
@@ -2690,6 +2720,64 @@ class RecipeRanker(typing.Protocol):
         MetaKeyPacket
             Metadata required in order to rank recipe.
         """
+
+    def append(self, other: "RecipeRanker") -> "CompositeRecipeRanker":
+        """
+        Add additional Recipe ranking function with lower priority.
+        """
+        if isinstance(other, CompositeRecipeRanker):
+            return other.prepend(self)
+        return CompositeRecipeRanker((self, other))
+
+    def prepend(self, other: "RecipeRanker") -> "CompositeRecipeRanker":
+        """
+        Add additional Recipe ranking function with lower priority.
+        """
+        if isinstance(other, CompositeRecipeRanker):
+            return other.append(self)
+        return CompositeRecipeRanker((self, other))
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class CompositeRecipeRanker(RecipeRanker[SizedTuple]):
+    _internal_rankers: tuple[RecipeRanker, ...]
+
+    def __call__(
+        self,
+        recipe: RecipeExplicit,
+        min_rank: typing.Optional[SizedTuple] = None,
+    ) -> typing.Optional[SizedTuple]:
+        if min_rank is None:
+            return SizedTuple(r(recipe) for r in self._internal_rankers)
+        if not isinstance(min_rank, SizedTuple):
+            raise NotImplementedError(
+                f"Invalid min_rank type: {type(min_rank)}; have you mixed ranking functions?"
+            )
+        return SizedTuple(
+            r(recipe, m)
+            for r, m in zip(self._internal_rankers, min_rank, strict=True)
+        )
+
+    @property
+    def meta_required(self) -> MetaKeyPacket:
+        return functools.reduce(
+            operator.add, (r.meta_required for r in self._internal_rankers)
+        )
+
+    def append(self, other: "RecipeRanker") -> "CompositeRecipeRanker":
+        if isinstance(other, CompositeRecipeRanker):
+            return CompositeRecipeRanker(
+                self._internal_rankers + other._internal_rankers
+            )
+        return CompositeRecipeRanker(self._internal_rankers + (other,))
+
+    def prepend(self, other: "RecipeRanker") -> "CompositeRecipeRanker":
+        if isinstance(other, CompositeRecipeRanker):
+            return CompositeRecipeRanker(
+                other._internal_rankers + self._internal_rankers
+            )
+        return CompositeRecipeRanker((other,) + self._internal_rankers)
 
 
 class GlobalUpdateHook(typing.Protocol):
