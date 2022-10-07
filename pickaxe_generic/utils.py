@@ -3,6 +3,7 @@ Contains classes which define and implement utility functions.
 """
 
 import collections.abc
+import dataclasses
 import itertools
 import typing
 
@@ -192,3 +193,16 @@ def _logreduce(
     except StopIteration:
         return x, True
     return f(x, y), False
+
+
+@dataclasses.dataclass(slots=True)
+class NumberIterCondition:
+    _num_iter: int
+
+    def __call__(
+        self, network: interfaces.ChemNetwork
+    ) -> typing.Optional[bool]:
+        self._num_iter -= 1
+        if self._num_iter <= 0:
+            return False
+        return None
