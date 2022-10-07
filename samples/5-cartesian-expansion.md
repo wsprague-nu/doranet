@@ -84,7 +84,7 @@ strat.expand()
  (6, MolDatBasic('CC(C)O')),
  (7, MolDatBasic('C=CCC')),
  (8, MolDatBasic('CCCC'))]
->>> pprint(list(enumerate(network.rxns)))
+>>> pprint(list(network.rxns))
 [Reaction(operator=0, reactants=(1, 0), products=(5,)),
  Reaction(operator=0, reactants=(2, 0), products=(6,)),
  Reaction(operator=0, reactants=(4, 0), products=(7,)),
@@ -93,8 +93,54 @@ strat.expand()
 
 As you can see, all possible molecules were hydrogenated, and butadiene was hydrogenated twice to form butane.
 
+### Developer Note
+
+Under the hood, the Cartesian strategy is using the much more complex PriorityQueue strategy with no ranker function and a custom global hook function.  Otherwise, much of the functionality is the same.
+
 ## Limiting Network Size
 
 The example above was fairly simple.  Hydrogenation is, by definition, limited by the saturation of the targeted molecules.  However, with operators which create larger molecules or operate on very generic reaction sites, the number of molecules generated can quickly explode.
 
-The cartesian expansion, and indeed most expansion strategies, comes with several ways to limit the number of reactions.  The first is by limiting the number of recipes which are tested.
+The cartesian expansion, like other strategies, comes with several ways to limit the size of the generated network.  The first is by limiting the number of recipes which are tested.
+
+### Limiting Number of Recipes
+
+Using the `max_recipes` argument, we can see that limiting the number of recipes to `max_recipes=2` results in only two reactions appearing in the system.
+
+```python
+network = engine.network_from_file("5-cartesian-expansion-initial")
+strat = engine.strat.cartesian(network)
+strat.expand(max_recipes=2)
+```
+```sh
+>>> pprint(list(network.rxns))
+[Reaction(operator=0, reactants=(1, 0), products=(5,)),
+ Reaction(operator=0, reactants=(2, 0), products=(6,))]
+```
+
+This method is effective for limiting the overall size of the network in an absolute sense.  However, of the reactions which are available at the start of the program, some will inevitably be prioritized over others.
+
+### Limiting Number of Cartesian Products
+
+The Cartesian strategy will naturally perform multiple iterations over the sets of molecules and operators.  Limiting these iterations provides a way to limit network size, while not favoring any particular combination of reactants and operators during an iteration.  However, the cost is that if there are very many Recipes which are possible in an iteration, they will all be evaluated before the stopping condition is met.
+
+Setting a limit on the number of iterations is done via the `num_iter` argument.
+
+```python
+network = engine.network_from_file("5-cartesian-expansion-initial")
+strat = engine.strat.cartesian(network)
+strat.expand(num_iter=1)
+```
+```sh
+>>> pprint(list(network.rxns))
+[Reaction(operator=0, reactants=(1, 0), products=(5,)),
+ Reaction(operator=0, reactants=(2, 0), products=(6,)),
+ Reaction(operator=0, reactants=(4, 0), products=(7,))]
+```
+
+## Takeaways
+
+1. Each iteration, the Cartesian strategy combines all operators with their compatible molecules.
+2. The network size can be limited either by limiting the number of iterations or by limiting the total number of recipes which may be tested.
+
+Congratulations!  You have finished the fifth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./6-filters.md) to learn how to use filters in order to restrict your network expansion to only the most relevant reactions.
