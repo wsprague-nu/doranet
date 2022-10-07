@@ -13,6 +13,7 @@ import typing
 
 from . import interfaces, metadata
 from . import network as pgnetworks
+from . import utils
 
 
 class _ReactionProvider(typing.Protocol):
@@ -1442,6 +1443,7 @@ class CartesianStrategyUpdated:
 
     def expand(
         self,
+        num_iter: typing.Optional[int] = None,
         max_gen: typing.Optional[int] = None,
         max_recipes: typing.Optional[int] = None,
     ):
@@ -1450,16 +1452,20 @@ class CartesianStrategyUpdated:
         mol_filter: typing.Optional[interfaces.MolFilter] = None
         calc: typing.Optional[metadata.MolPropertyFromRxnCalc] = None
         resolver: typing.Optional[metadata.MetaUpdateResolver] = None
+        global_hook: list[interfaces.GlobalUpdateHook] = []
         if max_gen is not None:
             mol_filter = engine.filter.mol.meta_func(
                 self._gen_key, self.gen_test(max_gen)
             )
             calc = engine.meta.generation(self._gen_key)
             resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})
+        if num_iter is not None:
+            global_hook.append(utils.NumberIterCondition(num_iter))
         p_strat.expand(
             max_recipes,
             mol_filter,
             reaction_plan=calc,
             mc_update=resolver,
             beam_size=None,
+            global_hooks=global_hook,
         )
