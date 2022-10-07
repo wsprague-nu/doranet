@@ -2795,7 +2795,8 @@ class GlobalUpdateHook(typing.Protocol):
         -------
         bool
             If True, terminate expansion after hook returns.  If False,
-            terminate expansion after remaining hooks run.
+            terminate expansion after remaining hooks run.  If None, continue
+            expansion.
         """
 
 
