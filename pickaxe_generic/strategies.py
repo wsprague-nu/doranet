@@ -1448,6 +1448,10 @@ class CartesianStrategyUpdated:
         self,
         num_iter: typing.Optional[int] = None,
         max_recipes: typing.Optional[int] = None,
+        mol_filter: typing.Optional[interfaces.MolFilter] = None,
+        bundle_filter: typing.Optional[interfaces.BundleFilter] = None,
+        recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
+        reaction_plan: typing.Optional[metadata.RxnAnalysisStep] = None,
         # max_gen: typing.Optional[int] = None,
     ):
         engine = self._engine
@@ -1471,4 +1475,8 @@ class CartesianStrategyUpdated:
             # mc_update=resolver,
             beam_size=None,
             global_hooks=global_hook,
+            mol_filter=mol_filter,
+            bundle_filter=bundle_filter,
+            recipe_filter=recipe_filter,
+            reaction_plan=reaction_plan,
         )
