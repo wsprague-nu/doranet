@@ -1246,6 +1246,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 ]
 
             # for each operator, create recipe batches
+            cur_min = recipe_heap.min
             for opIndex, _ in enumerate(network.ops):
                 # for each argument, accumulate a total of old_mols and new_mols
                 compat_table = network.compat_table(interfaces.OpIndex(opIndex))
@@ -1268,7 +1269,6 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                         mol_filter,
                         bundle_filter,
                     )
-                    cur_min = recipe_heap.min
                     new_recipe_heap = execute_recipe_ranking(
                         recipejob, cur_min, recipes_tested
                     )
