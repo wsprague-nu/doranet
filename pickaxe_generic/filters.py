@@ -165,6 +165,27 @@ class MolFilterMetaFunc(interfaces.MolFilter):
 
 
 @typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class MolFilterIndex(interfaces.MolFilter):
+    indices: collections.abc.Container[interfaces.MolIndex]
+    whitelist: bool = False
+
+    def __call__(
+        self,
+        mol: interfaces.DataPacket[interfaces.MolDatBase],
+        op: typing.Optional[interfaces.DataPacket[interfaces.OpDatBase]],
+        arg_num: typing.Optional[int],
+    ) -> bool:
+        if mol.i in self.indices:
+            return self.whitelist
+        return not self.whitelist
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
+
+
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class CoreactantFilter(interfaces.RecipeFilter):
     __slots__ = "coreactants"

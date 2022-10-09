@@ -1573,6 +1573,8 @@ class MolFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
+    index : filters.MolFilterIndex
+        Filter which implements a whitelist/blacklist based on molecule index.
     meta : filters.MolFilterMetaVal
         Filter which filters based on matching metadata.
     meta_exist : filters.MolFilterMetaExist
@@ -1583,6 +1585,7 @@ class MolFilterTypes(typing.NamedTuple):
         True when evaluating the value of the metadata.
     """
 
+    indices: "type[filters.MolFilterIndex]"
     meta: "type[filters.MolFilterMetaVal]"
     meta_exist: "type[filters.MolFilterMetaExist]"
     meta_func: "type[filters.MolFilterMetaFunc]"

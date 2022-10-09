@@ -262,6 +262,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     def filter(self):
         return interfaces.FilterTypes(
             interfaces.MolFilterTypes(
+                filters.MolFilterIndex,
                 filters.MolFilterMetaVal,
                 filters.MolFilterMetaExist,
                 filters.MolFilterMetaFunc,
