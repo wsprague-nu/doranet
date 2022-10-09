@@ -1466,7 +1466,7 @@ class _strat_init_type_cartesian(typing.Protocol):
     def __call__(
         self,
         network: "ChemNetwork",
-        gen_key: collections.abc.Hashable = "generation",
+        #        gen_key: collections.abc.Hashable = "generation",
     ) -> "strategies.CartesianStrategyUpdated":
         """
         Creates a Cartesian Strategy object.
@@ -1480,8 +1480,6 @@ class _strat_init_type_cartesian(typing.Protocol):
         ----------
         network : ChemNetwork
             Chemical network to be expanded.
-        gen_key : collections.abc.Hashable (default: 'generation')
-            Metadata key representing the generation of a molecule.
         """
 
 

@@ -1435,11 +1435,12 @@ class CartesianStrategyUpdated:
         self,
         network: interfaces.ChemNetwork,
         engine: interfaces.NetworkEngine,
-        gen_key: collections.abc.Hashable = "generation",
+        #        gen_key: collections.abc.Hashable = "generation",
     ) -> None:
         self._network = network
         self._engine = engine
-        self._gen_key = gen_key
+
+    #        self._gen_key = gen_key
 
     def expand(
         self,

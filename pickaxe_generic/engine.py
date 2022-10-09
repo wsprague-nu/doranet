@@ -86,10 +86,10 @@ class _cartesian_op_init:
     def __call__(
         self,
         network: interfaces.ChemNetwork,
-        gen_key: collections.abc.Hashable = "generation",
+        #        gen_key: collections.abc.Hashable = "generation",
     ) -> strategies.CartesianStrategyUpdated:
         return strategies.CartesianStrategyUpdated(
-            network, self._engine, gen_key
+            network, self._engine  # , gen_key
         )
 
 
