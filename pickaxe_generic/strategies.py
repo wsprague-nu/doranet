@@ -891,8 +891,10 @@ def execute_recipe_ranking(
     ]
     if job.mol_filter is not None:
         args_edited = tuple(
-            tuple(mol for mol in arg_mols if job.mol_filter(mol))
-            for arg_mols in job.op_args
+            tuple(
+                mol for mol in arg_mols if job.mol_filter(mol, job.operator, i)
+            )
+            for i, arg_mols in enumerate(job.op_args)
         )
     else:
         args_edited = job.op_args

@@ -659,14 +659,23 @@ class MolFilter(abc.ABC):
     __slots__ = ()
 
     @abc.abstractmethod
-    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+    def __call__(
+        self,
+        mol: DataPacket[MolDatBase],
+        op: typing.Optional[DataPacket[OpDatBase]],
+        arg_num: typing.Optional[int],
+    ) -> bool:
         """
-        Evaluate a DataPacket using filter function.
+        Evaluate a possible molecule argument using filter function.
 
         Parameters
         ----------
         mol : DataPacket[MolDatBase]
             DataPacket containing information about a molecule.
+        op : typing.Optional[DataPacket[OpDatBase]] (default: None)
+            DataPacket containing information about a particular operator.
+        arg_num : typing.Optional[int] (default: None)
+            The argument of the operator the molecule is being considered for.
 
         Returns
         -------
@@ -695,7 +704,7 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterAnd
-            MolFilter which returns the result of `self(mol) and other(mol)`.
+            MolFilter which returns the result of `self(mol, op, arg_num) and other(mol, op, arg_num)`.
         """
         return MolFilterAnd(self, other)
 
@@ -707,7 +716,7 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterInv
-            MolFilter which returns the result of `not self(mol)`.
+            MolFilter which returns the result of `not self(mol, op, arg_num)`.
         """
         return MolFilterInv(self)
 
@@ -719,7 +728,7 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterOr
-            MolFilter which returns the result of `self(mol) or other(mol)`.
+            MolFilter which returns the result of `self(mol, op, arg_num) or other(mol, op, arg_num)`.
         """
         return MolFilterOr(self, other)
 
@@ -731,7 +740,7 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterXor
-            MolFilter which returns the result of `self(mol) != other(mol)`
+            MolFilter which returns the result of `self(mol, op, arg_num) != other(mol, op, arg_num)`
         """
         return MolFilterXor(self, other)
 
@@ -745,13 +754,18 @@ class MolFilterAnd(MolFilter):
     Notes
     -----
     If initialized with filter1 and filter2, when called will return the result
-    of `filter1(mol) and filter2(mol)`.
+    of `filter1(mol, op, arg_num) and filter2(mol, op, arg_num)`.
     """
 
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+    def __call__(
+        self,
+        mol: DataPacket[MolDatBase],
+        op: typing.Optional[DataPacket[OpDatBase]] = None,
+        arg_num: typing.Optional[int] = None,
+    ) -> bool:
         """
         Calculate the intersection result of the composed filters.
 
@@ -759,14 +773,20 @@ class MolFilterAnd(MolFilter):
         ----------
         mol : DataPacket[MolDatBase]
             DataPacket containing information about a molecule.
+        op : typing.Optional[DataPacket[OpDatBase]] (default: None)
+            DataPacket containing information about a particular operator.
+        arg_num : typing.Optional[int] (default: None)
+            The argument of the operator the molecule is being considered for.
 
         Returns
         -------
         bool
             If initialized with filter1 and filter2, returns the result of
-            `filter1(mol) and filter2(mol)`.
+            `filter1(mol, op, arg_num) and filter2(mol, op, arg_num)`.
         """
-        return self._filter1(mol) and self._filter2(mol)
+        return self._filter1(mol, op, arg_num) and self._filter2(
+            mol, op, arg_num
+        )
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -786,7 +806,12 @@ class MolFilterAnd(MolFilter):
 class MolFilterInv(MolFilter):
     _filter: MolFilter
 
-    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+    def __call__(
+        self,
+        mol: DataPacket[MolDatBase],
+        op: typing.Optional[DataPacket[OpDatBase]] = None,
+        arg_num: typing.Optional[int] = None,
+    ) -> bool:
         """
         Calculate the inverse result of the composed filter.
 
@@ -794,14 +819,18 @@ class MolFilterInv(MolFilter):
         ----------
         mol : DataPacket[MolDatBase]
             DataPacket containing information about a molecule.
+        op : typing.Optional[DataPacket[OpDatBase]] (default: None)
+            DataPacket containing information about a particular operator.
+        arg_num : typing.Optional[int] (default: None)
+            The argument of the operator the molecule is being considered for.
 
         Returns
         -------
         bool
             If initialized with filter1, returns the result of
-            `not filter1(mol)`.
+            `not filter1(mol, op, arg_num)`.
         """
-        return not self._filter(mol)
+        return not self._filter(mol, op, arg_num)
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -831,7 +860,12 @@ class MolFilterOr(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+    def __call__(
+        self,
+        mol: DataPacket[MolDatBase],
+        op: typing.Optional[DataPacket[OpDatBase]] = None,
+        arg_num: typing.Optional[int] = None,
+    ) -> bool:
         """
         Calculate the union result of the composed filters.
 
@@ -839,14 +873,20 @@ class MolFilterOr(MolFilter):
         ----------
         mol : DataPacket[MolDatBase]
             DataPacket containing information about a molecule.
+        op : typing.Optional[DataPacket[OpDatBase]] (default: None)
+            DataPacket containing information about a particular operator.
+        arg_num : typing.Optional[int] (default: None)
+            The argument of the operator the molecule is being considered for.
 
         Returns
         -------
         bool
             If initialized with filter1 and filter2, returns the result of
-            `filter1(mol) or filter2(mol)`.
+            `filter1(mol, op, arg_numl) or filter2(mol, op, arg_num)`.
         """
-        return self._filter1(mol) or self._filter2(mol)
+        return self._filter1(mol, op, arg_num) or self._filter2(
+            mol, op, arg_num
+        )
 
     @property
     def meta_required(self) -> MetaKeyPacket:
@@ -876,7 +916,12 @@ class MolFilterXor(MolFilter):
     _filter1: MolFilter
     _filter2: MolFilter
 
-    def __call__(self, mol: DataPacket[MolDatBase]) -> bool:
+    def __call__(
+        self,
+        mol: DataPacket[MolDatBase],
+        op: typing.Optional[DataPacket[OpDatBase]] = None,
+        arg_num: typing.Optional[int] = None,
+    ) -> bool:
         """
         Calculate the symmetric difference result of the composed filters.
 
@@ -884,14 +929,20 @@ class MolFilterXor(MolFilter):
         ----------
         mol : DataPacket[MolDatBase]
             DataPacket containing information about a molecule.
+        op : typing.Optional[DataPacket[OpDatBase]] (default: None)
+            DataPacket containing information about a particular operator.
+        arg_num : typing.Optional[int] (default: None)
+            The argument of the operator the molecule is being considered for.
 
         Returns
         -------
         bool
             If initialized with filter1 and filter2, returns the result of
-            `filter1(mol) != filter2(mol)`.
+            `filter1(mol, op, arg_num) != filter2(mol, op, arg_num)`.
         """
-        return self._filter1(mol) != self._filter2(mol)
+        return self._filter1(mol, op, arg_num) != self._filter2(
+            mol, op, arg_num
+        )
 
     @property
     def meta_required(self) -> MetaKeyPacket:

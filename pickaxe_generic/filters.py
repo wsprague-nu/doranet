@@ -103,7 +103,10 @@ class MolFilterMetaVal(interfaces.MolFilter):
     val: typing.Any
 
     def __call__(
-        self, mol: interfaces.DataPacket[interfaces.MolDatBase]
+        self,
+        mol: interfaces.DataPacket[interfaces.MolDatBase],
+        op: typing.Optional[interfaces.DataPacket[interfaces.OpDatBase]],
+        arg_num: typing.Optional[int],
     ) -> bool:
         if mol.meta is None:
             return False
@@ -123,7 +126,10 @@ class MolFilterMetaExist(interfaces.MolFilter):
     key: collections.abc.Hashable
 
     def __call__(
-        self, mol: interfaces.DataPacket[interfaces.MolDatBase]
+        self,
+        mol: interfaces.DataPacket[interfaces.MolDatBase],
+        op: typing.Optional[interfaces.DataPacket[interfaces.OpDatBase]],
+        arg_num: typing.Optional[int],
     ) -> bool:
         if mol.meta is None or self.key not in mol.meta:
             return False
@@ -142,7 +148,10 @@ class MolFilterMetaFunc(interfaces.MolFilter):
     unknown_pass: bool = False
 
     def __call__(
-        self, mol: interfaces.DataPacket[interfaces.MolDatBase]
+        self,
+        mol: interfaces.DataPacket[interfaces.MolDatBase],
+        op: typing.Optional[interfaces.DataPacket[interfaces.OpDatBase]],
+        arg_num: typing.Optional[int],
     ) -> bool:
         meta = mol.meta
         key = self.key
