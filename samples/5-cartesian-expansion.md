@@ -44,6 +44,15 @@ for name, smarts in operator_smarts.items():
     network.add_op(engine.op.rdkit(smarts), meta={"name": name})
 ```
 
+As an example of using the name of the operator, we can list the operators by name.
+
+```sh
+>>> [x["name"] for x in network.ops.meta(keys=["name"])]
+['hydrogenation of alkene/carbonyl']
+```
+
+This becomes more useful when viewing reactions which only indicate the index of the operator.
+
 We will save this initial network to a file, so that we may restore it for testing out new strategies and configuration options.
 
 ```python
@@ -84,7 +93,7 @@ strat.expand()
  (6, MolDatBasic('CC(C)O')),
  (7, MolDatBasic('C=CCC')),
  (8, MolDatBasic('CCCC'))]
->>> pprint(list(network.rxns))
+>>> pprint(list((rxn, network.ops.meta(rxn.operator,"name")) for rxn in network.rxns))
 [Reaction(operator=0, reactants=(1, 0), products=(5,)),
  Reaction(operator=0, reactants=(2, 0), products=(6,)),
  Reaction(operator=0, reactants=(4, 0), products=(7,)),
