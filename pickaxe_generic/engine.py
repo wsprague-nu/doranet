@@ -267,7 +267,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
                 filters.MolFilterMetaExist,
                 filters.MolFilterMetaFunc,
             ),
-            interfaces.BundleFilterTypes(),
+            interfaces.BundleFilterTypes(filters.BundleFilterCoreactants),
             interfaces.RecipeFilterTypes(filters.CoreactantFilter),
             interfaces.ReactionFilterTypes(filters.GenerationFilter),
         )

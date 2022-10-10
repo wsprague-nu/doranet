@@ -1608,7 +1608,11 @@ class BundleFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
+    coreactant : filters.BundleFilterCoreactants
+        Filter which requires at least one non-coreactant in every reaction.
     """
+
+    coreactant: "filters.BundleFilterCoreactants"
 
 
 @typing.final
