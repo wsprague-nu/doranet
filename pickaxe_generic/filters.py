@@ -4,6 +4,7 @@ Contains classes which implement various filter components.
 
 import collections.abc
 import dataclasses
+import itertools
 import typing
 
 import rdkit
@@ -180,9 +181,33 @@ class MolFilterIndex(interfaces.MolFilter):
             return self.whitelist
         return not self.whitelist
 
-    @property
-    def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket()
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class BundleFilterCoreactants(interfaces.BundleFilter):
+    coreagents: collections.abc.Container[interfaces.MolIndex]
+
+    def __call__(
+        self, bundle: interfaces.RecipeBundle
+    ) -> collections.abc.Iterable[interfaces.RecipeBundle]:
+        mol_args = bundle.args
+        n_args = len(mol_args)
+        coreagents = self.coreagents
+        coreagents_args = tuple(
+            tuple(mol for mol in mols if mol.i in coreagents)
+            for mols in mol_args
+        )
+        for i in range(n_args):
+            yield interfaces.RecipeBundle(
+                bundle.operator,
+                coreagents_args[:i]
+                + (
+                    tuple(
+                        mol for mol in mol_args[i] if mol.i not in coreagents
+                    ),
+                )
+                + mol_args[i + 1 :],
+            )
 
 
 @typing.final
