@@ -269,7 +269,10 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             ),
             interfaces.BundleFilterTypes(filters.BundleFilterCoreactants),
             interfaces.RecipeFilterTypes(filters.CoreactantFilter),
-            interfaces.ReactionFilterTypes(filters.GenerationFilter),
+            interfaces.ReactionFilterTypes(
+                filters.ReactionFilterMaxAtoms.from_num,
+                filters.GenerationFilter,
+            ),
         )
 
     @property

@@ -9,6 +9,7 @@ import typing
 
 import rdkit
 import rdkit.Chem
+import rdkit.Chem.rdqueries
 
 from . import interfaces, metadata
 
@@ -269,14 +270,14 @@ class ReactionFilterMaxAtoms(metadata.ReactionFilterBase):
             rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(proton_number),
         )
 
-    def __call__(self, operator, reactants, products):
-        for mol in products:
-            if not isinstance(mol, interfaces.MolDatRDKit):
+    def __call__(self, recipe: interfaces.ReactionExplicit):
+        for mol in recipe.products:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
                 raise NotImplementedError(
                     f"Counting # of atoms in non-RDKit molecules is not yet supported (found {repr(mol)})"
                 )
             if (
-                len(mol.rdkitmol.GetAtomsMatchingQuery(self.query))
+                len(mol.item.rdkitmol.GetAtomsMatchingQuery(self.query))
                 > self.max_atoms
             ):
                 return False

@@ -1638,10 +1638,14 @@ class ReactionFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
+    max_atoms : filter.ReactionFilterMaxAtoms
+        Filter which limits reactions producing molecules larger than a certain
+        threshold # of atoms.
     generation : filters.GenerationFilter
-        Filter which limits the maximum number of "generations."
+        Filter which limits the maximum number of "generations" based on integer metadata.
     """
 
+    max_atoms: type['filters.ReactionFilterMaxAtoms.from_num']
     generation: "filters.GenerationFilter"
 
 
