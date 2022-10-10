@@ -253,6 +253,36 @@ class GenerationFilter(metadata.ReactionFilterBase):
         return interfaces.MetaKeyPacket(frozenset((self.gen_key,)))
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class ReactionFilterMaxAtoms(metadata.ReactionFilterBase):
+    max_atoms: int
+    query: typing.Any
+
+    @classmethod
+    def from_num(
+        self, max_atoms: int, proton_number: typing.Optional[int]
+    ) -> "ReactionFilterMaxAtoms":
+        if proton_number is None:
+            return ReactionFilterMaxAtoms(max_atoms, None)
+        return ReactionFilterMaxAtoms(
+            max_atoms,
+            rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(proton_number),
+        )
+
+    def __call__(self, operator, reactants, products):
+        for mol in products:
+            if not isinstance(mol, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"Counting # of atoms in non-RDKit molecules is not yet supported (found {repr(mol)})"
+                )
+            if (
+                len(mol.rdkitmol.GetAtomsMatchingQuery(self.query))
+                > self.max_atoms
+            ):
+                return False
+        return True
+
+
 def ReplaceNewValue(
     key: collections.abc.Hashable, old_value: typing.Any, new_value: typing.Any
 ) -> bool:
