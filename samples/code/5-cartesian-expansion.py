@@ -22,15 +22,18 @@ for smiles in initial_reactant_smiles:
 for name, smarts in operator_smarts.items():
     network.add_op(engine.op.rdkit(smarts), meta={"name": name})
 
-for i in range(len(network.mols)):
-    network.mols.set_meta(i, {"generation": 0})
-network.mols.set_meta(0, {"generation": -1})
-network.mols.set_meta(4, {"generation": -1})
-strat = engine.strat.cartesian(network, gen_key="generation")
+strat = engine.strat.cartesian(network)
 strat.expand(num_iter=2)
 pprint.pprint(list(enumerate(network.mols)))
 pprint.pprint(list(network.rxns))
 pprint.pprint(list(network.mols.meta()))
+pprint.pprint(
+    list(
+        (rxn, network.ops.meta(rxn.operator, ["name"])["name"])
+        for rxn in network.rxns
+    )
+)
+print([x["name"] for x in network.ops.meta(keys=["name"])])
 
 operator_smarts_big = {
     "hydrogenation of alkene/carbonyl": "[C,O;+0:1]=[C&+0:2].[#1][#1]>>[*:1]-[*:2]",
