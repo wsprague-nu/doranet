@@ -442,11 +442,19 @@ OR | \|
 XOR | ^
 NOT | -
 
+These operations are also implemented using short-circuiting, so make sure to order your filters such that the solution can be computed as quickly as possible!
+
 Since the bundle filter doesn't work quite like the others in terms of its return value, you can't use these logical operators with it.  However, you can chain multiple bundle filters using `>>`.
 
 🚧🚧Example of filter composition coming soon.🚧🚧
 
 ## Takeaways
 
-1. 
+1. There are four varieties of filter: molecule filters, bundle filters, recipe filters, and reaction filters.
+    1. Molecule filters test specific molecules and remove them from the reaction lists.
+    1. Bundle filters limit the types of combinations which can occur to produce recipes.
+    1. Recipe filters stop individual reactions from occurring.  They are fairly inefficient, but some applications require them.
+    1. Reaction filters do not stop reactions which have already occurred.  Instead, they prevent the products of some reactions from being further reacted via the `reactive=False` flag.
+1. Molecule, Recipe, and Reaction filters can be composed with logical operators `&`, `|`, `^`, and `-`.  Bundle filters can be composed using `>>`.
 
+Congratulations!  You have finished the fifth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./7-metadata.md) to learn how to use the metadata engine to make your networks run even more efficiently!
