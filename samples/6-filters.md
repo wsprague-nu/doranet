@@ -428,3 +428,25 @@ False
 You may have noticed that the argument for entering a reaction filter into `.expand()` is in fact `reaction_plan`, not `reaction_filter` as would follow the pattern of the other filter types.  This is because reaction filters are much more internally complex than the pre-reaction filters, and are actually part of [an extended metadata calculation framework](./7-metadata.md) which enables the most powerful features of Pickaxe-Generic, including the parallel calculation, optimization, and caching of critical molecule properties.
 
 ## Filter Composition
+
+One of the additional powerful features of Pickaxe-Generic is that it uses extensive [composition](https://en.wikipedia.org/wiki/Object_composition).
+
+When using the built-in filters, or even designing your own, you may wonder "but what if I want an exception to this molecule filter for this specific operator" or "if only I was able to use both of these bundle filters."  Your immediate reaction may to go straight to the code and create your own filter type which implements all the required functions, etc.  However, if the basic filters you want already exist, and the statement you would like to filter for can be expressed in terms of the basic logical operators AND, OR, XOR, and NOT, then you don't have to write any additional classes or function!  Note: this advertisement does not apply to the bundle filter.
+
+Simply use the syntax `filter12 = filter1 & filter2` to create a new `filter12` which for an argument `x` tests the assertion `filter1(x) and filter2(x)`.  These compounds can also be nested using parentheses: `filter12or3 = (filter1 & filter2) | filter3` tests the same assertion as previous, but also passes those assertions which pass `filter3`.  The list of logical operators and their corresponding Python operators is shown below.
+
+Logical Operator | Python Operator
+---|---
+AND | &
+OR | \|
+XOR | ^
+NOT | -
+
+Since the bundle filter doesn't work quite like the others in terms of its return value, you can't use these logical operators with it.  However, you can chain multiple bundle filters using `>>`.
+
+🚧🚧Example of filter composition coming soon.🚧🚧
+
+## Takeaways
+
+1. 
+
