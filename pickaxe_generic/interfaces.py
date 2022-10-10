@@ -1179,6 +1179,7 @@ class BundleFilter(abc.ABC):
             necessary to run filter, and if live molecules or operators are
             required.
         """
+        return MetaKeyPacket()
 
     @typing.final
     def __rshift__(self, other: "BundleFilter") -> "BundleFilter":
@@ -1612,7 +1613,7 @@ class BundleFilterTypes(typing.NamedTuple):
         Filter which requires at least one non-coreactant in every reaction.
     """
 
-    coreactant: "filters.BundleFilterCoreactants"
+    coreactant: type["filters.BundleFilterCoreactants"]
 
 
 @typing.final
