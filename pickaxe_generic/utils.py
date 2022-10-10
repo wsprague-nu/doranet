@@ -137,6 +137,120 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
         )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class RxnTrackerDepthFirstNetwork(interfaces.RxnTrackerNetwork):
+    """Implements RxnTrackerNetwork interface."""
+
+    network: interfaces.ChemNetwork
+
+    def _getchains(
+        self,
+        cur_gen_mols: collections.abc.Collection[interfaces.MolIndex],
+        prev_gens_mols: set[interfaces.MolIndex] = None,
+        prev_gens_rxns: set[interfaces.RxnIndex] = None,
+        reagent_table: typing.Optional[
+            collections.abc.Container[interfaces.MolIndex]
+        ] = None,
+        fail_on_unknown_reagent: bool = False,
+        depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.RxnIndex]], None, None
+    ]:
+        network = self.network
+        n_mols = len(network.mols)
+        n_rxns = len(network.rxns)
+        if depth is not None:
+            if depth <= 0:
+                return
+            new_depth = depth - 1
+        else:
+            new_depth = None
+        if len(cur_gen_mols) == 0:
+            yield []
+            return
+        if prev_gens_mols is None:
+            prev_gens_mols = set()
+        if prev_gens_rxns is None:
+            prev_gens_rxns = set()
+        if reagent_table is None:
+            reagent_table = set()
+        rxnsets: list[list[interfaces.RxnIndex]] = []
+        for mol in cur_gen_mols:
+            if mol in reagent_table:
+                continue
+            elif mol >= n_mols:
+                rxnsets.append([])
+                continue
+            newrxnset: list[interfaces.RxnIndex] = [
+                rxn
+                for rxn in network.producers(mol)
+                if rxn not in prev_gens_rxns
+                and all(
+                    mol not in prev_gens_mols
+                    for mol in network.rxns[rxn].reactants
+                )
+            ]
+            rxnsets.append(newrxnset)
+        if not fail_on_unknown_reagent:
+            rxnsets = [rxnset for rxnset in rxnsets if len(rxnset) > 0]
+            if len(rxnsets) == 0:  # these two lines
+                return  # close the loophole
+        if len(rxnsets) == 0:
+            yield []
+            return
+        tested_combos: set[frozenset[interfaces.RxnIndex]] = set()
+        for rxntuple in itertools.product(*rxnsets):
+            rxncombo: frozenset[interfaces.RxnIndex] = frozenset(rxntuple)
+            if rxncombo in tested_combos:
+                continue
+            else:
+                tested_combos.add(frozenset(rxncombo))
+            required_reagents = set(
+                mol
+                for mol in itertools.chain(
+                    *(network.rxns[rxn].reactants for rxn in rxncombo)
+                )
+                if mol not in reagent_table
+            )
+            if len(required_reagents) == 0:
+                yield [rxncombo]
+                continue
+            for path in self._getchains(
+                required_reagents,
+                prev_gens_mols.union(cur_gen_mols),
+                prev_gens_rxns.union(rxncombo),
+                reagent_table,
+                fail_on_unknown_reagent,
+                new_depth,
+            ):
+                path.append(rxncombo)
+                yield path
+
+    def getParentChains(
+        self,
+        target: interfaces.MolIndex,
+        reagent_table: collections.abc.Container[interfaces.MolIndex] = tuple(),
+        fail_on_unknown_reagent: bool = False,
+        max_depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.RxnIndex]], None, None
+    ]:
+        if fail_on_unknown_reagent and not reagent_table:
+            raise ValueError(
+                "reagent table must be specified if fail_on_unknown_reagent is "
+                "True"
+            )
+        return (
+            path
+            for path in self._getchains(
+                [target],
+                reagent_table=reagent_table,
+                fail_on_unknown_reagent=fail_on_unknown_reagent,
+                depth=max_depth,
+            )
+        )
+
+
 T = typing.TypeVar("T")
 
 

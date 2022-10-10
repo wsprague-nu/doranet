@@ -1645,7 +1645,7 @@ class ReactionFilterTypes(typing.NamedTuple):
         Filter which limits the maximum number of "generations" based on integer metadata.
     """
 
-    max_atoms: type['filters.ReactionFilterMaxAtoms.from_num']
+    max_atoms: type["filters.ReactionFilterMaxAtoms.from_num"]
     generation: "filters.GenerationFilter"
 
 
@@ -3008,6 +3008,39 @@ class RxnTracker(abc.ABC):
         target : Identifier
             Unique id of target molecule.
         reagent_table : Sequence[Identifier]
+            Sequence of reagents which are considered "basic" and which the tree
+            search will consider leaf nodes.
+        fail_on_unknown_reagent : bool
+            If tree requires unlisted reagents, do not return.
+        """
+
+
+class RxnTrackerNetwork(abc.ABC):
+    """
+    Interface representing an object which analyzes rxn network connections.
+
+    Classes implementing this interface are able to create retrosynthetic trees
+    based on a precalculated reaction network tree.
+    """
+
+    @abc.abstractmethod
+    def getParentChains(
+        self,
+        target: MolIndex,
+        reagent_table: collections.abc.Container[MolIndex] = tuple(),
+        fail_on_unknown_reagent: bool = False,
+        max_depth: typing.Optional[int] = None,
+    ) -> collections.abc.Iterable[
+        collections.abc.Iterable[collections.abc.Iterable[RxnIndex]]
+    ]:
+        """
+        Gets parent chains for a particular target molecule.
+
+        Parameters
+        ----------
+        target : MolIndex
+            Unique id of target molecule.
+        reagent_table : collections.abc.Collection[MolIndex]
             Sequence of reagents which are considered "basic" and which the tree
             search will consider leaf nodes.
         fail_on_unknown_reagent : bool
