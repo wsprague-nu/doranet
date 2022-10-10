@@ -1451,7 +1451,14 @@ class CartesianStrategyUpdated:
         mol_filter: typing.Optional[interfaces.MolFilter] = None,
         bundle_filter: typing.Optional[interfaces.BundleFilter] = None,
         recipe_filter: typing.Optional[interfaces.RecipeFilter] = None,
-        reaction_plan: typing.Optional[metadata.RxnAnalysisStep] = None,
+        reaction_plan: typing.Optional[
+            typing.Union[
+                metadata.RxnAnalysisStep,
+                metadata.PropertyCompositor,
+                metadata.ReactionFilterBase,
+                metadata.LocalPropertyCalc,
+            ]
+        ] = None,
         # max_gen: typing.Optional[int] = None,
     ):
         engine = self._engine
