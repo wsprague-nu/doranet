@@ -1459,6 +1459,10 @@ class CartesianStrategyUpdated:
                 metadata.LocalPropertyCalc,
             ]
         ] = None,
+        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
+        global_hooks: typing.Optional[
+            collections.abc.Sequence[interfaces.GlobalUpdateHook]
+        ] = None,
         # max_gen: typing.Optional[int] = None,
     ):
         engine = self._engine
@@ -1466,7 +1470,11 @@ class CartesianStrategyUpdated:
         # mol_filter: typing.Optional[interfaces.MolFilter] = None
         # calc: typing.Optional[metadata.MolPropertyFromRxnCalc] = None
         # resolver: typing.Optional[metadata.MetaUpdateResolver] = None
-        global_hook: list[interfaces.GlobalUpdateHook] = []
+        global_hook: list[interfaces.GlobalUpdateHook]
+        if global_hooks is None:
+            global_hook = []
+        else:
+            global_hook = list(global_hooks)
         # if max_gen is not None:
         #     mol_filter = engine.filter.mol.meta_func(
         #         self._gen_key, self.gen_test(max_gen)
@@ -1486,4 +1494,5 @@ class CartesianStrategyUpdated:
             bundle_filter=bundle_filter,
             recipe_filter=recipe_filter,
             reaction_plan=reaction_plan,
+            mc_update=mc_update,
         )
