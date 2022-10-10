@@ -1168,6 +1168,7 @@ class BundleFilter(abc.ABC):
         """
 
     @property
+    @abc.abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         """
         Specifier for information required by filter function.
@@ -1179,7 +1180,6 @@ class BundleFilter(abc.ABC):
             necessary to run filter, and if live molecules or operators are
             required.
         """
-        return MetaKeyPacket()
 
     @typing.final
     def __rshift__(self, other: "BundleFilter") -> "BundleFilter":
@@ -1242,6 +1242,7 @@ class RecipeFilter(abc.ABC):
         """
 
     @property
+    @abc.abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         """
         Specifier for information required by filter function.

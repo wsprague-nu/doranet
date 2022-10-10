@@ -209,6 +209,10 @@ class BundleFilterCoreactants(interfaces.BundleFilter):
                 + mol_args[i + 1 :],
             )
 
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
+
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
@@ -220,6 +224,10 @@ class CoreactantFilter(interfaces.RecipeFilter):
         if all(mol.i in self.coreactants for mol in recipe.reactants):
             return False
         return True
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
 
 
 @typing.final
