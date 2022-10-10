@@ -35,7 +35,9 @@ network = engine.network_from_file("6-filters")
 
 strat = engine.strat.cartesian(network)
 
-max_atoms_filter = engine.filter.reaction.max_atoms(max_atoms=5, proton_number=6)
+max_atoms_filter = engine.filter.reaction.max_atoms(
+    max_atoms=5, proton_number=6
+)
 
 strat.expand(num_iter=10, reaction_plan=max_atoms_filter)
 
