@@ -1631,6 +1631,15 @@ class RecipeFilterTypes(typing.NamedTuple):
     coreactant: "filters.CoreactantFilter"
 
 
+class _max_atoms_from_num(typing.Protocol):
+    @abc.abstractmethod
+    @classmethod
+    def __call__(
+        self, max_atoms: int, proton_number: typing.Optional[int] = None
+    ) -> "filters.ReactionFilterMaxAtoms":
+        ...
+
+
 @typing.final
 class ReactionFilterTypes(typing.NamedTuple):
     """
@@ -1645,7 +1654,7 @@ class ReactionFilterTypes(typing.NamedTuple):
         Filter which limits the maximum number of "generations" based on integer metadata.
     """
 
-    max_atoms: type["filters.ReactionFilterMaxAtoms.from_num"]
+    max_atoms: _max_atoms_from_num
     generation: "filters.GenerationFilter"
 
 
