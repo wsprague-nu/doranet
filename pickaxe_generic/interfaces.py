@@ -1632,8 +1632,8 @@ class RecipeFilterTypes(typing.NamedTuple):
 
 
 class _max_atoms_from_num(typing.Protocol):
-    @abc.abstractmethod
     @classmethod
+    @abc.abstractmethod
     def __call__(
         self, max_atoms: int, proton_number: typing.Optional[int] = None
     ) -> "filters.ReactionFilterMaxAtoms":
