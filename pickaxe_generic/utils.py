@@ -230,3 +230,71 @@ class RxnTrackerDepthFirst(RxnTracker):
                 depth=max_depth,
             )
         )
+
+    
+def getFigures(target_smiles, mol_smiles, num_gens, engine, rxn_lib, job_name):  
+    """If the target is found at the end of the expansion, create figures of the
+       reaction routes. Each figure contains all generations of one route. Also 
+       prints reaction operators, reactants, and products. Figures are displayed,
+       also saved in the working folder. Based on the example code for using 
+       RxnTrackerDepthFirst(rxn_lib).
+       Currently need to have the font file 'OpenSans-Regular.ttf' in the working 
+       folder.
+       
+    Parameters
+        ----------       
+        target_smiles : str, target molecule smiles            
+        mol_smiles : tuple, smiles of starting chemicals            
+        num_gens : int, number of expansion generations                   
+        engine : example: engine, created with engine = create_engine()  
+        rxn_lib : example: rxn_lib, created with mol_lib, op_lib, rxn_lib = engine.Libs()  
+        job_name: str, name of the job
+    """
+    from rdkit.Chem import AllChem
+    from rdkit.Chem import Draw
+    from PIL import Image, ImageDraw, ImageFont
+    from IPython.display import display
+    doubletracker = RxnTrackerDepthFirst(rxn_lib)    
+    route = 1
+    for chain in doubletracker.getParentChains(
+        engine.Mol(target_smiles).uid,
+        reagent_table=[engine.Mol(smiles).uid for smiles in mol_smiles],
+        max_depth = num_gens,
+    ):
+        g = 0        
+        rxn_image_list =[]
+        for gen in chain:
+            print(f"Generation {g}:")
+            for rxnid in gen:
+                print(rxn_lib[rxnid])   
+                rxn_smiles_str = ""     
+                for molecule in rxn_lib[rxnid].reactants:                                               
+                    rxn_smiles_str += molecule
+                    rxn_smiles_str += "."                
+                rxn_smiles_str += ">>"   
+                for molecule in rxn_lib[rxnid].products:                
+                    rxn_smiles_str += molecule
+                    rxn_smiles_str += "."                              
+                rxn1 = AllChem.ReactionFromSmarts(rxn_smiles_str, useSmiles = True)               
+                img1 = Draw.ReactionToImage(rxn1)
+                msg = f"Route {route}, Generation {g}"
+                img_w, img_h = img1.size           
+                I1 = ImageDraw.Draw(img1)
+                myFont = ImageFont.truetype('OpenSans-Regular.ttf', 25)
+                new_box = I1.textbbox((0,0), msg, font = myFont)                             
+                I1.text(((img_w-new_box[2])/2, 0), msg, font = myFont, fill="black")                       
+                rxn_image_list.append(img1)                                  
+            g += 1        
+        max_width = 0
+        total_hight = 0
+        for img in rxn_image_list:                       
+            total_hight += img.size[1]
+            max_width = max(max_width, img.size[0])
+        combined_image = Image.new('RGB', (max_width, total_hight), "white")
+        current_hight = 0
+        for img in rxn_image_list:    
+            combined_image.paste(img, ((max_width - img.size[0])//2, current_hight))
+            current_hight += img.size[1]        
+        display(combined_image) 
+        combined_image.save(f"{job_name} route {route}.png")
+        route += 1
