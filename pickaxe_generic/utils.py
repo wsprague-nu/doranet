@@ -28,6 +28,7 @@ import rdkit.Chem
 
 from pickaxe_generic.containers import ObjectLibrary
 from pickaxe_generic.datatypes import Identifier, RxnDatBase
+from pickaxe_generic.engine import NetworkEngine
 
 
 class RxnTracker(ABC):
@@ -236,23 +237,38 @@ class RxnTrackerDepthFirst(RxnTracker):
         )
 
 
-def getFigures(target_smiles, mol_smiles, num_gens, engine, rxn_lib, job_name):
-    """If the target is found at the end of the expansion, create figures of the
-       reaction routes. Each figure contains all generations of one route. Also
-       prints reaction operators, reactants, and products. Figures are displayed,
-       also saved in the working folder. Based on the example code for using
-       RxnTrackerDepthFirst(rxn_lib).
-       Currently need to have the font file 'OpenSans-Regular.ttf' in the working
-       folder.
+def getFigures(
+    target_smiles: str,
+    mol_smiles: tuple[str, ...],
+    num_gens: int,
+    engine: NetworkEngine,
+    rxn_lib: ObjectLibrary[RxnDatBase],
+    job_name: str,
+):
+    """
+    Create and display figures of reaction pathways.
+
+    If the target is found at the end of the expansion, create figures of the
+    reaction routes. Each figure contains all generations of one route. Also
+    prints reaction operators, reactants, and products. Figures are displayed,
+    also saved in the working folder. Based on the example code for using
+    RxnTrackerDepthFirst(rxn_lib).  Currently need to have the font file
+    'OpenSans-Regular.ttf' in the working folder.
 
     Parameters
-        ----------
-        target_smiles : str, target molecule smiles
-        mol_smiles : tuple, smiles of starting chemicals
-        num_gens : int, number of expansion generations
-        engine : example: engine, created with engine = create_engine()
-        rxn_lib : example: rxn_lib, created with mol_lib, op_lib, rxn_lib = engine.Libs()
-        job_name: str, name of the job
+    ----------
+    target_smiles : str
+        Target molecule SMILES.
+    mol_smiles : tuple[str,...]
+        SMILES of starting chemicals.
+    num_gens : int
+        Number of expansion generations performed.
+    engine : NetworkEngine
+        Network Engine used to create data objects.
+    rxn_lib : ObjectLibrary[RxnDatBase]
+        Reaction library where reactions are contained.
+    job_name: str
+        Name of the job.
     """
     doubletracker = RxnTrackerDepthFirst(rxn_lib)
     route = 1
@@ -269,10 +285,18 @@ def getFigures(target_smiles, mol_smiles, num_gens, engine, rxn_lib, job_name):
                 print(rxn_lib[rxnid])
                 rxn_smiles_str = ""
                 for molecule in rxn_lib[rxnid].reactants:
+                    if not isinstance(molecule, str):
+                        raise TypeError(
+                            f"Identifier {molecule} of type {type(molecule)} must be SMILES string."
+                        )
                     rxn_smiles_str += molecule
                     rxn_smiles_str += "."
                 rxn_smiles_str += ">>"
                 for molecule in rxn_lib[rxnid].products:
+                    if not isinstance(molecule, str):
+                        raise TypeError(
+                            f"Identifier {molecule} of type {type(molecule)} must be SMILES string."
+                        )
                     rxn_smiles_str += molecule
                     rxn_smiles_str += "."
                 rxn1 = rdkit.Chem.rdchemreactions.ReactionFromSmarts(
