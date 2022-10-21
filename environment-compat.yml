@@ -2,11 +2,13 @@ name: pickaxe-env
 channels:
  - conda-forge
 dependencies:
+ - ipython
  - jupyter
  - mordred
  - numpy
  - numpydoc
  - pandas
+ - pillow
  - pymongo
  - python>=3.9
  - rdkit
