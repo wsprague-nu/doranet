@@ -8,6 +8,7 @@ dependencies:
  - flake8
  - flake8-bugbear
  - flake8-docstrings
+ - ipython
  - isort
  - jupyter
  - memory_profiler
@@ -16,6 +17,7 @@ dependencies:
  - numpy
  - numpydoc
  - pandas
+ - pillow
  - pymongo
  - pylint
  - pytest
