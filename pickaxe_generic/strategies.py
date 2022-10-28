@@ -1180,7 +1180,6 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 metadata.LocalPropertyCalc,
             ]
         ] = None,
-        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
         global_hooks: typing.Optional[
             collections.abc.Sequence[interfaces.GlobalUpdateHook]
         ] = None,
@@ -1192,7 +1191,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         rxn_analysis_task: typing.Optional[metadata.RxnAnalysisStep] = None
         if reaction_plan is not None:
             rxn_analysis_task = metadata.as_rxn_analysis_step(reaction_plan)
-        if mc_update is None:
+            mc_update = rxn_analysis_task.resolver
+        else:
             mc_update = metadata.MetaUpdateResolver({}, {}, {})
 
         if heap_size is not None and beam_size is not None:
@@ -1459,7 +1459,6 @@ class CartesianStrategyUpdated:
                 metadata.LocalPropertyCalc,
             ]
         ] = None,
-        mc_update: typing.Optional[metadata.MetaUpdateResolver] = None,
         global_hooks: typing.Optional[
             collections.abc.Sequence[interfaces.GlobalUpdateHook]
         ] = None,
@@ -1494,5 +1493,4 @@ class CartesianStrategyUpdated:
             bundle_filter=bundle_filter,
             recipe_filter=recipe_filter,
             reaction_plan=reaction_plan,
-            mc_update=mc_update,
         )

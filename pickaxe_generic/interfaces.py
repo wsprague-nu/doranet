@@ -2910,7 +2910,6 @@ class PriorityQueueStrategy(abc.ABC):
                 "metadata.LocalPropertyCalc",
             ]
         ] = None,
-        mc_update: typing.Optional["metadata.MetaUpdateResolver"] = None,
         global_hooks: typing.Optional[
             collections.abc.Sequence[GlobalUpdateHook]
         ] = None,

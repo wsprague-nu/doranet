@@ -371,6 +371,11 @@ class PropertyCompositor(abc.ABC):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         ...
 
+    @property
+    @abc.abstractmethod
+    def resolver(self) -> "MetaUpdateResolver":
+        ...
+
 
 class MergePropertyCompositor(PropertyCompositor):
     __slots__ = ("_comp1", "_comp2")
@@ -401,6 +406,10 @@ class MergePropertyCompositor(PropertyCompositor):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._comp1.meta_required + self._comp2.meta_required
+
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        return self._comp1.resolver | self._comp2.resolver
 
 
 @dataclasses.dataclass(frozen=True)
@@ -459,6 +468,10 @@ class FunctionPropertyCompositor(PropertyCompositor):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._comp1.meta_required + self._comp2.meta_required
 
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        return self._comp1.resolver | self._comp2.resolver
+
 
 @dataclasses.dataclass(frozen=True)
 class MolPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
@@ -483,6 +496,11 @@ class MolPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
+
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        calc = self._calc
+        return MetaUpdateResolver({calc.key: calc.resolver}, {}, {})
 
 
 @dataclasses.dataclass(frozen=True)
@@ -509,6 +527,11 @@ class MolRxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        calc = self._calc
+        return MetaUpdateResolver({calc.key: calc.resolver}, {}, {})
+
 
 @dataclasses.dataclass(frozen=True)
 class OpPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
@@ -532,6 +555,11 @@ class OpPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
 
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        calc = self._calc
+        return MetaUpdateResolver({}, {calc.key: calc.resolver}, {})
+
 
 @dataclasses.dataclass(frozen=True)
 class OpRxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
@@ -554,6 +582,11 @@ class OpRxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
+
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        calc = self._calc
+        return MetaUpdateResolver({}, {calc.key: calc.resolver}, {})
 
 
 @dataclasses.dataclass(frozen=True)
@@ -579,6 +612,11 @@ class RxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._calc.meta_required
+
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        calc = self._calc
+        return MetaUpdateResolver({}, {}, {calc.key: calc.resolver})
 
 
 @dataclasses.dataclass
@@ -705,6 +743,11 @@ class RxnAnalysisStep(abc.ABC):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         ...
 
+    @property
+    @abc.abstractmethod
+    def resolver(self) -> "MetaUpdateResolver":
+        ...
+
 
 @dataclasses.dataclass(frozen=True)
 class RxnAnalysisStepCompound(RxnAnalysisStep):
@@ -726,6 +769,10 @@ class RxnAnalysisStepCompound(RxnAnalysisStep):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self.step1.meta_required + self.step2.meta_required
+
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        return self.step1.resolver | self.step2.resolver
 
 
 def _mmd(
@@ -831,6 +878,10 @@ class RxnAnalysisStepProp(RxnAnalysisStep):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._prop.meta_required
 
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        return self._prop.resolver
+
 
 class RxnAnalysisStepFilter(RxnAnalysisStep):
     __slots__ = ("_arg",)
@@ -853,6 +904,10 @@ class RxnAnalysisStepFilter(RxnAnalysisStep):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return self._arg.meta_required
+
+    @property
+    def resolver(self) -> "MetaUpdateResolver":
+        return MetaUpdateResolver({}, {}, {})
 
 
 def _as_property_compositor(
@@ -910,6 +965,16 @@ def _compose_property_function(
     )
 
 
+def _merge_metas(
+    x: collections.abc.Mapping[collections.abc.Hashable, MetaDataResolverFunc],
+    y: collections.abc.Mapping[collections.abc.Hashable, MetaDataResolverFunc],
+) -> collections.abc.Mapping[collections.abc.Hashable, MetaDataResolverFunc]:
+    if isinstance(x, dict):
+        x | y
+    return {**x, **y}
+
+
+@typing.final
 @dataclasses.dataclass(frozen=True)
 class MetaUpdateResolver:
     __slots__ = ("mol_updates", "op_updates", "rxn_updates")
@@ -923,3 +988,11 @@ class MetaUpdateResolver:
     rxn_updates: collections.abc.Mapping[
         collections.abc.Hashable, MetaDataResolverFunc
     ]
+
+    @typing.final
+    def __or__(self, other: "MetaUpdateResolver") -> "MetaUpdateResolver":
+        return MetaUpdateResolver(
+            _merge_metas(self.mol_updates, other.mol_updates),
+            _merge_metas(self.op_updates, other.op_updates),
+            _merge_metas(self.rxn_updates, other.rxn_updates),
+        )
