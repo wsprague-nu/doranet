@@ -1690,9 +1690,11 @@ class MetaCalcTypes(typing.NamedTuple):
     ----------
     generation : type[metacalc.GenerationCalculator]
         Calculates the "generation" of a molecule.
+    mw : type[metacalc.MolWeightCalculator]
     """
 
     generation: "type[metacalc.GenerationCalculator]"
+    mw: "type[metacalc.MolWeightCalculator]"
 
 
 class NetworkEngine(abc.ABC):

@@ -27,6 +27,10 @@ _U = typing.TypeVar("_U")
 MetaDataResolverFunc = collections.abc.Callable[[_T, _T], _T]
 
 
+def TrivialMetaDataResolverFunc(a: _T, b: _T) -> _T:
+    return a
+
+
 class LocalPropertyCalc(abc.ABC, typing.Generic[_T]):
     @property
     @abc.abstractmethod

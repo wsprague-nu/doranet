@@ -6,6 +6,8 @@ import collections.abc
 import dataclasses
 import typing
 
+import rdkit
+
 from . import interfaces, metadata
 
 
@@ -56,3 +58,35 @@ class GenerationCalculator(metadata.MolPropertyFromRxnCalc[int]):
         ):
             return None
         return cur_gen
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class MolWeightCalculator(metadata.MolPropertyCalc[int]):
+    weight_key: collections.abc.Hashable
+
+    @property
+    def key(self) -> collections.abc.Hashable:
+        return self.weight_key
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
+
+    @property
+    def resolver(self) -> metadata.MetaDataResolverFunc[int]:
+        return metadata.TrivialMetaDataResolverFunc
+
+    def __call__(
+        self,
+        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        prev_value: typing.Optional[int] = None,
+    ) -> typing.Optional[int]:
+        if prev_value is not None:
+            return prev_value
+        item = data.item
+        if not isinstance(item, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"MolWeightCalculator has not been implemented for molecule type {type(item)}"
+            )
+        return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)

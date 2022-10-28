@@ -277,7 +277,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
 
     @property
     def meta(self):
-        return interfaces.MetaCalcTypes(metacalc.GenerationCalculator)
+        return interfaces.MetaCalcTypes(metacalc.GenerationCalculator, metacalc.MolWeightCalculator)
 
     def new_network(self):
         return network.ChemNetworkBasic()
