@@ -6,7 +6,7 @@ import collections.abc
 import dataclasses
 import typing
 
-import rdkit
+import rdkit.Chem.rdMolDescriptors
 
 from . import interfaces, metadata
 
