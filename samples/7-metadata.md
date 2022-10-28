@@ -33,7 +33,7 @@ for smiles in reagents:
 for name, smarts in operator_smarts.items():
     network.add_op(engine.op.rdkit(smarts), meta={"name": name})
 
-network.save_to_file("6-filters")
+network.save_to_file("7-metadata")
 ```
 
 ## Types of Metadata
@@ -67,19 +67,64 @@ This model of *local* vs. *global* metadata may seem complex, but is required in
 
 ### Developer's Note
 
-You may realize that inherent metadata does not necessarily have to be stored as metadata, since it can be recalculated given only the data object.  While this is technically true, having to recalculate complex inherent metadata may take more time than simply using the metadata framework as a cache for this information.  In addition, when running in parallel Pickaxe-Generic will not pass the data object to Recipe enumeration processes if only the metadata will suffice for the recipe filters and recipe ranking functions.  This saves on I/O, which is often the bottleneck of parallel processing.
-
-## The Reaction Analysis Plan
+You may realize that inherent metadata does not necessarily have to be stored as metadata, since it can be recalculated given only the data object.  While this is technically true, having to recalculate complex inherent metadata may take more time than simply using the metadata framework as a cache for this information.  In addition, Pickaxe-Generic will not pass the data object to Recipe enumeration processes if only the metadata will suffice for the recipe filters and recipe ranking functions.  This saves on I/O, which is often the bottleneck of parallel processing.
 
 ## Inherent Metadata
 
+Inherent metadata can be calculated directly from a data object.  One example is the molecular weight of a molecule.  Below is an example where the molecular weight of relevant molecules is calculated during network expansion.
+
+```python
+from pprint import pprint
+
+network = engine.network_from_file("7-metadata")
+
+strat = engine.strat.cartesian(network)
+
+mw_calc = engine.meta.mw("mw")
+
+strat.expand(num_iter=1, reaction_plan=mw_calc)
+```
+
+```sh
+>>> pprint(
+...   [
+...     (i, v[0], v[1])
+...     for i, v in
+...     enumerate(zip(network.mols, network.mols.meta()))
+...   ]
+... )
+[(0, MolDatBasic('[H][H]'), {'mw': 2.015650064}),
+ (1, MolDatBasic('O'), {'mw': 18.010564684}),
+ (2, MolDatBasic('CO'), {'mw': 32.026214748}),
+ (3, MolDatBasic('CCO'), {'mw': 46.041864812}),
+ (4, MolDatBasic('CC(=O)O'), {'mw': 60.021129368000004}),
+ (5, MolDatBasic('CC(O)O'), {'mw': 62.036779432}),
+ (6, MolDatBasic('COC(C)=O'), {'mw': 74.036779432}),
+ (7, MolDatBasic('CCOC(C)=O'), {'mw': 88.052429496}),
+ (8, MolDatBasic('CC(=O)OC(C)=O'), {'mw': 102.031694052})]
+```
+
+Note that the reactant molecules also have their molecular weights calculated.  Some calculators (like the one for "generation") require the reactants to already have a defined value before reaction in order to calculate the values for the products of a reaction.
+
+Other inherent metadata types you may be interested in might be a molecule's fingerprint, enthalpy of formation, pKa, and others.
+
 ## Contextual, Local Metadata
+
+Contextual metadata, as described in the [Types of Metadata](#types-of-metadata) section, is dependent on the context of a particular molecule within the network.  For example, the "generation" of a molecule can be defined as an integer, where in a particular reaction the generation of a product molecule is the largest generation of any reactant plus one, and in a larger sense is the smallest generation calculated from all the reactions which produce that molecule.  Since this is a recursive definition, some molecules must have their generation defined before runtime.  Reagents often have their generation value set to 0.
+
+**insert example here**
 
 ## Global Metadata
 
 ## Filtering on Metadata
 
-## The Reaction Analysis Plan, Revisited
+## The Reaction Analysis Plan
+
+The calculation and organization of metadata calculation is done in two possible places: either when new molecules are produced from a reaction, or during a global update phase in between network expansion iterations.  The global update phase will be covered later, in the "Global Metadata" section and again in more depth in its own dedicated tutorial.
+
+When a reaction produces molecules (which can be done in parallel), there may be several metadata components which the user wishes to calculate.  The classes which determine how these metadata are calculated are called *calculators*.  Some of these calculators may depend on the values of other metadata, and thus a particular ordering of calculation is required.  Combining several metadata calculators into a metadata calculation scheme produces a `Reaction Analysis Plan`.
+
+Below is an example of a reaction analysis plan.  There are three values we would like to calculate: first, the 
 
 ## Takeaways
 
