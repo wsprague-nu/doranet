@@ -1694,6 +1694,7 @@ class MetaCalcTypes(typing.NamedTuple):
     """
 
     generation: "type[metacalc.GenerationCalculator]"
+    masswaste: "type[metacalc.MassWasteCalculator]"
     mw: "type[metacalc.MolWeightCalculator]"
 
 

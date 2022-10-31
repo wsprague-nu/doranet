@@ -4,6 +4,7 @@ Contains metadata calculator classes.
 
 import collections.abc
 import dataclasses
+import itertools
 import typing
 
 import rdkit.Chem.rdMolDescriptors
@@ -58,6 +59,63 @@ class GenerationCalculator(metadata.MolPropertyFromRxnCalc[int]):
         ):
             return None
         return cur_gen
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class MassWasteCalculator(metadata.MolPropertyFromRxnCalc[float]):
+    masswaste_key: collections.abc.Hashable
+    mw_key: collections.abc.Hashable
+
+    @property
+    def key(self) -> collections.abc.Hashable:
+        return self.masswaste_key
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(
+            molecule_keys=frozenset((self.masswaste_key, self.mw_key))
+        )
+
+    @property
+    def resolver(self) -> metadata.MetaDataResolverFunc[float]:
+        return min
+
+    def __call__(
+        self,
+        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        rxn: interfaces.ReactionExplicit,
+        prev_value: typing.Optional[float] = None,
+    ) -> typing.Optional[float]:
+        if (
+            sum(1 for mol in rxn.products if mol.item == data.item)
+            - sum(1 for mol in rxn.reactants if mol.item == data.item)
+            <= 0
+        ):
+            return None
+        if data.meta is None:
+            return None
+        masseff_key = self.masswaste_key
+        mw_key = self.mw_key
+        if any(
+            mol.meta is None or masseff_key not in mol.meta
+            for mol in rxn.reactants
+        ):
+            return None
+        if any(
+            mol.meta is None or mw_key not in mol.meta for mol in rxn.products
+        ):
+            return None
+        reactants_sum: float = sum(
+            mol.meta[masseff_key]  # type: ignore
+            for mol in rxn.reactants
+            if mol.item != data.item
+        )
+        products_sum: float = sum(
+            mol.meta[mw_key] for mol in rxn.products if mol.item != data.item  # type: ignore
+        )
+        final_result = reactants_sum + products_sum
+        return final_result
 
 
 @typing.final
