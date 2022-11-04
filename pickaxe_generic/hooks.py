@@ -19,3 +19,15 @@ class NumberIterCondition:
         if self._num_iter <= 0:
             return False
         return None
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class MaxMoleculesCondition:
+    _max_mols: int
+
+    def __call__(
+        self, network: interfaces.ChemNetwork
+    ) -> typing.Optional[bool]:
+        if len(network.mols) > self._max_mols:
+            return False
+        return None
