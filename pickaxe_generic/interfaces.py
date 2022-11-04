@@ -2641,7 +2641,7 @@ class ChemNetwork(abc.ABC):
     def save_to_file(
         self,
         filename: str,
-        path: str = "./",
+        path: str = "",
         minimal: bool = False,
         ext: str = ".pgnet",
     ) -> None:
