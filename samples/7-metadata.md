@@ -243,7 +243,98 @@ Metadata calculators which utilize the same metadata key may override one anothe
 
 ## Reaction Filtering on Metadata
 
+Reaction filters are implemented during the reaction step, and can be mixed into the reaction analysis plan.  This is done by using the second type of reaction analysis step: the filtering step.  An example of this is shown below, where even though `num_iter=5`, molecules are not permitted to react beyond the third generation.
+
+```python
+network = engine.network_from_file("7-metadata")
+
+strat = engine.strat.cartesian(network)
+
+gen_calc = engine.meta.generation("gen")
+mw_calc = engine.meta.mw("mw")
+mass_efficiency_calc = engine.meta.masswaste("waste", "mw")
+gen_filter = engine.filter.reaction.generation(3,"gen")
+reaction_plan = (gen_calc & mw_calc) >> gen_filter >> mass_efficiency_calc
+
+strat.expand(num_iter=5, reaction_plan=reaction_plan)
+```
+
+```sh
+>>> pprint(
+...   [
+...     (i, v[0].smiles, v[1])
+...     for i, v in
+...     enumerate(zip(network.mols, network.mols.meta(keys=["gen", "waste"])))
+...   ]
+... )
+[(0, '[H][H]', {'gen': 0, 'waste': 0}),
+ (1, 'O', {'gen': 0, 'waste': 0}),
+ (2, 'CO', {'gen': 0, 'waste': 0}),
+ (3, 'CCO', {'gen': 0, 'waste': 0}),
+ (4, 'CC(=O)O', {'gen': 0, 'waste': 0}),
+ (5, 'CC(O)O', {'gen': 1, 'waste': 0}),
+ (6, 'COC(C)=O', {'gen': 1, 'waste': 18.010564684}),
+ (7, 'CCOC(C)=O', {'gen': 1, 'waste': 18.010564684}),
+ (8, 'CC(=O)OC(C)=O', {'gen': 1, 'waste': 18.010564684}),
+ (9, 'CC(=O)OC(C)O', {'gen': 2, 'waste': 18.010564684}),
+ (10, 'COC(C)O', {'gen': 2, 'waste': 18.010564684}),
+ (11, 'CCOC(C)O', {'gen': 2, 'waste': 18.010564684}),
+ (12, 'CC(O)OC(C)O', {'gen': 3}),
+ (13, 'CC(=O)OC(C)OC(C)=O', {'gen': 3}),
+ (14, 'COC(C)OC(C)=O', {'gen': 3}),
+ (15, 'CCOC(C)OC(C)=O', {'gen': 3})]
+```
+
+It is worth noting that the generation 3 molecules, in addition to not reacting further, do not have a calculated value for the `waste` metadata.  This is because they were filtered out by the generation filter step before reaching the waste metadata generation step.  If we desire `waste` to be calculated even for these molecules, we can simply reverse the order of the filter and calculator:
+
+```python
+network = engine.network_from_file("7-metadata")
+
+strat = engine.strat.cartesian(network)
+
+gen_calc = engine.meta.generation("gen")
+mw_calc = engine.meta.mw("mw")
+mass_efficiency_calc = engine.meta.masswaste("waste", "mw")
+gen_filter = engine.filter.reaction.generation(3,"gen")
+reaction_plan = (gen_calc & mw_calc) >> mass_efficiency_calc >> gen_filter
+
+strat.expand(num_iter=5, reaction_plan=reaction_plan)
+```
+
+```sh
+>>> pprint(
+...   [
+...     (i, v[0].smiles, v[1])
+...     for i, v in
+...     enumerate(zip(network.mols, network.mols.meta(keys=["gen", "waste"])))
+...   ]
+... )
+[(0, '[H][H]', {'gen': 0, 'waste': 0}),
+ (1, 'O', {'gen': 0, 'waste': 0}),
+ (2, 'CO', {'gen': 0, 'waste': 0}),
+ (3, 'CCO', {'gen': 0, 'waste': 0}),
+ (4, 'CC(=O)O', {'gen': 0, 'waste': 0}),
+ (5, 'CC(O)O', {'gen': 1, 'waste': 0}),
+ (6, 'COC(C)=O', {'gen': 1, 'waste': 18.010564684}),
+ (7, 'CCOC(C)=O', {'gen': 1, 'waste': 18.010564684}),
+ (8, 'CC(=O)OC(C)=O', {'gen': 1, 'waste': 18.010564684}),
+ (9, 'CC(=O)OC(C)O', {'gen': 2, 'waste': 18.010564684}),
+ (10, 'COC(C)O', {'gen': 2, 'waste': 18.010564684}),
+ (11, 'CCOC(C)O', {'gen': 2, 'waste': 18.010564684}),
+ (12, 'CC(O)OC(C)O', {'gen': 3, 'waste': 18.010564684}),
+ (13, 'CC(=O)OC(C)OC(C)=O', {'gen': 3, 'waste': 36.021129368}),
+ (14, 'COC(C)OC(C)=O', {'gen': 3, 'waste': 36.021129368}),
+ (15, 'CCOC(C)OC(C)=O', {'gen': 3, 'waste': 36.021129368})]
+```
+
 ## Global Metadata
+
+Global metadata, which cannot be calculated for individual reactions, can instead be calculated using a "Global Hook Function."  These will be described in the [next section](./8-global-hooks.md).
 
 ## Takeaways
 
+1. There are four classification of metadata, of which two (*local* and *global*) are relevant for determining how it ought to be calculated.
+1. The reaction and subsequent filtering/calculation steps proceed according to the *Reaction Analysis Plan*, which is composed of a sequence of calculation and filtering steps.
+1. *Global* metadata cannot be calculated during the *Reaction Analysis Plan* (unless the calculator is given some way to access the network ahead of time).
+
+Congratulations!  You have finished the seventh part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./8-global-hooks.md) to learn how global hook functions work and can assist you in implementing global metadata calculations and stopping criteria.
