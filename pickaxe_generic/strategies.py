@@ -11,9 +11,8 @@ import itertools
 import math
 import typing
 
-from . import interfaces, metadata
+from . import hooks, interfaces, metadata
 from . import network as pgnetworks
-from . import utils
 
 
 class _ReactionProvider(typing.Protocol):
@@ -1481,7 +1480,7 @@ class CartesianStrategyUpdated:
         #     calc = engine.meta.generation(self._gen_key)
         #     resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})
         if num_iter is not None:
-            global_hook.append(utils.NumberIterCondition(num_iter))
+            global_hook.append(hooks.NumberIterCondition(num_iter))
         p_strat.expand(
             max_recipes,
             # mol_filter,
