@@ -2665,7 +2665,7 @@ class ChemNetwork(abc.ABC):
             File extension.
         """
         filepath = path + filename + ext
-        temp_filepath = path + "." + filename + ext + ".tmp"
+        temp_filepath = os.path.join(path, "." + filename + ext + ".tmp")
         compress_level = 6
         if minimal:
             compress_level = 9
