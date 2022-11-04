@@ -237,6 +237,15 @@ Because the calculators are not guaranteed to be run in order when part of the s
 
 When combining multiple calculators into one step (which optimizes processing power by minimizing # of property collations), the `&` operator is used.  When chaining steps together, the `>>` operator is used.  Putting multiple calculators into one step also requires parentheses due to order-of-operations.
 
+### ⚠️WARNING⚠️
+
+The metadata calculator used here, "mass waste," is not necessarily guaranteed to be accurate from just the reaction information due to the Cartesian strategy used.  A molecule which is formed in a later generation, with a lower overall mass waste, will not automatically propagate its new lower mass waste to molecules which are produced from it.
+
+There are two possible solutions:
+
+1. Use a [global update function](./8-global-hooks.md) to reconcile issues with metadata which arise from such calculations.
+1. Use a [priority queue](./9-priority-queue.md) which expands based on minimum mass waste, thus guaranteeing that the first time a molecule is created, it is via the reaction with the minimum possible mass waste.
+
 ### Developer's Note
 
 Metadata calculators which utilize the same metadata key may override one another and even use each other's values.  Later steps override earlier ones, but within a step the left-hand side's metadata resolver function is used to resolve conflicts.  This is advanced functionality and is not necessary for most users.
