@@ -31,3 +31,15 @@ class MaxMoleculesCondition:
         if len(network.mols) > self._max_mols:
             return False
         return None
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class TargetMoleculeCondition:
+    _target_mol: interfaces.MolDatBase
+
+    def __call__(
+        self, network: interfaces.ChemNetwork
+    ) -> typing.Optional[bool]:
+        if self._target_mol in network.mols:
+            return False
+        return None
