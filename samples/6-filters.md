@@ -198,7 +198,8 @@ flowchart TB
     a6 -- reactions --> a7(ReactionFilter*)
     
     a7 -- reactions --> a8[["Add reactions to network (see below)"]]
-    a8 --> a1
+    a8 --> a9(Call global update hook functions)
+    a9 --> a1
 ```
 
 ```mermaid
