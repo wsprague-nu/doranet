@@ -1655,7 +1655,7 @@ class ReactionFilterTypes(typing.NamedTuple):
     """
 
     max_atoms: _max_atoms_from_num
-    generation: "filters.GenerationFilter"
+    generation: type["filters.GenerationFilter"]
 
 
 @typing.final
