@@ -874,7 +874,7 @@ class RxnAnalysisStepProp(RxnAnalysisStep):
                 operator.or_, meta_lib_generator
             )
         except TypeError:
-            prop_map = MetaPropertyState({},{},{})
+            prop_map = MetaPropertyState({}, {}, {})
         return metalib_to_rxn_meta(prop_map, rxn_list)
 
     @property
