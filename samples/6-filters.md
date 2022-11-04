@@ -457,4 +457,4 @@ Since the bundle filter doesn't work quite like the others in terms of its retur
     1. Reaction filters do not stop reactions which have already occurred.  Instead, they prevent the products of some reactions from being further reacted via the `reactive=False` flag.
 1. Molecule, Recipe, and Reaction filters can be composed with logical operators `&`, `|`, `^`, and `-`.  Bundle filters can be composed using `>>`.
 
-Congratulations!  You have finished the fifth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./7-metadata.md) to learn how to use the metadata engine to make your networks run even more efficiently!
+Congratulations!  You have finished the sexth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./7-metadata.md) to learn how to use the metadata engine to make your networks run even more efficiently!
