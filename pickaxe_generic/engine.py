@@ -18,6 +18,7 @@ from . import (
     containers,
     datatypes,
     filters,
+    hooks,
     interfaces,
     metacalc,
     network,
@@ -281,6 +282,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             metacalc.GenerationCalculator,
             metacalc.MassWasteCalculator,
             metacalc.MolWeightCalculator,
+        )
+
+    @property
+    def hook(self) -> interfaces.GlobalHookTypes:
+        return interfaces.GlobalHookTypes(
+            hooks.NumberIterCondition,
+            hooks.MaxMoleculesCondition,
+            hooks.TargetMoleculeCondition,
         )
 
     def new_network(self):

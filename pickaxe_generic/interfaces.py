@@ -23,7 +23,7 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 if typing.TYPE_CHECKING:
-    from . import filters, metacalc, metadata, strategies
+    from . import filters, hooks, metacalc, metadata, strategies
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)
@@ -1604,6 +1604,29 @@ class OpFilterTypes(typing.NamedTuple):
 
 
 @typing.final
+class GlobalHookTypes(typing.NamedTuple):
+    """
+    Container class which provides global hook functions.
+
+    Attributes
+    ----------
+    max_iter: type[hooks.NumberIterCondition]
+        Global hook which stops expansion once certain number of iterations have
+        occurred.
+    max_mols: type[hooks.MaxMoleculesCondition]
+        Global hook which stops expansion after a certain number of molecules
+        exist in the network.
+    target: type[hooks.TargetMoleculeCondition]
+        Global hook which stops expansion after a certain molecule exists in the
+        network.
+    """
+
+    max_iter: type[hooks.NumberIterCondition]
+    max_mols: type[hooks.MaxMoleculesCondition]
+    target: type[hooks.TargetMoleculeCondition]
+
+
+@typing.final
 class BundleFilterTypes(typing.NamedTuple):
     """
     Container class which provides bundle filters.
@@ -1922,6 +1945,18 @@ class NetworkEngine(abc.ABC):
         MetaCalcTypes
             Table of metadata calculation subtypes corresponding with engine
             configuration.
+        """
+
+    @property
+    @abc.abstractmethod
+    def hook(self) -> GlobalHookTypes:
+        """
+        Get table of global hook functions.
+
+        Returns
+        -------
+        GlobalHookTypes
+            Table of global hook types forresponding with engine configuration.
         """
 
     @abc.abstractmethod
