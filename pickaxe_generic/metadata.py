@@ -869,9 +869,12 @@ class RxnAnalysisStepProp(RxnAnalysisStep):
     ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
         rxn_list = list(rxns)
         meta_lib_generator = (self._prop(rxn[0]) for rxn in rxn_list if rxn[1])
-        prop_map: MetaPropertyState = utils.logreduce(
-            operator.or_, meta_lib_generator
-        )
+        try:
+            prop_map: MetaPropertyState = utils.logreduce(
+                operator.or_, meta_lib_generator
+            )
+        except TypeError:
+            prop_map = MetaPropertyState({},{},{})
         return metalib_to_rxn_meta(prop_map, rxn_list)
 
     @property
