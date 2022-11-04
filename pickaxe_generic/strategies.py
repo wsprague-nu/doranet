@@ -1480,7 +1480,7 @@ class CartesianStrategyUpdated:
         #     calc = engine.meta.generation(self._gen_key)
         #     resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})
         if num_iter is not None:
-            global_hook.append(hooks.NumberIterCondition(num_iter))
+            global_hook.append(engine.hook.max_iter(num_iter))
         p_strat.expand(
             max_recipes,
             # mol_filter,
