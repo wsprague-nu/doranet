@@ -1621,9 +1621,9 @@ class GlobalHookTypes(typing.NamedTuple):
         network.
     """
 
-    max_iter: type[hooks.NumberIterCondition]
-    max_mols: type[hooks.MaxMoleculesCondition]
-    target: type[hooks.TargetMoleculeCondition]
+    max_iter: "type[hooks.NumberIterCondition]"
+    max_mols: "type[hooks.MaxMoleculesCondition]"
+    target: "type[hooks.TargetMoleculeCondition]"
 
 
 @typing.final
