@@ -7,6 +7,7 @@ import base64
 import collections
 import collections.abc
 import dataclasses
+import enum
 import functools
 import gzip
 import itertools
@@ -2889,9 +2890,15 @@ class CompositeRecipeRanker(RecipeRanker[SizedTuple]):
         return CompositeRecipeRanker((other,) + self._internal_rankers)
 
 
-class GlobalUpdateHook(typing.Protocol):
+class GlobalHookReturnValue(enum.Enum):
+    CONTINUE = enum.auto()
+    STOP = enum.auto()
+    STOP_SHORTCIRCUIT = enum.auto()
+
+
+class GlobalUpdateHook(abc.ABC):
     @abc.abstractmethod
-    def __call__(self, network: ChemNetwork) -> typing.Optional[bool]:
+    def __call__(self, network: ChemNetwork) -> GlobalHookReturnValue:
         """
         Protocol defining format for global update hook.
 
@@ -2902,10 +2909,11 @@ class GlobalUpdateHook(typing.Protocol):
 
         Returns
         -------
-        bool
-            If True, terminate expansion after hook returns.  If False,
-            terminate expansion after remaining hooks run.  If None, continue
-            expansion.
+        GlobalHookReturnValue
+            CONTINUE -> continue running expansion after calling.
+            STOP -> finish running other global hooks, then stop expansion.
+            STOP_SHORTCIRCUIT -> stop expansion immediately, do not run other
+                global hooks.
         """
 
 

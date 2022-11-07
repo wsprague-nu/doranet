@@ -3,43 +3,42 @@ Contains classes which implement global hook functions.
 """
 
 import dataclasses
-import typing
 
 from . import interfaces
 
 
 @dataclasses.dataclass(slots=True)
-class NumberIterCondition:
+class NumberIterCondition(interfaces.GlobalUpdateHook):
     _num_iter: int
 
     def __call__(
         self, network: interfaces.ChemNetwork
-    ) -> typing.Optional[bool]:
+    ) -> interfaces.GlobalHookReturnValue:
         self._num_iter -= 1
         if self._num_iter <= 0:
-            return False
-        return None
+            return interfaces.GlobalHookReturnValue.STOP
+        return interfaces.GlobalHookReturnValue.CONTINUE
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class MaxMoleculesCondition:
+class MaxMoleculesCondition(interfaces.GlobalUpdateHook):
     _max_mols: int
 
     def __call__(
         self, network: interfaces.ChemNetwork
-    ) -> typing.Optional[bool]:
+    ) -> interfaces.GlobalHookReturnValue:
         if len(network.mols) > self._max_mols:
-            return False
-        return None
+            return interfaces.GlobalHookReturnValue.STOP
+        return interfaces.GlobalHookReturnValue.CONTINUE
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class TargetMoleculeCondition:
+class TargetMoleculeCondition(interfaces.GlobalUpdateHook):
     _target_mol: interfaces.MolDatBase
 
     def __call__(
         self, network: interfaces.ChemNetwork
-    ) -> typing.Optional[bool]:
+    ) -> interfaces.GlobalHookReturnValue:
         if self._target_mol in network.mols:
-            return False
-        return None
+            return interfaces.GlobalHookReturnValue.STOP
+        return interfaces.GlobalHookReturnValue.CONTINUE

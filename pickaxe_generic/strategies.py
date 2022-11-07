@@ -1410,9 +1410,12 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 end_on_completion: bool = False
                 for hook_func in global_hooks:
                     rval = hook_func(fake_network)
-                    if rval is True:
+                    if (
+                        rval
+                        is interfaces.GlobalHookReturnValue.STOP_SHORTCIRCUIT
+                    ):
                         return
-                    if rval is False:
+                    if rval is interfaces.GlobalHookReturnValue.STOP:
                         end_on_completion = True
                 if end_on_completion:
                     return
