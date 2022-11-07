@@ -152,7 +152,22 @@ Even with all of the same arguments besides the hook, once the target (molecule 
 
 ## Global Metadata
 
-### Note to self: change return type of global hooks to an Enum.
+Global hooks can also be used in order to refresh/update metadata in order to reconcile conflicts that may have accumulated.  For example, in the mass waste example above there may be a lower mass waste calculated for a molecule which was previously generated and assigned a mass waste.  Therefore, molecule produced from that one must have their metadata updated.  A global hook function is useful for such an update.
+
+🚧UNDER CONSTRUCTION🚧
+
+There are not currently any global hook functions providing such a functionality.  However, the implementation is relatively simple and looking over the examples in [hooks.py](../pickaxe_generic/hooks.py) should provide some suggestions as to how these may be implemented.  In addition, the interface that global hooks subclass from (located in [interfaces.py](../pickaxe_generic/interfaces.py)) contains a docstring for the `__call__` method which describes the meaning of the different `Enum` return types.
+
+## Addendum: Global Hook Functions and the Cartesian Strategy
+
+It may be of some interest that the Cartesian strategy is actually the same as the [priority queue](./9-priority-queue.md) strategy.  It accomplishes this by adding a default global hook which limits the number of iterations, as well as defining both the heap size and beam size as uncapped.
+
+This also means that the Cartesian strategy can run out of RAM if the number of possible recipes in a particular generation becomes too large.  If a higher-memory solution is desired, a method involving recipe filtering and generation metadata may be used with limited beam/heap sizes in order to guarantee a replication of the Cartesian strategy with a lower memory requirement.  However this has not been implemented as of the present time.
 
 ## Takeaways
 
+1. Between iterations, a sequence of global hook functions will execute which provide the user a way to intervene in the network expansion in order to reconcile metadata, pause the expansion, limit the expansion based on certain global conditions, or any other functionality which is required.
+1. Global hook functions are fairly straightforward to implement, requiring only a single function implementation.
+1. The Cartesian strategy is a thin layer over the Priority Queue strategy, and uses its own global function to limit the number of iterations.
+
+Congratulations!  You have finished the eighth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./9-priority-queue.md) to learn how the advanced Priority Queue strategy works and use it to implement a number of network search algorithms.
