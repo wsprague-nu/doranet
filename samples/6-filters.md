@@ -268,7 +268,7 @@ strat = engine.strat.cartesian(network)
 
 butyric_acid_i = network.add_mol(engine.mol.rdkit("CCCC(=O)O"))
 
-coreactants_filter = engine.filter.bundle.coreactant(tuple(range(butyric_acid_i)))
+coreactants_filter = engine.filter.bundle.coreactants(tuple(range(butyric_acid_i)))
 
 strat.expand(num_iter=1, bundle_filter=coreactants_filter)
 ```
@@ -308,7 +308,7 @@ strat = engine.strat.cartesian(network)
 
 butyric_acid_i = network.add_mol(engine.mol.rdkit("CCCC(=O)O"))
 
-coreactants_filter = engine.filter.recipe.coreactant(tuple(range(butyric_acid_i)))
+coreactants_filter = engine.filter.recipe.coreactants(tuple(range(butyric_acid_i)))
 
 strat.expand(num_iter=1, recipe_filter=coreactants_filter)
 ```

@@ -1635,11 +1635,11 @@ class BundleFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
-    coreactant : filters.BundleFilterCoreactants
+    coreactants : filters.BundleFilterCoreactants
         Filter which requires at least one non-coreactant in every reaction.
     """
 
-    coreactant: type["filters.BundleFilterCoreactants"]
+    coreactants: type["filters.BundleFilterCoreactants"]
 
 
 @typing.final
@@ -1649,11 +1649,11 @@ class RecipeFilterTypes(typing.NamedTuple):
 
     Attributes
     ----------
-    coreactant : filters.CoreactantFilter
+    coreactants : filters.CoreactantFilter
         Filter which requires at least one non-coreactant in every reaction.
     """
 
-    coreactant: "filters.CoreactantFilter"
+    coreactants: type["filters.CoreactantFilter"]
 
 
 class _max_atoms_from_num(typing.Protocol):
