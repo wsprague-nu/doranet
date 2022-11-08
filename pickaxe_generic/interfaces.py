@@ -686,6 +686,7 @@ class MolFilter(abc.ABC):
         """
 
     @property
+    @abc.abstractmethod
     def meta_required(self) -> MetaKeyPacket:
         """
         Specifier for information required by filter function.
