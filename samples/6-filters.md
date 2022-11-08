@@ -230,7 +230,7 @@ network = engine.network_from_file("6-filters")
 strat = engine.strat.cartesian(network)
 
 ethanol_i = network.mols.i('CCO')
-mol_filter = engine.filter.mol.indices(ethanol_i)
+mol_filter = engine.filter.mol.indices([ethanol_i])
 
 strat.expand(num_iter=1)
 ```
