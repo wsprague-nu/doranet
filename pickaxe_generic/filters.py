@@ -181,7 +181,7 @@ class MolFilterIndex(interfaces.MolFilter):
         if mol.i in self.indices:
             return self.whitelist
         return not self.whitelist
-    
+
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return interfaces.MetaKeyPacket()
