@@ -39,6 +39,6 @@ class TargetMoleculeCondition(interfaces.GlobalUpdateHook):
     def __call__(
         self, network: interfaces.ChemNetwork
     ) -> interfaces.GlobalHookReturnValue:
-        if self._target_mol in network.mols:
+        if self._target_mol in network.mols and network.reactivity[network.mols.i(self._target_mol)]:
             return interfaces.GlobalHookReturnValue.STOP
         return interfaces.GlobalHookReturnValue.CONTINUE
