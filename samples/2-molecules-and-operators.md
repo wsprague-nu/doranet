@@ -20,7 +20,7 @@ engine = pg.create_engine()
 Now we want to create some molecules.  The preferred way for the end user to create molecules is from [Daylight SMILES](https://daylight.com/dayhtml/doc/theory/theory.smiles.html).  Let's try making acetone as an RDKit-style molecule (other styles are not yet supported).
 
 ```python
-acetone = engine.mol.rdkit("CC(O)C")
+acetone = engine.mol.rdkit("CC(=O)C")
 ```
 
 Investigating what this molecule consists of shows that the SMILES string appears to be different.  This is because the SMILES string has been "canonicalized" by RDKit.  Because there are many SMILES strings which could represent the same molecule, it becomes difficult to quickly compare two molecules to see if they are the same one.  Therefore, RDKit has a procedure such that for a particular molecule, only one of those SMILES strings is considered valid.  This is the "canonical" SMILES string.
@@ -60,7 +60,8 @@ We can run this operator on two acetone molecules to condense them, creating new
 
 ```sh
 >>> aldol_condensation(acetone,acetone)
-((MolDatBasic('CC(=O)C=C(C)C'), MolDatBasic('O')), (MolDatBasic('CC(=O)C=C(C)C'), MolDatBasic('O')))
+((MolDatBasic('CC(=O)C=C(C)C'), MolDatBasic('O')),
+ (MolDatBasic('CC(=O)C=C(C)C'), MolDatBasic('O')))
 ```
 
 You may notice that there are two sets of products, and that these are equivalent.  This is because there are technically two choices for reactant atom 3 on acetone; this will be further explored in the next part.
