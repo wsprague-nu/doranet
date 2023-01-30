@@ -232,7 +232,7 @@ strat = engine.strat.cartesian(network)
 ethanol_i = network.mols.i('CCO')
 mol_filter = engine.filter.mol.indices([ethanol_i])
 
-strat.expand(num_iter=1)
+strat.expand(num_iter=1, mol_filter=mol_filter)
 ```
 ```sh
 >>> pprint(list(enumerate(network.mols)))
