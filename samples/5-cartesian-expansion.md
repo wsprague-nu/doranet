@@ -51,7 +51,7 @@ As an example of using the name of the operator, we can list the operators by na
 ['hydrogenation of alkene/carbonyl']
 ```
 
-This becomes more useful when viewing reactions which only indicate the index of the operator.
+This becomes more useful when viewing reactions (which only indicate the index of the operator).
 
 We will save this initial network to a file, so that we may restore it for testing out new strategies and configuration options.
 
