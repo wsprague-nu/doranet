@@ -92,8 +92,8 @@ strat_with_hook.expand(
 ...     (i, v[0].smiles, v[1])
 ...     for i, v in enumerate(
 ...       zip(
-...         network_no_hook.mols,
-...         network_no_hook.mols.meta(keys=["gen"]))
+...         network_with_hook.mols,
+...         network_with_hook.mols.meta(keys=["gen"]))
 ...     )
 ...   ]
 ... )
