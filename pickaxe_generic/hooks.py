@@ -41,7 +41,7 @@ class TargetMoleculeCondition(interfaces.GlobalUpdateHook):
     ) -> interfaces.GlobalHookReturnValue:
         if (
             self._target_mol in network.mols
-            and network.reactivity[network.mols.i(self._target_mol)]
+            and network.reactivity[network.mols.i(self._target_mol.uid)]
         ):
             return interfaces.GlobalHookReturnValue.STOP
         return interfaces.GlobalHookReturnValue.CONTINUE
