@@ -1142,8 +1142,8 @@ def execute_reactions(
     rxn_jobs: collections.abc.Collection[ReactionJob],
     rxn_analysis: typing.Optional[metadata.RxnAnalysisStep] = None,
 ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
-    rxn_generator = functools.reduce(
-        itertools.chain, (execute_reaction(rxn_job) for rxn_job in rxn_jobs)  # type: ignore
+    rxn_generator = itertools.chain.from_iterable(
+        execute_reaction(rxn_job) for rxn_job in rxn_jobs
     )
     if rxn_analysis is None:
         return rxn_generator
