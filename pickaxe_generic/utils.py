@@ -33,8 +33,8 @@ class RxnTrackerDepthFirst(interfaces.RxnTracker):
     def _getchains(
         self,
         cur_gen_mols: collections.abc.Collection[interfaces.Identifier],
-        prev_gens_mols: set[interfaces.Identifier] = None,
-        prev_gens_rxns: set[interfaces.Identifier] = None,
+        prev_gens_mols: typing.Optional[set[interfaces.Identifier]] = None,
+        prev_gens_rxns: typing.Optional[set[interfaces.Identifier]] = None,
         reagent_table: typing.Optional[
             collections.abc.Iterable[interfaces.Identifier]
         ] = None,
