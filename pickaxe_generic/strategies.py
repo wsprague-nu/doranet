@@ -18,9 +18,13 @@ from . import network as pgnetworks
 class _ReactionProvider(typing.Protocol):
     def Rxn(
         self,
-        operator: interfaces.Identifier = None,
-        reactants: collections.abc.Collection[interfaces.Identifier] = None,
-        products: collections.abc.Collection[interfaces.Identifier] = None,
+        operator: typing.Optional[interfaces.Identifier] = None,
+        reactants: typing.Optional[
+            collections.abc.Collection[interfaces.Identifier]
+        ] = None,
+        products: typing.Optional[
+            collections.abc.Collection[interfaces.Identifier]
+        ] = None,
     ) -> interfaces.RxnDatBase:
         ...
 
