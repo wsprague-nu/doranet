@@ -1428,17 +1428,6 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
 
 class CartesianStrategyUpdated:
-    @dataclasses.dataclass(frozen=True, slots=True)
-    class gen_test:
-        max_gen: int
-
-        def __call__(self, val) -> bool:
-            if not isinstance(val, int):
-                raise TypeError(
-                    f"Wrong type for generation metadata; must be `int` (type: {type(val)}; value: {val})"
-                )
-            return val < self.max_gen
-
     def __init__(
         self,
         network: interfaces.ChemNetwork,
