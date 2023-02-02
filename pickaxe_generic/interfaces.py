@@ -2962,6 +2962,7 @@ class PriorityQueueStrategy(abc.ABC):
         heap_size: typing.Optional[int] = None,
         beam_size: typing.Optional[int] = 1,
         batch_size: typing.Optional[int] = None,
+        save_unreactive: bool = True,
     ) -> None:
         """
         Expand the network according to certain parameters.
@@ -3022,6 +3023,11 @@ class PriorityQueueStrategy(abc.ABC):
             job to evaluate at once.  Affects how recipes are bundled.  Value
             of `None` indicates no limit on number of recipes.  Tune when using
             parallel processes.
+        save_unreactive : bool (default: False)
+            Store reactions rejected by reaction_plan in the network.  If
+            False, reactions which are rejected will simply be deleted, along
+            with their products, instead of stored.  Depending on the
+            proportion of rejected reactions, this may save a lot of memory.
 
         Notes
         -----

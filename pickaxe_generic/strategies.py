@@ -1189,6 +1189,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         heap_size: typing.Optional[int] = None,
         beam_size: typing.Optional[int] = 1,
         batch_size: typing.Optional[int] = None,
+        save_unreactive: bool = True,
     ) -> None:
 
         rxn_analysis_task: typing.Optional[metadata.RxnAnalysisStep] = None
@@ -1314,6 +1315,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
             for rxn, pass_filter in execute_reactions(
                 reaction_jobs, rxn_analysis_task
             ):
+                if not save_unreactive and not pass_filter:
+                    continue
                 # add product mols to network
                 products_indices = tuple(
                     network.add_mol(mol.item, None, pass_filter)
@@ -1457,6 +1460,7 @@ class CartesianStrategyUpdated:
         global_hooks: typing.Optional[
             collections.abc.Sequence[interfaces.GlobalUpdateHook]
         ] = None,
+        save_unreactive: bool = True,
         # max_gen: typing.Optional[int] = None,
     ):
         engine = self._engine
@@ -1488,4 +1492,5 @@ class CartesianStrategyUpdated:
             bundle_filter=bundle_filter,
             recipe_filter=recipe_filter,
             reaction_plan=reaction_plan,
+            save_unreactive=save_unreactive,
         )
