@@ -1972,6 +1972,7 @@ class NetworkEngine(abc.ABC):
             Empty chemical network.
         """
 
+    @abc.abstractmethod
     def network_from_file(
         self,
         filename: str,
