@@ -146,8 +146,8 @@ class RxnTrackerDepthFirstNetwork(interfaces.RxnTrackerNetwork):
     def _getchains(
         self,
         cur_gen_mols: collections.abc.Collection[interfaces.MolIndex],
-        prev_gens_mols: set[interfaces.MolIndex] = None,
-        prev_gens_rxns: set[interfaces.RxnIndex] = None,
+        prev_gens_mols: typing.Optional[set[interfaces.MolIndex]] = None,
+        prev_gens_rxns: typing.Optional[set[interfaces.RxnIndex]] = None,
         reagent_table: typing.Optional[
             collections.abc.Container[interfaces.MolIndex]
         ] = None,
