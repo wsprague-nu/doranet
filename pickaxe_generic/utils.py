@@ -405,6 +405,6 @@ def getFigures(
                 img, ((max_width - img.size[0]) // 2, current_hight)
             )
             current_hight += img.size[1]
-        IPython.display(combined_image)
+        IPython.display(combined_image)  # type: ignore
         combined_image.save(f"{job_name} route {route}.png")
         route += 1
