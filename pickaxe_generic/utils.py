@@ -11,6 +11,11 @@ import typing
 from . import interfaces
 
 
+import rdkit.Chem
+import PIL
+import IPython
+
+
 class RxnTrackerDepthFirst(interfaces.RxnTracker):
     """Implements RxnTracker interface; stores lookups as a hash table within
     the object.  Will eventually deprecate this functionality when the
@@ -314,8 +319,8 @@ def getFigures(
     target_smiles: str,
     mol_smiles: tuple[str, ...],
     num_gens: int,
-    engine: NetworkEngine,
-    rxn_lib: ObjectLibrary[RxnDatBase],
+    engine: interfaces.NetworkEngine,
+    rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
     job_name: str,
 ):
     """
