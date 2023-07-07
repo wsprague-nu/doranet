@@ -330,7 +330,8 @@ def getFigures(
     prints reaction operators, reactants, and products. Figures are displayed,
     also saved in the working folder. Based on the example code for using
     RxnTrackerDepthFirst(rxn_lib).  Currently need to have the font file
-    'OpenSans-Regular.ttf' in the working folder.
+    'OpenSans-Regular.ttf' in the working folder.  May not work due to legacy
+    code source.
 
     Parameters
     ----------
