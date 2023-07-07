@@ -16,7 +16,11 @@ profile = "black"
 line_length = 80
 
 [[tool.mypy.overrides]]
-module = "rdkit.*"
+module = [
+    "rdkit.*",
+    "PIL.*",
+    "IPython.*"
+]
 ignore_missing_imports = true
 
 [tool.pylint.format]
