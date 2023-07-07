@@ -19,6 +19,7 @@ dependencies:
  - pandas
  - pillow
  - pymongo
+ - pyproject-flake8
  - pylint
  - pytest
  - pytest-cov
@@ -29,5 +30,6 @@ dependencies:
  - scipy
  - snakeviz
  - sphinxcontrib-napoleon
+ - sphinx_rtd_theme
  - sqlalchemy
  - tox

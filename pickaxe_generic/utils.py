@@ -1,135 +1,32 @@
 """
 Contains classes which define and implement utility functions.
-
-Classes:
-
-    RxnTracker
-      RxnTrackerSingle*
-      RxnTrackerDepthFirst*
 """
 
-from abc import ABC, abstractmethod
-from itertools import chain
-from itertools import product as iterproduct
-from typing import (
-    Collection,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Set,
-)
 
-import IPython.display
+import collections.abc
+import dataclasses
+import itertools
+import typing
+
+import IPython
 import PIL
 import rdkit.Chem
 
-from pickaxe_generic.containers import ObjectLibrary
-from pickaxe_generic.datatypes import Identifier, RxnDatBase
-from pickaxe_generic.engine import NetworkEngine
+from . import interfaces
 
 
-class RxnTracker(ABC):
-    """
-    Interface representing an object which analyzes rxn network connections.
-
-    Classes implementing this interface are able to create retrosynthetic trees
-    based on a precalculated reaction network tree.
-
-    Parameters
-    ----------
-    target : Identifier
-        Unique ID of target molecule.
-    reagent_table : Sequence[Identifier] (default: tuple())
-        Contains unique IDs of reagents which do not need to be synthesized.
-    fail_on_unknown_reagent : bool (default: False)
-        If True, do not return paths which require reagents not in
-        reagent_table.
-    """
-
-    @abstractmethod
-    def getParentChains(
-        self,
-        target: Identifier,
-        reagent_table: Sequence[Identifier] = tuple(),
-        fail_on_unknown_reagent: bool = False,
-    ) -> Iterable[Iterable[Iterable[Identifier]]]:
-        """
-        Gets parent chains for a particular target molecule.
-
-        Parameters
-        ----------
-        target : Identifier
-            Unique id of target molecule.
-        reagent_table : Sequence[Identifier]
-            Sequence of reagents which are considered "basic" and which the tree
-            search will consider leaf nodes.
-        fail_on_unknown_reagent : bool
-            If tree requires unlisted reagents, do not return.
-        """
-
-
-class RxnTrackerSingle(RxnTracker):
-    """Implements RxnTracker interface; only compatible with reactions
-    involving a single reactant and product.  DEVELOPMENT ONLY"""
-
-    _mol_lookup: Dict[Identifier, list[Identifier]]
-
-    def __init__(self, rxn_lib: ObjectLibrary[RxnDatBase]) -> None:
-        self._mol_lookup = {}
-        self._rxn_lib = rxn_lib
-        for rxnid in rxn_lib.ids():
-            product_mol = sorted(rxn_lib[rxnid].products)[0]
-            if product_mol not in self._mol_lookup:
-                self._mol_lookup[product_mol] = []
-            self._mol_lookup[product_mol].append(rxnid)
-
-    def _getchains(
-        self, cur_mol: Identifier, cur_mols: Optional[Set[Identifier]] = None
-    ):
-        if cur_mols is None:
-            cur_mols = {cur_mol}
-        noReactions = True
-        if cur_mol not in self._mol_lookup:
-            yield list()
-        else:
-            for rxnid in self._mol_lookup[cur_mol]:
-                reactant = sorted(self._rxn_lib[rxnid].reactants)[0]
-                if reactant in cur_mols:
-                    continue
-                noReactions = False
-                for rxnpath in self._getchains(
-                    reactant, cur_mols.union({reactant})
-                ):
-                    rxnpath.append(rxnid)
-                    yield rxnpath
-            if noReactions:
-                yield list()
-
-    def getParentChains(
-        self,
-        target: Identifier,
-        reagent_table: Sequence[Identifier] = None,
-        fail_on_unknown_reagent: bool = None,
-        max_depth: Optional[int] = None,
-    ) -> Iterable[Iterable[Iterable[RxnDatBase]]]:
-        if reagent_table is not None or fail_on_unknown_reagent is not None:
-            raise NotImplementedError("Arguments besides target not supported.")
-        return ([path] for path in self._getchains(target))
-
-
-class RxnTrackerDepthFirst(RxnTracker):
+class RxnTrackerDepthFirst(interfaces.RxnTracker):
     """Implements RxnTracker interface; stores lookups as a hash table within
     the object.  Will eventually deprecate this functionality when the
     ObjectLibrary interface is updated to include native search functionality.
     """
 
-    _mol_lookup: Dict[Identifier, list[Identifier]]
-    _rxn_lib: ObjectLibrary[RxnDatBase]
+    _mol_lookup: dict[interfaces.Identifier, list[interfaces.Identifier]]
+    _rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase]
 
-    def __init__(self, rxn_lib: ObjectLibrary[RxnDatBase]) -> None:
+    def __init__(
+        self, rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase]
+    ) -> None:
         self._mol_lookup = {}
         self._rxn_lib = rxn_lib
         for rxnid in rxn_lib.ids():
@@ -140,13 +37,17 @@ class RxnTrackerDepthFirst(RxnTracker):
 
     def _getchains(
         self,
-        cur_gen_mols: Collection[Identifier],
-        prev_gens_mols: Set[Identifier] = None,
-        prev_gens_rxns: Set[Identifier] = None,
-        reagent_table: Optional[Iterable[Identifier]] = None,
+        cur_gen_mols: collections.abc.Collection[interfaces.Identifier],
+        prev_gens_mols: typing.Optional[set[interfaces.Identifier]] = None,
+        prev_gens_rxns: typing.Optional[set[interfaces.Identifier]] = None,
+        reagent_table: typing.Optional[
+            collections.abc.Iterable[interfaces.Identifier]
+        ] = None,
         fail_on_unknown_reagent: bool = False,
-        depth: Optional[int] = None,
-    ) -> Generator[list[frozenset[Identifier]], None, None]:
+        depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.Identifier]], None, None
+    ]:
         if depth is not None:
             if depth <= 0:
                 return
@@ -162,14 +63,14 @@ class RxnTrackerDepthFirst(RxnTracker):
             prev_gens_rxns = set()
         if reagent_table is None:
             reagent_table = set()
-        rxnsets: List[List[Identifier]] = []
+        rxnsets: list[list[interfaces.Identifier]] = []
         for mol in cur_gen_mols:
             if mol in reagent_table:
                 continue
             elif mol not in self._mol_lookup:
                 rxnsets.append([])
                 continue
-            newrxnset: List[Identifier] = [
+            newrxnset: list[interfaces.Identifier] = [
                 rxn
                 for rxn in self._mol_lookup[mol]
                 if rxn not in prev_gens_rxns
@@ -187,15 +88,15 @@ class RxnTrackerDepthFirst(RxnTracker):
             yield []
             return
         tested_combos = set()
-        for rxntuple in iterproduct(*rxnsets):
-            rxncombo: frozenset[Identifier] = frozenset(rxntuple)
+        for rxntuple in itertools.product(*rxnsets):
+            rxncombo: frozenset[interfaces.Identifier] = frozenset(rxntuple)
             if rxncombo in tested_combos:
                 continue
             else:
                 tested_combos.add(frozenset(rxncombo))
             required_reagents = set(
                 mol
-                for mol in chain(
+                for mol in itertools.chain(
                     *(self._rxn_lib[rxn].reactants for rxn in rxncombo)
                 )
                 if mol not in reagent_table
@@ -216,11 +117,15 @@ class RxnTrackerDepthFirst(RxnTracker):
 
     def getParentChains(
         self,
-        target: Identifier,
-        reagent_table: Sequence[Identifier] = tuple(),
+        target: interfaces.Identifier,
+        reagent_table: collections.abc.Sequence[
+            interfaces.Identifier
+        ] = tuple(),
         fail_on_unknown_reagent: bool = False,
-        max_depth: Optional[int] = None,
-    ) -> Generator[list[frozenset[Identifier]], None, None]:
+        max_depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.Identifier]], None, None
+    ]:
         if fail_on_unknown_reagent and not reagent_table:
             raise ValueError(
                 "reagent table must be specified if fail_on_unknown_reagent is "
@@ -237,12 +142,184 @@ class RxnTrackerDepthFirst(RxnTracker):
         )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class RxnTrackerDepthFirstNetwork(interfaces.RxnTrackerNetwork):
+    """Implements RxnTrackerNetwork interface."""
+
+    network: interfaces.ChemNetwork
+
+    def _getchains(
+        self,
+        cur_gen_mols: collections.abc.Collection[interfaces.MolIndex],
+        prev_gens_mols: typing.Optional[set[interfaces.MolIndex]] = None,
+        prev_gens_rxns: typing.Optional[set[interfaces.RxnIndex]] = None,
+        reagent_table: typing.Optional[
+            collections.abc.Container[interfaces.MolIndex]
+        ] = None,
+        fail_on_unknown_reagent: bool = False,
+        depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.RxnIndex]], None, None
+    ]:
+        network = self.network
+        n_mols = len(network.mols)
+        n_rxns = len(network.rxns)
+        if depth is not None:
+            if depth <= 0:
+                return
+            new_depth = depth - 1
+        else:
+            new_depth = None
+        if len(cur_gen_mols) == 0:
+            yield []
+            return
+        if prev_gens_mols is None:
+            prev_gens_mols = set()
+        if prev_gens_rxns is None:
+            prev_gens_rxns = set()
+        if reagent_table is None:
+            reagent_table = set()
+        rxnsets: list[list[interfaces.RxnIndex]] = []
+        for mol in cur_gen_mols:
+            if mol in reagent_table:
+                continue
+            elif mol >= n_mols:
+                rxnsets.append([])
+                continue
+            newrxnset: list[interfaces.RxnIndex] = [
+                rxn
+                for rxn in network.producers(mol)
+                if rxn not in prev_gens_rxns
+                and all(
+                    mol not in prev_gens_mols
+                    for mol in network.rxns[rxn].reactants
+                )
+            ]
+            rxnsets.append(newrxnset)
+        if not fail_on_unknown_reagent:
+            rxnsets = [rxnset for rxnset in rxnsets if len(rxnset) > 0]
+            if len(rxnsets) == 0:  # these two lines
+                return  # close the loophole
+        if len(rxnsets) == 0:
+            yield []
+            return
+        tested_combos: set[frozenset[interfaces.RxnIndex]] = set()
+        for rxntuple in itertools.product(*rxnsets):
+            rxncombo: frozenset[interfaces.RxnIndex] = frozenset(rxntuple)
+            if rxncombo in tested_combos:
+                continue
+            else:
+                tested_combos.add(frozenset(rxncombo))
+            required_reagents = set(
+                mol
+                for mol in itertools.chain(
+                    *(network.rxns[rxn].reactants for rxn in rxncombo)
+                )
+                if mol not in reagent_table
+            )
+            if len(required_reagents) == 0:
+                yield [rxncombo]
+                continue
+            for path in self._getchains(
+                required_reagents,
+                prev_gens_mols.union(cur_gen_mols),
+                prev_gens_rxns.union(rxncombo),
+                reagent_table,
+                fail_on_unknown_reagent,
+                new_depth,
+            ):
+                path.append(rxncombo)
+                yield path
+
+    def getParentChains(
+        self,
+        target: interfaces.MolIndex,
+        reagent_table: collections.abc.Container[interfaces.MolIndex] = tuple(),
+        fail_on_unknown_reagent: bool = False,
+        max_depth: typing.Optional[int] = None,
+    ) -> collections.abc.Generator[
+        list[frozenset[interfaces.RxnIndex]], None, None
+    ]:
+        if fail_on_unknown_reagent and not reagent_table:
+            raise ValueError(
+                "reagent table must be specified if fail_on_unknown_reagent is "
+                "True"
+            )
+        return (
+            path
+            for path in self._getchains(
+                [target],
+                reagent_table=reagent_table,
+                fail_on_unknown_reagent=fail_on_unknown_reagent,
+                depth=max_depth,
+            )
+        )
+
+
+T = typing.TypeVar("T")
+
+
+def logreduce(
+    function: collections.abc.Callable[[T, T], T],
+    iterable: collections.abc.Iterable[T],
+) -> T:
+    """
+    logreduce(function, iterable[, initial]) -> value
+
+    Apply a function of two arguments (satisfying the associative property)
+    cumulatively to the items of a sequence or iterable, from left to right, so
+    as to reduce the iterable to a single value.  For example, reduce(lambda x,
+    y: x+y, [1, 2, 3, 4, 5]) calculates (((1+2)+(3+4))+5).  If initial is
+    present, it is placed before the items of the iterable in the calculation,
+    and serves as a default when the iterable is empty.
+
+    Memory: maximum of log2(n) objects of iterable stored vs 2 for reduce()
+    Speed: log2(n) calls to function() vs n for reduce()
+    """
+    i = iter(iterable)
+    try:
+        r_val, stop = _logreduce(function, i, 0)
+    except StopIteration:
+        raise TypeError("logreduce() of empty iterable with no initial value")
+    n = 0
+    try:
+        while not stop:
+            n += 1
+            new_val, stop = _logreduce(function, i, n - 1)
+            r_val = function(r_val, new_val)
+    except StopIteration:
+        ...
+    return r_val
+
+
+def _logreduce(
+    f: collections.abc.Callable[[T, T], T],
+    i: collections.abc.Iterator[T],
+    n: int,
+) -> tuple[T, bool]:
+    if n == 0:
+        x = next(i)
+        try:
+            y = next(i)
+        except StopIteration:
+            return x, True
+        return f(x, y), False
+    x, stop = _logreduce(f, i, n - 1)
+    if stop:
+        return x, True
+    try:
+        y, stop = _logreduce(f, i, n - 1)
+    except StopIteration:
+        return x, True
+    return f(x, y), False
+
+
 def getFigures(
     target_smiles: str,
     mol_smiles: tuple[str, ...],
     num_gens: int,
-    engine: NetworkEngine,
-    rxn_lib: ObjectLibrary[RxnDatBase],
+    engine: interfaces.NetworkEngine,
+    rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
     job_name: str,
 ):
     """
@@ -328,6 +405,6 @@ def getFigures(
                 img, ((max_width - img.size[0]) // 2, current_hight)
             )
             current_hight += img.size[1]
-        IPython.display(combined_image)
+        IPython.display(combined_image)  # type: ignore
         combined_image.save(f"{job_name} route {route}.png")
         route += 1

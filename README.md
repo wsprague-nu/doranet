@@ -191,6 +191,8 @@ Project Link: [https://github.com/wsprague-nu/Pickaxe-Generic](https://github.co
 ## Acknowledgments
 
 * [Prof. Linda Broadbelt](broadbelt.northwestern.edu)
+* Manali Dhawan
+* Quan Zhang
 * Kevin Shebek
 * Lauren Lopez
 * Joseph Ni
