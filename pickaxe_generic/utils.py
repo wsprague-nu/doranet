@@ -8,12 +8,11 @@ import dataclasses
 import itertools
 import typing
 
-from . import interfaces
-
-
-import rdkit.Chem
-import PIL
 import IPython
+import PIL
+import rdkit.Chem
+
+from . import interfaces
 
 
 class RxnTrackerDepthFirst(interfaces.RxnTracker):
