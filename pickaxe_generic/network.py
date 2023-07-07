@@ -620,7 +620,6 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         meta: typing.Optional[collections.abc.Mapping] = None,
         rxn: typing.Optional[interfaces.Reaction] = None,
     ) -> interfaces.RxnIndex:
-
         if rxn is None:
             if operator is None or reactants is None or products is None:
                 raise ValueError(

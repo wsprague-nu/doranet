@@ -134,7 +134,6 @@ def _evaluate_reaction_unpack(
     tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
     tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
 ]:
-
     return _evaluate_reaction(*job)
 
 
@@ -332,7 +331,6 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
             for recipe in _generate_recipes_from_compat_table(
                 self._compat_table, self._recipe_cache, custom_uid_prefilter
             ):
-
                 operator = self._op_lib[recipe[0]]
                 reactants = tuple(
                     (self._mol_lib[mol_uid] for mol_uid in recipe[1])
@@ -887,7 +885,6 @@ def execute_recipe_ranking(
     min_val: typing.Optional[RecipePriorityItem],
     recipes_tested: collections.abc.Collection[interfaces.Recipe],
 ) -> "RecipeHeap":
-
     # filter molecules
     args_edited: tuple[
         tuple[interfaces.DataPacket[interfaces.MolDatBase], ...], ...
@@ -1191,7 +1188,6 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
         batch_size: typing.Optional[int] = None,
         save_unreactive: bool = True,
     ) -> None:
-
         rxn_analysis_task: typing.Optional[metadata.RxnAnalysisStep] = None
         if reaction_plan is not None:
             rxn_analysis_task = metadata.as_rxn_analysis_step(reaction_plan)
