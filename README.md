@@ -25,7 +25,7 @@
 <h3 align="center">Pickaxe-Generic</h3>
 
   <p align="center">
-    This is a private repo providing the Pickaxe-Generic network generation framework to the Broadbelt group at Northwestern.  Licensing has not yet been sorted out and this code should not be shared with external developers.
+    This is a repo containing the Pickaxe-Generic network generation framework.
     <br />
     <a href="https://github.com/wsprague-nu/Pickaxe-Generic/issues">Report Bug</a>
     ·
