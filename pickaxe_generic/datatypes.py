@@ -213,14 +213,16 @@ class OpDatBasic(interfaces.OpDatRDKit):
         if isinstance(operator, rdkit.Chem.rdChemReactions.ChemicalReaction):
             self._rdkitrxn = operator
             self._kekulize = kekulize
+            self._drop_errors = drop_errors
         elif isinstance(operator, str):
             self._rdkitrxn = rdkit.Chem.rdChemReactions.ReactionFromSmarts(
                 operator
             )
             self._kekulize = kekulize
+            self._drop_errors = drop_errors
             # SanitizeRxn(self._rdkitrxn)
         elif isinstance(operator, bytes):
-            self._rdkitrxn, self._kekulize = loads(operator)
+            self._rdkitrxn, self._kekulize, self._drop_errors = loads(operator)
             self._blob = operator
         else:
             raise NotImplementedError("Invalid operator type")
@@ -233,7 +235,9 @@ class OpDatBasic(interfaces.OpDatRDKit):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = pickle.dumps((self.rdkitrxn, self._kekulize))
+            self._blob = pickle.dumps(
+                (self.rdkitrxn, self._kekulize, self._drop_errors)
+            )
         return self._blob
 
     @property
