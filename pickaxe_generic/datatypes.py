@@ -308,16 +308,16 @@ class OpDatBasic(interfaces.OpDatRDKit):
                 rdkit.Chem.rdmolops.Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
             return tuple(
-                tuple(
-                    x
-                    for x in (
+                product_set  # type: ignore [misc]
+                for product_set in (
+                    tuple(
                         self._process_new_mol(product) for product in products
                     )
-                    if x is not None
+                    for products in self._rdkitrxn.RunReactants(
+                        rdkitmols, maxProducts=0
+                    )
                 )
-                for products in self._rdkitrxn.RunReactants(
-                    rdkitmols, maxProducts=0
-                )
+                if None not in product_set
             )
         except Exception as err:
             raise RuntimeError(
