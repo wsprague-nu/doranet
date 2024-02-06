@@ -2,7 +2,6 @@
 Contains classes which define and implement dependency-injection engines.
 """
 
-
 import base64
 import collections.abc
 import dataclasses
@@ -197,8 +196,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
+        drop_errors: bool = False,
     ) -> datatypes.OpDatBasic:
-        return self._Op(operator=operator, engine=self, kekulize=kekulize)
+        return self._Op(
+            operator=operator,
+            engine=self,
+            kekulize=kekulize,
+            drop_errors=drop_errors,
+        )
 
     def Rxn(
         self,
@@ -225,13 +230,13 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         interfaces.ObjectLibrary[interfaces.OpDatBase],
         interfaces.ObjectLibrary[interfaces.RxnDatBase],
     ]:
-        mol_lib: interfaces.ObjectLibrary[
-            interfaces.MolDatBase
-        ] = self._Mol_Lib()
+        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase] = (
+            self._Mol_Lib()
+        )
         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase] = self._Op_Lib()
-        rxn_lib: interfaces.ObjectLibrary[
-            interfaces.RxnDatBase
-        ] = self._Rxn_Lib()
+        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase] = (
+            self._Rxn_Lib()
+        )
         return (mol_lib, op_lib, rxn_lib)
 
     def CartesianStrategy(

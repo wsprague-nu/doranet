@@ -186,6 +186,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
         "_blob",
         "_engine",
         "_kekulize",
+        "_drop_errors",
         "_rdkitrxn",
         "_smarts",
         "_templates",
@@ -200,12 +201,14 @@ class OpDatBasic(interfaces.OpDatRDKit):
     _smarts: typing.Optional[str]
     _uid: typing.Optional[tuple[tuple[str, ...], tuple[str, ...]]]
     _kekulize: bool
+    _drop_errors: bool
 
     def __init__(
         self,
         operator: rdkit.Chem.rdchem.Mol | str | bytes,
         engine: interfaces.NetworkEngine,
         kekulize: bool = False,
+        drop_errors: bool = False,
     ) -> None:
         if isinstance(operator, rdkit.Chem.rdChemReactions.ChemicalReaction):
             self._rdkitrxn = operator

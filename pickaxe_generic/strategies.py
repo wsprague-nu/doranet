@@ -25,8 +25,7 @@ class _ReactionProvider(typing.Protocol):
         products: typing.Optional[
             collections.abc.Collection[interfaces.Identifier]
         ] = None,
-    ) -> interfaces.RxnDatBase:
-        ...
+    ) -> interfaces.RxnDatBase: ...
 
 
 def _generate_recipes_from_compat_table(
@@ -1053,12 +1052,10 @@ class RecipeHeap:
     @typing.overload
     def __getitem__(
         self, item: slice
-    ) -> collections.abc.Sequence[RecipePriorityItem]:
-        ...
+    ) -> collections.abc.Sequence[RecipePriorityItem]: ...
 
     @typing.overload
-    def __getitem__(self, item: int) -> RecipePriorityItem:
-        ...
+    def __getitem__(self, item: int) -> RecipePriorityItem: ...
 
     def __getitem__(self, item: typing.Union[int, slice]):
         if self._ordered is None:
