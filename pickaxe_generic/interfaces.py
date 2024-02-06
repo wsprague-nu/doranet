@@ -436,6 +436,7 @@ class OpDatRDKit(OpDatBase):
         ],
         engine: "NetworkEngine",
         kekulize: bool = False,
+        drop_errors: bool = False,
     ) -> None: ...
 
     @classmethod

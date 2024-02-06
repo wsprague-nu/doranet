@@ -57,6 +57,7 @@ class _rdkit_op_init(typing.NamedTuple):
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
+        drop_errors=False,
     ) -> interfaces.OpDatRDKit:
         """
         Creates an object which manages an RDKit SMARTS operator.
@@ -73,9 +74,15 @@ class _rdkit_op_init(typing.NamedTuple):
             RDKit operator itself.
         kekulize : bool (default: False)
             Whether to kekulize reactants before reaction.
+        drop_errors : bool (default: False)
+            Reaction products which generate errors are dropped instead of
+            being re-raised.
         """
         return self.optype(
-            operator=operator, engine=self.engine, kekulize=kekulize
+            operator=operator,
+            engine=self.engine,
+            kekulize=kekulize,
+            drop_errors=drop_errors,
         )
 
 

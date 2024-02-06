@@ -286,6 +286,14 @@ class OpDatBasic(interfaces.OpDatRDKit):
             print(type(err))
             raise err
 
+    def _process_new_mol(self, mol) -> interfaces.MolDatRDKit | None:
+        if self._drop_errors:
+            try:
+                return self._engine.Mol(mol)
+            except Exception:
+                return None
+        return self._engine.Mol(mol)
+
     def __call__(
         self, *reactants: interfaces.MolDatBase
     ) -> tuple[tuple[interfaces.MolDatBase, ...], ...]:
@@ -300,7 +308,13 @@ class OpDatBasic(interfaces.OpDatRDKit):
                 rdkit.Chem.rdmolops.Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
             return tuple(
-                tuple(self._engine.Mol(product) for product in products)
+                tuple(
+                    x
+                    for x in (
+                        self._process_new_mol(product) for product in products
+                    )
+                    if x is not None
+                )
                 for products in self._rdkitrxn.RunReactants(
                     rdkitmols, maxProducts=0
                 )
