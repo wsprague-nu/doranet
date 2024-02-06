@@ -2,7 +2,6 @@
 Contains classes which define and implement utility functions.
 """
 
-
 import collections.abc
 import dataclasses
 import itertools

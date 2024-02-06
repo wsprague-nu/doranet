@@ -209,8 +209,7 @@ class MolDatRDKit(MolDatBase):
         molecule: typing.Union[rdkit.Chem.rdchem.Mol, str],
         sanitize: bool = True,
         neutralize: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @property
     @abc.abstractmethod
@@ -437,8 +436,8 @@ class OpDatRDKit(OpDatBase):
         ],
         engine: "NetworkEngine",
         kekulize: bool = False,
-    ) -> None:
-        ...
+        drop_errors: bool = False,
+    ) -> None: ...
 
     @classmethod
     def from_bytes(
@@ -463,9 +462,9 @@ class OpDatRDKit(OpDatBase):
         pickaxe_generic.interfaces.OpDatRDKit
             Operator returned from processing bytestring.
         """
-        unpacked: tuple[
-            rdkit.Chem.rdChemReactions.ChemicalReaction, bool
-        ] = pickle.loads(data)
+        unpacked: tuple[rdkit.Chem.rdChemReactions.ChemicalReaction, bool] = (
+            pickle.loads(data)
+        )
         operator, kekulize = unpacked
         return engine.Op(operator, kekulize)
 
@@ -1497,6 +1496,7 @@ class _op_init_type_rdkit(typing.Protocol):
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
+        drop_errors: bool = False,
     ) -> OpDatRDKit:
         """
         Creates an object which manages an RDKit SMARTS operator.
@@ -1513,6 +1513,9 @@ class _op_init_type_rdkit(typing.Protocol):
             RDKit operator itself.
         kekulize : bool (default: False)
             Whether to kekulize reactants before reaction.
+        drop_errors : bool (default: False)
+            Reaction products which generate errors are dropped instead of
+            being re-raised.
         """
 
 
@@ -1661,8 +1664,7 @@ class _max_atoms_from_num(typing.Protocol):
     @abc.abstractmethod
     def __call__(
         self, max_atoms: int, proton_number: typing.Optional[int] = None
-    ) -> "filters.ReactionFilterMaxAtoms":
-        ...
+    ) -> "filters.ReactionFilterMaxAtoms": ...
 
 
 @typing.final
@@ -2066,8 +2068,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         """
 
     @abc.abstractmethod
-    def __getitem__(self, item: typing.Union[slice, T_int, Identifier]):
-        ...
+    def __getitem__(self, item: typing.Union[slice, T_int, Identifier]): ...
 
     @abc.abstractmethod
     def i(self, uid: Identifier) -> T_int:
@@ -2103,8 +2104,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Mapping:
-        ...
+    ) -> collections.abc.Mapping: ...
 
     @typing.overload
     def meta(
@@ -2113,8 +2113,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Iterable[collections.abc.Mapping]:
-        ...
+    ) -> collections.abc.Iterable[collections.abc.Mapping]: ...
 
     @abc.abstractmethod
     def meta(
@@ -2251,8 +2250,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         """
 
     @abc.abstractmethod
-    def __getitem__(self, item: typing.Union[slice, T_int]):
-        ...
+    def __getitem__(self, item: typing.Union[slice, T_int]): ...
 
     @abc.abstractmethod
     def i(self, item: T_id) -> T_int:
@@ -2277,8 +2275,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Mapping:
-        ...
+    ) -> collections.abc.Mapping: ...
 
     @typing.overload
     def meta(
@@ -2287,8 +2284,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Iterable[collections.abc.Mapping]:
-        ...
+    ) -> collections.abc.Iterable[collections.abc.Mapping]: ...
 
     @abc.abstractmethod
     def meta(
@@ -2380,8 +2376,7 @@ class ChemNetwork(abc.ABC):
     __slots__ = ()
 
     @abc.abstractmethod
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     @property
     @abc.abstractmethod
@@ -2937,8 +2932,7 @@ class PriorityQueueStrategy(abc.ABC):
     def __init__(
         self,
         network: ChemNetwork,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
     def expand(
@@ -3114,13 +3108,11 @@ class MetaDataCalculatorLocal(typing.Protocol):
     @abc.abstractmethod
     def __call__(
         self, unit: typing.Union[ReactionExplicit, RecipeExplicit]
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @property
     @abc.abstractmethod
-    def meta_required(self) -> MetaKeyPacket:
-        ...
+    def meta_required(self) -> MetaKeyPacket: ...
 
 
 class MetaDataUpdate(typing.Protocol):
@@ -3134,8 +3126,7 @@ class MetaDataUpdate(typing.Protocol):
         ],
         None,
         None,
-    ]:
-        ...
+    ]: ...
 
 
 class ObjectLibrary(abc.ABC, typing.Generic[T_data]):

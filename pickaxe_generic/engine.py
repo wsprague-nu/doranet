@@ -2,7 +2,6 @@
 Contains classes which define and implement dependency-injection engines.
 """
 
-
 import base64
 import collections.abc
 import dataclasses
@@ -58,6 +57,7 @@ class _rdkit_op_init(typing.NamedTuple):
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
+        drop_errors=False,
     ) -> interfaces.OpDatRDKit:
         """
         Creates an object which manages an RDKit SMARTS operator.
@@ -74,9 +74,15 @@ class _rdkit_op_init(typing.NamedTuple):
             RDKit operator itself.
         kekulize : bool (default: False)
             Whether to kekulize reactants before reaction.
+        drop_errors : bool (default: False)
+            Reaction products which generate errors are dropped instead of
+            being re-raised.
         """
         return self.optype(
-            operator=operator, engine=self.engine, kekulize=kekulize
+            operator=operator,
+            engine=self.engine,
+            kekulize=kekulize,
+            drop_errors=drop_errors,
         )
 
 
@@ -197,8 +203,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
             rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
         ],
         kekulize: bool = False,
+        drop_errors: bool = False,
     ) -> datatypes.OpDatBasic:
-        return self._Op(operator=operator, engine=self, kekulize=kekulize)
+        return self._Op(
+            operator=operator,
+            engine=self,
+            kekulize=kekulize,
+            drop_errors=drop_errors,
+        )
 
     def Rxn(
         self,
@@ -225,13 +237,13 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         interfaces.ObjectLibrary[interfaces.OpDatBase],
         interfaces.ObjectLibrary[interfaces.RxnDatBase],
     ]:
-        mol_lib: interfaces.ObjectLibrary[
-            interfaces.MolDatBase
-        ] = self._Mol_Lib()
+        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase] = (
+            self._Mol_Lib()
+        )
         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase] = self._Op_Lib()
-        rxn_lib: interfaces.ObjectLibrary[
-            interfaces.RxnDatBase
-        ] = self._Rxn_Lib()
+        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase] = (
+            self._Rxn_Lib()
+        )
         return (mol_lib, op_lib, rxn_lib)
 
     def CartesianStrategy(

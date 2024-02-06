@@ -186,6 +186,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
         "_blob",
         "_engine",
         "_kekulize",
+        "_drop_errors",
         "_rdkitrxn",
         "_smarts",
         "_templates",
@@ -200,24 +201,28 @@ class OpDatBasic(interfaces.OpDatRDKit):
     _smarts: typing.Optional[str]
     _uid: typing.Optional[tuple[tuple[str, ...], tuple[str, ...]]]
     _kekulize: bool
+    _drop_errors: bool
 
     def __init__(
         self,
         operator: rdkit.Chem.rdchem.Mol | str | bytes,
         engine: interfaces.NetworkEngine,
         kekulize: bool = False,
+        drop_errors: bool = False,
     ) -> None:
         if isinstance(operator, rdkit.Chem.rdChemReactions.ChemicalReaction):
             self._rdkitrxn = operator
             self._kekulize = kekulize
+            self._drop_errors = drop_errors
         elif isinstance(operator, str):
             self._rdkitrxn = rdkit.Chem.rdChemReactions.ReactionFromSmarts(
                 operator
             )
             self._kekulize = kekulize
+            self._drop_errors = drop_errors
             # SanitizeRxn(self._rdkitrxn)
         elif isinstance(operator, bytes):
-            self._rdkitrxn, self._kekulize = loads(operator)
+            self._rdkitrxn, self._kekulize, self._drop_errors = loads(operator)
             self._blob = operator
         else:
             raise NotImplementedError("Invalid operator type")
@@ -230,7 +235,9 @@ class OpDatBasic(interfaces.OpDatRDKit):
     @property
     def blob(self) -> bytes:
         if self._blob is None:
-            self._blob = pickle.dumps((self.rdkitrxn, self._kekulize))
+            self._blob = pickle.dumps(
+                (self.rdkitrxn, self._kekulize, self._drop_errors)
+            )
         return self._blob
 
     @property
@@ -279,6 +286,14 @@ class OpDatBasic(interfaces.OpDatRDKit):
             print(type(err))
             raise err
 
+    def _process_new_mol(self, mol) -> interfaces.MolDatRDKit | None:
+        if self._drop_errors:
+            try:
+                return self._engine.Mol(mol)
+            except Exception:
+                return None
+        return self._engine.Mol(mol)
+
     def __call__(
         self, *reactants: interfaces.MolDatBase
     ) -> tuple[tuple[interfaces.MolDatBase, ...], ...]:
@@ -293,10 +308,16 @@ class OpDatBasic(interfaces.OpDatRDKit):
                 rdkit.Chem.rdmolops.Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
             return tuple(
-                tuple(self._engine.Mol(product) for product in products)
-                for products in self._rdkitrxn.RunReactants(
-                    rdkitmols, maxProducts=0
+                product_set  # type: ignore [misc]
+                for product_set in (
+                    tuple(
+                        self._process_new_mol(product) for product in products
+                    )
+                    for products in self._rdkitrxn.RunReactants(
+                        rdkitmols, maxProducts=0
+                    )
                 )
+                if None not in product_set
             )
         except Exception as err:
             raise RuntimeError(
