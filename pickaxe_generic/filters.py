@@ -4,7 +4,6 @@ Contains classes which implement various filter components.
 
 import collections.abc
 import dataclasses
-import itertools
 import typing
 
 import rdkit

@@ -15,7 +15,6 @@ import operator
 import os
 import pickle
 import shutil
-import types
 import typing
 import xml.etree.ElementTree
 

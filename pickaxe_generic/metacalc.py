@@ -4,7 +4,6 @@ Contains metadata calculator classes.
 
 import collections.abc
 import dataclasses
-import itertools
 import typing
 
 import rdkit.Chem.rdMolDescriptors

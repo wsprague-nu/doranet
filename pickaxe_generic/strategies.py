@@ -5,7 +5,6 @@ Contains classes which define and implement network expansion strategies.
 import collections.abc
 import concurrent.futures
 import dataclasses
-import functools
 import heapq
 import itertools
 import math
