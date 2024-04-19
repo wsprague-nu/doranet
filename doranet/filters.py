@@ -274,7 +274,8 @@ class ReactionFilterMaxAtoms(metadata.ReactionFilterBase):
         for mol in recipe.products:
             if not isinstance(mol.item, interfaces.MolDatRDKit):
                 raise NotImplementedError(
-                    f"Counting # of atoms in non-RDKit molecules is not yet supported (found {repr(mol)})"
+                    f"""Counting # of atoms in non-RDKit molecules is not yet
+                        supported (found {repr(mol)})"""
                 )
             if (
                 len(mol.item.rdkitmol.GetAtomsMatchingQuery(self.query))
