@@ -1,5 +1,4 @@
-import pytest
+import doranet as dn
 
 def test_import_package():
-    with pytest.raises(ImportError):
-        import doranet as dn
+    assert(dn)
