@@ -10,7 +10,7 @@ import itertools
 import math
 import typing
 
-from . import hooks, interfaces, metadata
+from . import interfaces, metadata
 from . import network as pgnetworks
 
 
