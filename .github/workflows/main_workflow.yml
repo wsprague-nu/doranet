@@ -28,7 +28,7 @@ jobs:
       - name: Test imports
         run: python test/import_test.py
       - name: Check formatting
-        run: ruff check
+        run: ruff check .
   test-install-windows:
     strategy:
       fail-fast: true
@@ -51,4 +51,4 @@ jobs:
       - name: Test imports
         run: python test/import_test.py
       - name: Check formatting
-        run: ruff check
+        run: ruff check .
