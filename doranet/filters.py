@@ -38,9 +38,9 @@ class LessThanNElementTypeFilter(interfaces.ReactionFilter):
 
     def __call__(self, operator, reactants, products):
         for mol in products:
-            if isinstance(mol, interfaces.MolDatRDKit):
-                if len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n:
-                    return False
+            if isinstance(mol, interfaces.MolDatRDKit) \
+            and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n:
+                return False
         return True
 
     def __getstate__(self):
