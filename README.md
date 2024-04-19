@@ -185,12 +185,14 @@ Project Link: [https://github.com/wsprague-nu/doranet](https://github.com/wsprag
 ## Acknowledgments
 
 - [Prof. Linda Broadbelt](broadbelt.northwestern.edu)
-- Manali Dhawan
 - Quan Zhang
+- Manali Dhawan
+- Geoffrey Bonnanzio
 - Kevin Shebek
 - Lauren Lopez
 - Joseph Ni
 - Jon Strutz
+- Stefan Pate
 - [Prof. Brent Shanks](https://www.engineering.iastate.edu/people/profile/bshanks/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
