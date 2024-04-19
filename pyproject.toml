@@ -1,6 +1,35 @@
 [build-system]
-requires = ["setuptools>=24.2.0","wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = 'doranet'
+version = '0.4.0'
+authors = [
+    { name='William Sprague', email='wsprague@u.northwestern.edu' },
+]
+description = 'Python package for generating and analyzing chemical reaction networks'
+readme = 'README.md'
+requires-python = '>=3.10'
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 2 - Pre-Alpha",
+]
+license = {file = "LICENSE"}
+dependencies = [
+    "numpy",
+    "pandas",
+    "pillow",
+    "pyarrow",
+    "rdkit",
+    "scipy",
+]
+
+[project.urls]
+Homepage = "https://github.com/wsprague-nu/doranet"
+Issues = "https://github.com/wsprague-nu/doranet/issues"
 
 [[tool.mypy.overrides]]
 module = [
