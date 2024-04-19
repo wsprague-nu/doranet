@@ -307,11 +307,8 @@ class ReplaceBlacklist:
         new_value: typing.Any,
     ) -> bool:
         if key in self._blacklist_keys:
-            if old_value is None:
-                return True
-            elif old_value is False and new_value is True:
-                return True
-            return False
+            return (old_value is None) \
+                   or (old_value is False and new_value is True)
         return ReplaceNewValue(key, old_value, new_value)
 
 
