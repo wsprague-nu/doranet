@@ -4,7 +4,7 @@ Contains classes which implement global hook functions.
 
 import dataclasses
 
-from . import interfaces
+from doranet import interfaces
 
 
 @dataclasses.dataclass(slots=True)

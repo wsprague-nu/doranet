@@ -12,7 +12,7 @@ import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from . import interfaces
+from doranet import interfaces
 
 # some code to make loads more safe to arbitrary code execution
 # necessary since external data from a database may be input

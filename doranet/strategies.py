@@ -10,8 +10,8 @@ import itertools
 import math
 import typing
 
-from . import interfaces, metadata
-from . import network as pgnetworks
+from doranet import interfaces, metadata
+from doranet import network as pgnetworks
 
 
 class _ReactionProvider(typing.Protocol):

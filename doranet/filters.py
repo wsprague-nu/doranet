@@ -10,7 +10,7 @@ import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdqueries
 
-from . import interfaces, metadata
+from doranet import interfaces, metadata
 
 
 class AlwaysTrueFilter(interfaces.ReactionFilter):

@@ -13,7 +13,7 @@ import xml.dom.minidom
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from . import (
+from doranet import (
     containers,
     datatypes,
     filters,

@@ -10,7 +10,7 @@ import itertools
 import operator
 import typing
 
-from . import interfaces, utils
+from doranet import interfaces, utils
 
 
 class MetaSink(typing.Protocol):

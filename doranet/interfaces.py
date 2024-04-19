@@ -23,7 +23,7 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 if typing.TYPE_CHECKING:
-    from . import filters, hooks, metacalc, metadata, strategies
+    from doranet import filters, hooks, metacalc, metadata, strategies
 
 T = typing.TypeVar("T")
 T_ci = typing.TypeVar("T_ci", contravariant=False)

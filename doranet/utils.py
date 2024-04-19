@@ -11,7 +11,7 @@ import IPython
 import PIL
 import rdkit.Chem
 
-from . import interfaces
+from doranet import interfaces
 
 
 class RxnTrackerDepthFirst(interfaces.RxnTracker):

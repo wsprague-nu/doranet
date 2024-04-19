@@ -5,7 +5,7 @@ Contains classes which define and implement relevant smart containers.
 import collections.abc
 import typing
 
-from . import interfaces
+from doranet import interfaces
 
 
 @typing.final

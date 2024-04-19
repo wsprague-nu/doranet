@@ -8,7 +8,7 @@ import typing
 
 import rdkit.Chem.rdMolDescriptors
 
-from . import interfaces, metadata
+from doranet import interfaces, metadata
 
 
 @typing.final

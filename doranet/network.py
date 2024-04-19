@@ -8,7 +8,7 @@ import gzip
 import pickle
 import typing
 
-from . import interfaces
+from doranet import interfaces
 
 
 @dataclasses.dataclass(frozen=True, slots=True, order=True)
