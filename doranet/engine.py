@@ -138,38 +138,39 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     _Rxn_Lib: typing.Any
 
     def __init__(self, speed: int = 5, np: int = 1):
-        if speed == 1:
-            # type: ignore
-            self._Mol = datatypes.MolDatBasicV2
-            raise NotImplementedError("Speed not yet implemented")
-        elif speed == 2:
-            self._Mol = datatypes.MolDatBasicV2
-            raise NotImplementedError("Speed not yet implemented")
-        elif speed == 3:
-            self._Mol = datatypes.MolDatBasicV2
-            raise NotImplementedError("Speed not yet implemented")
-        elif speed == 4:
-            self._Mol = datatypes.MolDatBasicV2
-            self._Mol_Lib = lambda: containers.ObjectLibraryKeyVal(
-                initializer=self.Mol
-            )
-            self._Op_Lib = lambda: containers.ObjectLibraryKeyVal(
-                initializer=self.Op
-            )
-            # self._Rxn_Lib = lambda: ObjectLibraryKeyVal(initializer=self.Rxn)
-            self._Rxn_Lib = containers.ObjectLibraryBasic
-        elif speed == 5:
-            self._Mol = datatypes.MolDatBasicV1
-            self._Mol_Lib = containers.ObjectLibraryBasic
-            self._Op_Lib = containers.ObjectLibraryBasic
-            self._Rxn_Lib = containers.ObjectLibraryBasic
-        elif speed == 6:
-            self._Mol = datatypes.MolDatBasicV2
-            self._Mol_Lib = containers.ObjectLibraryBasic
-            self._Op_Lib = containers.ObjectLibraryBasic
-            self._Rxn_Lib = containers.ObjectLibraryBasic
-        else:
-            raise ValueError(f"speed = {speed} is invalid")
+        match speed:
+            case 1:
+                self._Mol = datatypes.MolDatBasicV2
+                raise NotImplementedError("Speed not yet implemented")
+            case 2:
+                self._Mol = datatypes.MolDatBasicV2
+                raise NotImplementedError("Speed not yet implemented")
+            case 3:
+                self._Mol = datatypes.MolDatBasicV2
+                raise NotImplementedError("Speed not yet implemented")
+            case 4:
+                self._Mol = datatypes.MolDatBasicV2
+                self._Mol_Lib = lambda: containers.ObjectLibraryKeyVal(
+                    initializer=self.Mol
+                )
+                self._Op_Lib = lambda: containers.ObjectLibraryKeyVal(
+                    initializer=self.Op
+                )
+                # self._Rxn_Lib = lambda: ObjectLibraryKeyVal(initializer=self.Rxn)
+                self._Rxn_Lib = containers.ObjectLibraryBasic
+            case 5:
+                self._Mol = datatypes.MolDatBasicV1
+                self._Mol_Lib = containers.ObjectLibraryBasic
+                self._Op_Lib = containers.ObjectLibraryBasic
+                self._Rxn_Lib = containers.ObjectLibraryBasic
+            case 6:
+                self._Mol = datatypes.MolDatBasicV2
+                self._Mol_Lib = containers.ObjectLibraryBasic
+                self._Op_Lib = containers.ObjectLibraryBasic
+                self._Rxn_Lib = containers.ObjectLibraryBasic
+            case _:
+                raise ValueError(f"speed = {speed} is invalid")
+
         self._Op = datatypes.OpDatBasic
         self._Rxn = datatypes.RxnDatBasic
         self._CartesianStrategy = strategies.CartesianStrategy
