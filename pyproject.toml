@@ -44,3 +44,6 @@ line-length = 80
 
 [tool.ruff.format]
 line-ending = "lf"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "SIM"]
