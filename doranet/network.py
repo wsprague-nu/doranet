@@ -52,7 +52,7 @@ class _ValueQueryData(
     ) -> bool:
         if isinstance(item, interfaces.DataUnit):
             item = item.uid
-        return item in self._map.keys()
+        return item in self._map
 
     @typing.overload
     def __getitem__(
@@ -739,25 +739,23 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
         return self.network.producers(index)
 
     def add_mol(self, mol, meta=None, reactive=None, _custom_compat=None):
-        if meta is not None:
-            if mol in self.network:
-                i = self.network.mols.i(mol.uid)
-                exist_keys = self.network.mols.meta(i, meta.keys())
-                for key in exist_keys.keys():
-                    if exist_keys[key] != meta[key]:
-                        self.updated_mol_meta.add(i)
-                        continue
+        if meta is not None and mol in self.network:
+            i = self.network.mols.i(mol.uid)
+            exist_keys = self.network.mols.meta(i, meta.keys())
+            for key in exist_keys:
+                if exist_keys[key] != meta[key]:
+                    self.updated_mol_meta.add(i)
+                    continue
         return self.network.add_mol(mol, meta, reactive, _custom_compat)
 
     def add_op(self, op, meta=None):
-        if meta is not None:
-            if op in self.network:
-                i = self.network.ops.i(op.uid)
-                exist_keys = self.network.ops.meta(i, meta.keys())
-                for key in exist_keys.keys():
-                    if exist_keys[key] != meta[key]:
-                        self.updated_op_meta.add(i)
-                        continue
+        if meta is not None and op in self.network:
+            i = self.network.ops.i(op.uid)
+            exist_keys = self.network.ops.meta(i, meta.keys())
+            for key in exist_keys:
+                if exist_keys[key] != meta[key]:
+                    self.updated_op_meta.add(i)
+                    continue
         return self.network.add_op(op, meta)
 
     def add_rxn(self, operator, reactants, products, meta=None, rxn=None):

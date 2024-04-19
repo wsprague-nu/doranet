@@ -617,10 +617,12 @@ def _generate_recipe_batches(
     ],
     table_indices: collections.abc.Sequence[int],
     batch_size: typing.Optional[int] = None,
-    updated_mols: set[interfaces.MolIndex] = set(),
+    updated_mols: typing.Optional[set[interfaces.MolIndex]] = None,
 ) -> collections.abc.Generator[
     tuple[tuple[interfaces.MolIndex, ...], ...], None, None
 ]:
+    if updated_mols is None:
+        updated_mols = set()
     num_args = len(mol_table)
 
     # get number of old and new mols for each argument
@@ -782,10 +784,7 @@ def assemble_recipe_batch_job(
         None,
         None,
     ]
-    if keyset.live_operator:
-        op_data = network.ops[op_index]
-    else:
-        op_data = None
+    op_data = network.ops[op_index] if keyset.live_operator else None
     if keyset.operator_keys:
         op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
     else:
@@ -1469,10 +1468,7 @@ class CartesianStrategyUpdated:
         # calc: typing.Optional[metadata.MolPropertyFromRxnCalc] = None
         # resolver: typing.Optional[metadata.MetaUpdateResolver] = None
         global_hook: list[interfaces.GlobalUpdateHook]
-        if global_hooks is None:
-            global_hook = []
-        else:
-            global_hook = list(global_hooks)
+        global_hook = [] if global_hooks is None else list(global_hooks)
         # if max_gen is not None:
         #     mol_filter = engine.filter.mol.meta_func(
         #         self._gen_key, self.gen_test(max_gen)
