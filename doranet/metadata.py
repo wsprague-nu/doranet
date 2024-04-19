@@ -18,7 +18,8 @@ class MetaSink(typing.Protocol):
 
     @property
     @abc.abstractmethod
-    def meta_required(self) -> interfaces.MetaKeyPacket: ...
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        ...
 
 
 _T = typing.TypeVar("_T")
@@ -33,15 +34,18 @@ def TrivialMetaDataResolverFunc(a: _T, b: _T) -> _T:
 class LocalPropertyCalc(abc.ABC, typing.Generic[_T]):
     @property
     @abc.abstractmethod
-    def key(self) -> collections.abc.Hashable: ...
+    def key(self) -> collections.abc.Hashable:
+        ...
 
     @property
     @abc.abstractmethod
-    def meta_required(self) -> interfaces.MetaKeyPacket: ...
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        ...
 
     @property
     @abc.abstractmethod
-    def resolver(self) -> MetaDataResolverFunc[_T]: ...
+    def resolver(self) -> MetaDataResolverFunc[_T]:
+        ...
 
     @typing.final
     def __and__(
@@ -120,7 +124,8 @@ class MolPropertyCalc(LocalPropertyCalc[_T]):
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
         prev_value: typing.Optional[_T] = None,
-    ) -> typing.Optional[_T]: ...
+    ) -> typing.Optional[_T]:
+        ...
 
 
 class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
@@ -130,7 +135,8 @@ class MolPropertyFromRxnCalc(LocalPropertyCalc[_T]):
         data: interfaces.DataPacketE[interfaces.MolDatBase],
         rxn: interfaces.ReactionExplicit,
         prev_value: typing.Optional[_T] = None,
-    ) -> typing.Optional[_T]: ...
+    ) -> typing.Optional[_T]:
+        ...
 
 
 class OpPropertyCalc(LocalPropertyCalc[_T]):
@@ -139,7 +145,8 @@ class OpPropertyCalc(LocalPropertyCalc[_T]):
         self,
         data: interfaces.DataPacketE[interfaces.OpDatBase],
         prev_value: typing.Optional[_T] = None,
-    ) -> typing.Optional[_T]: ...
+    ) -> typing.Optional[_T]:
+        ...
 
 
 class OpPropertyFromRxnCalc(LocalPropertyCalc[_T]):
@@ -149,7 +156,8 @@ class OpPropertyFromRxnCalc(LocalPropertyCalc[_T]):
         data: interfaces.DataPacketE[interfaces.OpDatBase],
         rxn: interfaces.ReactionExplicit,
         prev_value: typing.Optional[_T] = None,
-    ) -> typing.Optional[_T]: ...
+    ) -> typing.Optional[_T]:
+        ...
 
 
 class RxnPropertyCalc(LocalPropertyCalc[_T]):
@@ -158,7 +166,8 @@ class RxnPropertyCalc(LocalPropertyCalc[_T]):
         self,
         data: interfaces.ReactionExplicit,
         prev_value: typing.Optional[_T] = None,
-    ) -> typing.Optional[_T]: ...
+    ) -> typing.Optional[_T]:
+        ...
 
 
 @dataclasses.dataclass(frozen=True)
@@ -197,7 +206,8 @@ class ReactionFilterBase(abc.ABC):
     __slots__ = ()
 
     @abc.abstractmethod
-    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool: ...
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        ...
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -290,13 +300,13 @@ class ReactionFilterXor(ReactionFilterBase):
 
 class PropertyCompositor(abc.ABC):
     @abc.abstractmethod
-    def __call__(
-        self, rxn: interfaces.ReactionExplicit
-    ) -> "MetaPropertyState": ...
+    def __call__(self, rxn: interfaces.ReactionExplicit) -> "MetaPropertyState":
+        ...
 
     @property
     @abc.abstractmethod
-    def keys(self) -> KeyOutput: ...
+    def keys(self) -> KeyOutput:
+        ...
 
     @typing.final
     def __and__(
@@ -358,11 +368,13 @@ class PropertyCompositor(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def meta_required(self) -> interfaces.MetaKeyPacket: ...
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        ...
 
     @property
     @abc.abstractmethod
-    def resolver(self) -> "MetaUpdateResolver": ...
+    def resolver(self) -> "MetaUpdateResolver":
+        ...
 
 
 class MergePropertyCompositor(PropertyCompositor):
@@ -589,7 +601,8 @@ class RxnPropertyCompositor(PropertyCompositor, typing.Generic[_T]):
             return MetaPropertyState({}, {}, {})
         props = {rxn.uid: calc}
         single_state = MetaPropertyStateSingleProp(
-            props, self._calc.resolver  # type: ignore
+            props,
+            self._calc.resolver,  # type: ignore
         )
         return MetaPropertyState({}, {}, {self._calc.key: single_state})
 
@@ -707,7 +720,8 @@ class RxnAnalysisStep(abc.ABC):
         rxns: collections.abc.Iterable[
             tuple[interfaces.ReactionExplicit, bool]
         ],
-    ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]: ...
+    ) -> collections.abc.Iterable[tuple[interfaces.ReactionExplicit, bool]]:
+        ...
 
     @typing.final
     def __rshift__(
@@ -727,11 +741,13 @@ class RxnAnalysisStep(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def meta_required(self) -> interfaces.MetaKeyPacket: ...
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        ...
 
     @property
     @abc.abstractmethod
-    def resolver(self) -> "MetaUpdateResolver": ...
+    def resolver(self) -> "MetaUpdateResolver":
+        ...
 
 
 @dataclasses.dataclass(frozen=True)
@@ -928,7 +944,7 @@ def as_rxn_analysis_step(
         PropertyCompositor,
         ReactionFilterBase,
         LocalPropertyCalc,
-    ]
+    ],
 ) -> RxnAnalysisStep:
     if isinstance(arg, PropertyCompositor):
         return RxnAnalysisStepProp(arg)

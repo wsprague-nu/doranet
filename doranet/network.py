@@ -34,7 +34,7 @@ def recipe_from_explicit(
 def index_iterable_guard(
     item: typing.Union[
         interfaces.T_int, collections.abc.Iterable[interfaces.T_int]
-    ]
+    ],
 ) -> typing.TypeGuard[collections.abc.Iterable[interfaces.T_int]]:
     return hasattr(item, "__iter__")
 
@@ -57,12 +57,14 @@ class _ValueQueryData(
     @typing.overload
     def __getitem__(
         self, item: slice
-    ) -> collections.abc.Sequence[interfaces.T_data]: ...
+    ) -> collections.abc.Sequence[interfaces.T_data]:
+        ...
 
     @typing.overload
     def __getitem__(
         self, item: typing.Union[interfaces.T_int, interfaces.Identifier]
-    ) -> interfaces.T_data: ...
+    ) -> interfaces.T_data:
+        ...
 
     def __getitem__(
         self, item: typing.Union[slice, interfaces.T_int, interfaces.Identifier]
@@ -86,7 +88,8 @@ class _ValueQueryData(
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Mapping[collections.abc.Hashable, typing.Any]: ...
+    ) -> collections.abc.Mapping[collections.abc.Hashable, typing.Any]:
+        ...
 
     @typing.overload
     def meta(
@@ -99,7 +102,8 @@ class _ValueQueryData(
         ] = None,
     ) -> collections.abc.Iterable[
         collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-    ]: ...
+    ]:
+        ...
 
     def meta(
         self,
@@ -163,10 +167,12 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
     @typing.overload
     def __getitem__(
         self, item: slice
-    ) -> collections.abc.Sequence[interfaces.T_id]: ...
+    ) -> collections.abc.Sequence[interfaces.T_id]:
+        ...
 
     @typing.overload
-    def __getitem__(self, item: interfaces.T_int) -> interfaces.T_id: ...
+    def __getitem__(self, item: interfaces.T_int) -> interfaces.T_id:
+        ...
 
     def __getitem__(self, item: typing.Union[slice, interfaces.T_int]):
         if isinstance(item, slice):
@@ -183,7 +189,8 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Mapping[collections.abc.Hashable, typing.Any]: ...
+    ) -> collections.abc.Mapping[collections.abc.Hashable, typing.Any]:
+        ...
 
     @typing.overload
     def meta(
@@ -196,7 +203,8 @@ class _ValueQueryAssoc(typing.Generic[interfaces.T_id, interfaces.T_int]):
         ] = None,
     ) -> collections.abc.Iterable[
         collections.abc.Mapping[collections.abc.Hashable, typing.Any]
-    ]: ...
+    ]:
+        ...
 
     def meta(
         self,

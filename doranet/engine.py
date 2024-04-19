@@ -96,7 +96,8 @@ class _cartesian_op_init:
         #        gen_key: collections.abc.Hashable = "generation",
     ) -> strategies.CartesianStrategyUpdated:
         return strategies.CartesianStrategyUpdated(
-            network, self._engine  # , gen_key
+            network,
+            self._engine,  # , gen_key
         )
 
 
@@ -237,13 +238,13 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         interfaces.ObjectLibrary[interfaces.OpDatBase],
         interfaces.ObjectLibrary[interfaces.RxnDatBase],
     ]:
-        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase] = (
-            self._Mol_Lib()
-        )
+        mol_lib: interfaces.ObjectLibrary[
+            interfaces.MolDatBase
+        ] = self._Mol_Lib()
         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase] = self._Op_Lib()
-        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase] = (
-            self._Rxn_Lib()
-        )
+        rxn_lib: interfaces.ObjectLibrary[
+            interfaces.RxnDatBase
+        ] = self._Rxn_Lib()
         return (mol_lib, op_lib, rxn_lib)
 
     def CartesianStrategy(

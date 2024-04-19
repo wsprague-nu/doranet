@@ -24,7 +24,8 @@ class _ReactionProvider(typing.Protocol):
         products: typing.Optional[
             collections.abc.Collection[interfaces.Identifier]
         ] = None,
-    ) -> interfaces.RxnDatBase: ...
+    ) -> interfaces.RxnDatBase:
+        ...
 
 
 def _generate_recipes_from_compat_table(
@@ -127,7 +128,7 @@ def _evaluate_reaction_unpack(
                 bool,
             ]
         ],
-    ]
+    ],
 ) -> tuple[
     tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
     tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
@@ -686,16 +687,20 @@ def _generate_recipe_batches(
         #     )
         # )
         if batch_size is None:
-            yield tuple(
-                tuple(mol_list[:i_counter])
-                for mol_list, i_counter in zip(
-                    mol_table[:i_bundle], table_indices
+            yield (
+                tuple(
+                    tuple(mol_list[:i_counter])
+                    for mol_list, i_counter in zip(
+                        mol_table[:i_bundle], table_indices
+                    )
                 )
-            ) + (
-                updated_vals[i_bundle]
-                + tuple(mol_table[i_bundle][table_indices[i_bundle] :]),
-            ) + tuple(
-                tuple(mol_list) for mol_list in mol_table[i_bundle + 1 :]
+                + (
+                    updated_vals[i_bundle]
+                    + tuple(mol_table[i_bundle][table_indices[i_bundle] :]),
+                )
+                + tuple(
+                    tuple(mol_list) for mol_list in mol_table[i_bundle + 1 :]
+                )
             )
             return
 
@@ -727,8 +732,9 @@ def _generate_recipe_batches(
             )
             cur_column_mols = tuple(
                 mol_table[i_bundle][
-                    batch_subindices[i_bundle]
-                    * chunk_sizes[i_bundle] : (batch_subindices[i_bundle] + 1)
+                    batch_subindices[i_bundle] * chunk_sizes[i_bundle] : (
+                        batch_subindices[i_bundle] + 1
+                    )
                     * chunk_sizes[i_bundle]
                 ]
             )
@@ -1051,10 +1057,12 @@ class RecipeHeap:
     @typing.overload
     def __getitem__(
         self, item: slice
-    ) -> collections.abc.Sequence[RecipePriorityItem]: ...
+    ) -> collections.abc.Sequence[RecipePriorityItem]:
+        ...
 
     @typing.overload
-    def __getitem__(self, item: int) -> RecipePriorityItem: ...
+    def __getitem__(self, item: int) -> RecipePriorityItem:
+        ...
 
     def __getitem__(self, item: typing.Union[int, slice]):
         if self._ordered is None:

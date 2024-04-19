@@ -111,7 +111,9 @@ class MassWasteCalculator(metadata.MolPropertyFromRxnCalc[float]):
             if mol.item != data.item
         )
         products_sum: float = sum(
-            mol.meta[mw_key] for mol in rxn.products if mol.item != data.item  # type: ignore
+            mol.meta[mw_key]
+            for mol in rxn.products
+            if mol.item != data.item  # type: ignore
         )
         final_result = reactants_sum + products_sum
         return final_result
