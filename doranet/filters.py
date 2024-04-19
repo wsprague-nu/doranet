@@ -90,10 +90,7 @@ class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
         operator: interfaces.Identifier,
         reactants: collections.abc.Sequence[interfaces.Identifier],
     ) -> bool:
-        for uid in reactants:
-            if uid not in self.coreactants:
-                return True
-        return False
+        return any(uid not in self.coreactants for uid in reactants)
 
 
 @typing.final
