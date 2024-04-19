@@ -184,7 +184,7 @@ Project Link: [https://github.com/wsprague-nu/doranet](https://github.com/wsprag
 
 ## Acknowledgments
 
-- [Prof. Linda Broadbelt](broadbelt.northwestern.edu)
+- [Prof. Linda Broadbelt](https://broadbelt.northwestern.edu)
 - Quan Zhang
 - Manali Dhawan
 - Geoffrey Bonnanzio
