@@ -2,19 +2,6 @@
 requires = ["setuptools>=24.2.0","wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-line-length = 80
-
-[tool.flake8]
-max-line-length = 80
-extend-ignore = ["E203"]
-docstring-convention = "numpy"
-exclude = ["./docs/**","./test/**"]
-
-[tool.isort]
-profile = "black"
-line_length = 80
-
 [[tool.mypy.overrides]]
 module = [
     "rdkit.*",
@@ -23,23 +10,8 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.pylint.format]
-max-line-length = "80"
+[tool.ruff]
+line-length = 80
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py
-isolated_build = true
-
-[testenv]
-deps =
-    black
-    isort
-    jupyter-black
-    mypy
-commands =
-    black --check .
-    isort --check .
-    mypy .
-"""
+[tool.ruff.format]
+line-ending = "lf"
