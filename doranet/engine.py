@@ -156,7 +156,6 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
                 self._Op_Lib = lambda: containers.ObjectLibraryKeyVal(
                     initializer=self.Op
                 )
-                # self._Rxn_Lib = lambda: ObjectLibraryKeyVal(initializer=self.Rxn)
                 self._Rxn_Lib = containers.ObjectLibraryBasic
             case 5:
                 self._Mol = datatypes.MolDatBasicV1
@@ -328,9 +327,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
                     return network
                 else:
                     raise NotImplementedError(
-                        f"File at {filepath} is incompatible with this version of Pickaxe_Generic, please update (file version={version}.{subversion}, max supported=0.0)"
+                        f"""File at {filepath} is incompatible with this version
+                            of Pickaxe_Generic, please update (file
+                            version={version}.{subversion}, max
+                            supported=0.0)"""
                     )
             else:
                 raise NotImplementedError(
-                    f"File at {filepath} is incompatible with this version of Pickaxe_Generic, please update (file version={version}, max supported=0)"
+                    f"""File at {filepath} is incompatible with this version of
+                        Pickaxe_Generic, please update (file version={version},
+                        max supported=0)"""
                 )
