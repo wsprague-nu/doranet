@@ -279,7 +279,7 @@ def logreduce(
     try:
         r_val, stop = _logreduce(function, i, 0)
     except StopIteration:
-        raise TypeError("logreduce() of empty iterable with no initial value")
+        raise TypeError("logreduce() of empty iterable with no initial value") from None
     n = 0
     try:
         while not stop:
