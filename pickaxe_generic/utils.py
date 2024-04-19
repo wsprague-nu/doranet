@@ -162,7 +162,7 @@ class RxnTrackerDepthFirstNetwork(interfaces.RxnTrackerNetwork):
     ]:
         network = self.network
         n_mols = len(network.mols)
-        n_rxns = len(network.rxns)
+        # n_rxns = len(network.rxns)
         if depth is not None:
             if depth <= 0:
                 return
