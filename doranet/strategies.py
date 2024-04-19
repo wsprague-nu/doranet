@@ -606,7 +606,7 @@ def calc_batch_split(
         num_split[max_index] += 1
         split_size = tuple(
             -(num_mols // -splitnum)
-            for num_mols, splitnum in zip(size_bundle, num_split)
+            for num_mols, splitnum in zip(size_bundle, num_split, strict=False)
         )
     return tuple(num_split)
 
@@ -641,7 +641,7 @@ def _generate_recipe_batches(
     num_new = tuple(
         len(col) + len(mol_list) - i_counter
         for col, mol_list, i_counter in zip(
-            updated_vals, mol_table, table_indices
+            updated_vals, mol_table, table_indices, strict=False
         )
     )
     num_tot = tuple(len(col) for col in mol_table)
@@ -693,7 +693,7 @@ def _generate_recipe_batches(
                 tuple(
                     tuple(mol_list[:i_counter])
                     for mol_list, i_counter in zip(
-                        mol_table[:i_bundle], table_indices
+                        mol_table[:i_bundle], table_indices, strict=False
                     )
                 )
                 + (
@@ -715,7 +715,7 @@ def _generate_recipe_batches(
         batch_split = calc_batch_split(size_bundle, batch_size)
         chunk_sizes = tuple(
             -(num_mols // -splitnum)
-            for num_mols, splitnum in zip(size_bundle, batch_split)
+            for num_mols, splitnum in zip(size_bundle, batch_split, strict=False)
         )
         split_indices = (range(num_splits) for num_splits in batch_split)
         for batch_subindices in itertools.product(*split_indices):
@@ -730,6 +730,7 @@ def _generate_recipe_batches(
                     table_indices[:i_bundle],
                     chunk_sizes[:i_bundle],
                     batch_subindices[:i_bundle],
+                    strict=False,
                 )
             )
             cur_column_mols = tuple(
@@ -750,6 +751,7 @@ def _generate_recipe_batches(
                     mol_table[i_bundle + 1 :],
                     chunk_sizes[i_bundle + 1 :],
                     batch_subindices[i_bundle + 1 :],
+                    strict=False
                 )
             )
             yield prev_column_mols + (cur_column_mols,) + next_column_mols
@@ -804,9 +806,9 @@ def assemble_recipe_batch_job(
     mol_batch = tuple(
         tuple(
             interfaces.DataPacket(i, mol, m_meta)
-            for i, mol, m_meta in zip(i_col, mol_col, meta_col)
+            for i, mol, m_meta in zip(i_col, mol_col, meta_col, strict=False)
         )
-        for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta)
+        for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta, strict=False)
     )
     return RecipeRankingJob(
         op,
@@ -853,7 +855,7 @@ def assemble_reaction_job(
 
     reactants = tuple(
         interfaces.DataPacketE(i, network.mols[i], meta)
-        for i, meta in zip(recipe.reactants, mol_meta)
+        for i, meta in zip(recipe.reactants, mol_meta, strict=False)
     )
 
     return ReactionJob(op, reactants)
@@ -1237,6 +1239,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     for i_tested, compat_mols in zip(
                         op_index_table,
                         network.compat_table(interfaces.OpIndex(op_index)),
+                        strict=False
                     )
                 )
                 for op_index, op_index_table in enumerate(compat_indices_table)
@@ -1340,7 +1343,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 updated_ops_set = set()
 
                 # update reactant metadata
-                for m_dat in zip(reactants_indices, rxn.reactants):
+                for m_dat in zip(reactants_indices, rxn.reactants, strict=False):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:
@@ -1355,7 +1358,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                                     updated_mols_set.add(m_dat[0])
 
                 # update product metadata
-                for m_dat in zip(products_indices, rxn.products):
+                for m_dat in zip(products_indices, rxn.products, strict=False):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:

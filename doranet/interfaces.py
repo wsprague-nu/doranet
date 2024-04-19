@@ -1073,7 +1073,7 @@ class Recipe:
         """
         self_order = sorted(self.reactants, reverse=True)
         other_order = sorted(other.reactants, reverse=True)
-        for val_self, val_other in zip(self_order, other_order):
+        for val_self, val_other in zip(self_order, other_order, strict=False):
             if val_self < val_other:
                 return False
             elif val_other < val_self:
