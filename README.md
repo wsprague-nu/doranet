@@ -174,7 +174,7 @@ This is an example of how pickaxe-generic may be used to obtain the heat of form
 
 ## Contact
 
-Your Name - wsprague@u.northwestern.edu
+William Sprague - [wsprague@u.northwestern.edu](wsprague@u.northwestern.edu])
 
 Project Link: [https://github.com/wsprague-nu/doranet](https://github.com/wsprague-nu/doranet)
 
