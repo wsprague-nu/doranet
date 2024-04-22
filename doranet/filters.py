@@ -38,8 +38,10 @@ class LessThanNElementTypeFilter(interfaces.ReactionFilter):
 
     def __call__(self, operator, reactants, products):
         for mol in products:
-            if isinstance(mol, interfaces.MolDatRDKit) \
-            and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n:
+            if (
+                isinstance(mol, interfaces.MolDatRDKit)
+                and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n
+            ):
                 return False
         return True
 
@@ -307,8 +309,9 @@ class ReplaceBlacklist:
         new_value: typing.Any,
     ) -> bool:
         if key in self._blacklist_keys:
-            return (old_value is None) \
-                   or (old_value is False and new_value is True)
+            return (old_value is None) or (
+                old_value is False and new_value is True
+            )
         return ReplaceNewValue(key, old_value, new_value)
 
 

@@ -715,8 +715,9 @@ def _generate_recipe_batches(
         batch_split = calc_batch_split(size_bundle, batch_size)
         chunk_sizes = tuple(
             -(num_mols // -splitnum)
-            for num_mols, splitnum in zip(size_bundle, batch_split, 
-                                          strict=False)
+            for num_mols, splitnum in zip(
+                size_bundle, batch_split, strict=False
+            )
         )
         split_indices = (range(num_splits) for num_splits in batch_split)
         for batch_subindices in itertools.product(*split_indices):
@@ -752,7 +753,7 @@ def _generate_recipe_batches(
                     mol_table[i_bundle + 1 :],
                     chunk_sizes[i_bundle + 1 :],
                     batch_subindices[i_bundle + 1 :],
-                    strict=False
+                    strict=False,
                 )
             )
             yield prev_column_mols + (cur_column_mols,) + next_column_mols
@@ -809,8 +810,9 @@ def assemble_recipe_batch_job(
             interfaces.DataPacket(i, mol, m_meta)
             for i, mol, m_meta in zip(i_col, mol_col, meta_col, strict=False)
         )
-        for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta, 
-                                            strict=False)
+        for i_col, mol_col, meta_col in zip(
+            batch, mol_data, mol_meta, strict=False
+        )
     )
     return RecipeRankingJob(
         op,
@@ -1242,7 +1244,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     for i_tested, compat_mols in zip(
                         op_index_table,
                         network.compat_table(interfaces.OpIndex(op_index)),
-                        strict=False
+                        strict=False,
                     )
                 )
                 for op_index, op_index_table in enumerate(compat_indices_table)
@@ -1346,8 +1348,9 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 updated_ops_set = set()
 
                 # update reactant metadata
-                for m_dat in zip(reactants_indices, rxn.reactants,
-                                 strict=False):
+                for m_dat in zip(
+                    reactants_indices, rxn.reactants, strict=False
+                ):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:

@@ -279,7 +279,9 @@ def logreduce(
     try:
         r_val, stop = _logreduce(function, i, 0)
     except StopIteration:
-        raise TypeError("logreduce() of empty iterable with no initial value") from None
+        raise TypeError(
+            "logreduce() of empty iterable with no initial value"
+        ) from None
     n = 0
     try:
         while not stop:
@@ -364,7 +366,8 @@ def getFigures(
                 for molecule in rxn_lib[rxnid].reactants:
                     if not isinstance(molecule, str):
                         raise TypeError(
-                            f"Identifier {molecule} of type {type(molecule)} must be SMILES string."
+                            f"""Identifier {molecule} of type {type(molecule)}
+                                must be SMILES string."""
                         )
                     rxn_smiles_str += molecule
                     rxn_smiles_str += "."
@@ -372,7 +375,8 @@ def getFigures(
                 for molecule in rxn_lib[rxnid].products:
                     if not isinstance(molecule, str):
                         raise TypeError(
-                            f"Identifier {molecule} of type {type(molecule)} must be SMILES string."
+                            f"""Identifier {molecule} of type {type(molecule)}
+                                must be SMILES string."""
                         )
                     rxn_smiles_str += molecule
                     rxn_smiles_str += "."
