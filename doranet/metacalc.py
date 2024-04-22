@@ -146,6 +146,7 @@ class MolWeightCalculator(metadata.MolPropertyCalc[int]):
         item = data.item
         if not isinstance(item, interfaces.MolDatRDKit):
             raise NotImplementedError(
-                f"MolWeightCalculator has not been implemented for molecule type {type(item)}"
+                f"""MolWeightCalculator has not been implemented for molecule
+                    type {type(item)}"""
             )
         return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)
