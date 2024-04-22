@@ -155,8 +155,8 @@ def _chunk_generator(
 @typing.final
 class CartesianStrategy(interfaces.ExpansionStrategy):
     """
-    Implements interfaces.ExpansionStrategy interface via Cartesian product of molecules
-    and operators.
+    Implements interfaces.ExpansionStrategy interface via Cartesian product of
+    molecules and operators.
     """
 
     def __init__(
@@ -374,8 +374,8 @@ class CartesianStrategy(interfaces.ExpansionStrategy):
 @typing.final
 class CartesianStrategyParallel(interfaces.ExpansionStrategy):
     """
-    Implements interfaces.ExpansionStrategy interface via Cartesian product of molecules
-    and operators.
+    Implements interfaces.ExpansionStrategy interface via Cartesian product of
+    molecules and operators.
     """
 
     def __init__(
@@ -557,7 +557,7 @@ class CartesianStrategyParallel(interfaces.ExpansionStrategy):
                     for results, _ in executor.map(
                         _evaluate_reaction_unpack, jobchunk
                     ):
-                        #                    for result in _evaluate_reaction_unpack(jobchunk):
+                        # for result in _evaluate_reaction_unpack(jobchunk):
                         for reaction, products in results:
                             num_mols += len(products)
                             num_rxns += 1
@@ -715,7 +715,8 @@ def _generate_recipe_batches(
         batch_split = calc_batch_split(size_bundle, batch_size)
         chunk_sizes = tuple(
             -(num_mols // -splitnum)
-            for num_mols, splitnum in zip(size_bundle, batch_split, strict=False)
+            for num_mols, splitnum in zip(size_bundle, batch_split, 
+                                          strict=False)
         )
         split_indices = (range(num_splits) for num_splits in batch_split)
         for batch_subindices in itertools.product(*split_indices):
@@ -808,7 +809,8 @@ def assemble_recipe_batch_job(
             interfaces.DataPacket(i, mol, m_meta)
             for i, mol, m_meta in zip(i_col, mol_col, meta_col, strict=False)
         )
-        for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta, strict=False)
+        for i_col, mol_col, meta_col in zip(batch, mol_data, mol_meta, 
+                                            strict=False)
     )
     return RecipeRankingJob(
         op,
@@ -1202,7 +1204,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
         if heap_size is not None and beam_size is not None:
             ValueError(
-                f"Heap size ({heap_size}) must be greater than beam size ({beam_size})"
+                f"""Heap size ({heap_size}) must be greater than beam size
+                    ({beam_size})"""
             )
 
         # set keysets so that updated reactions may occur and parameters may be
@@ -1343,7 +1346,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 updated_ops_set = set()
 
                 # update reactant metadata
-                for m_dat in zip(reactants_indices, rxn.reactants, strict=False):
+                for m_dat in zip(reactants_indices, rxn.reactants,
+                                 strict=False):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:
@@ -1477,7 +1481,8 @@ class CartesianStrategyUpdated:
         #         self._gen_key, self.gen_test(max_gen)
         #     )
         #     calc = engine.meta.generation(self._gen_key)
-        #     resolver = metadata.MetaUpdateResolver({self._gen_key: min}, {}, {})
+        #     resolver = metadata.MetaUpdateResolver({self._gen_key: min},
+        #                                            {}, {})
         if num_iter is not None:
             global_hook.append(engine.hook.max_iter(num_iter))
         p_strat.expand(
