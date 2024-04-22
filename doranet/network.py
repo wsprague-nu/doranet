@@ -623,7 +623,9 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         if rxn is None:
             if operator is None or reactants is None or products is None:
                 raise ValueError(
-                    f"op ({operator}), reactants ({reactants}), and products ({products}) must all be specified if reaction is None"
+                    f"""op ({operator}), reactants ({reactants}), and products
+                        ({products}) must all be specified if reaction is
+                        None"""
                 )
             rxn = interfaces.Reaction(
                 operator, tuple(reactants), tuple(products)
@@ -642,7 +644,8 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             or min(min(rxn.reactants), min(rxn.products)) < 0
         ):
             raise IndexError(
-                f"One of the molecule components for reaction {rxn} is not in the network."
+                f"""One of the molecule components for reaction {rxn} is not in
+                    the network."""
             )
         # sanity check that operator exists in the network
         if rxn.operator >= len(self._op_list):
@@ -701,32 +704,44 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
 
     def mol_meta(self, index, key, value=None):
         raise NotImplementedError(
-            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+            """This method is deprecated, if you're using it you need to recode,
+               or signal to William that he hasn't gotten around to fixing
+               things yet"""
         )
 
     def op_meta(self, index, key, value=None):
         raise NotImplementedError(
-            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+            """This method is deprecated, if you're using it you need to recode,
+               or signal to William that he hasn't gotten around to fixing
+               things yet"""
         )
 
     def rxn_meta(self, index, key, value=None):
         raise NotImplementedError(
-            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+            """This method is deprecated, if you're using it you need to recode,
+               or signal to William that he hasn't gotten around to fixing
+               things yet"""
         )
 
     def mol_metas(self, indices=None, keys=None):
         raise NotImplementedError(
-            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+            """This method is deprecated, if you're using it you need to recode,
+               or signal to William that he hasn't gotten around to fixing
+               things yet"""
         )
 
     def op_metas(self, indices=None, keys=None):
         raise NotImplementedError(
-            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+            """This method is deprecated, if you're using it you need to recode,
+               or signal to William that he hasn't gotten around to fixing
+               things yet"""
         )
 
     def rxn_metas(self, indices=None, keys=None):
         raise NotImplementedError(
-            "This method is deprecated, if you're using it you need to recode, or signal to William that he hasn't gotten around to fixing things yet"
+            """This method is deprecated, if you're using it you need to recode,
+               or signal to William that he hasn't gotten around to fixing
+               things yet"""
         )
 
     def compat_table(self, index):
