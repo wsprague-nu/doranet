@@ -566,24 +566,31 @@ class MetaKeyPacket:
 
     Attributes
     ----------
-    operator_keys : collections.abc.Set[collections.abc.Hashable] (default: frozenset())
+    operator_keys : collections.abc.Set[collections.abc.Hashable] (default:
+                    frozenset())
         Collection of operator keys.
-    molecule_keys : collections.abc.Set[collections.abc.Hashable] (default: frozenset())
+    molecule_keys : collections.abc.Set[collections.abc.Hashable] (default:
+                    frozenset())
         Collection of molecule keys.
     live_operator : bool (default: False)
-        Whether initialized operators are required (True) or only index + UID (False).
+        Whether initialized operators are required (True) or only index + UID
+        (False).
     live_molecule : bool (default: False)
-        Whether initialized molecules are required (True) or only index + UID (False).
+        Whether initialized molecules are required (True) or only index + UID
+        (False).
 
     Examples
     --------
     >>> MetaKeyPacket(molecule_keys={"enthalpy","generation"})
-    MetaKeyPacket(operator_keys=frozenset(), molecule_keys={'enthalpy', 'generation'}, live_operator=False, live_molecule=False)
+    MetaKeyPacket(operator_keys=frozenset(), molecule_keys={'enthalpy',
+    'generation'}, live_operator=False, live_molecule=False)
 
     Combining two MetaKeyPackets.
 
-    >>> MetaKeyPacket(molecule_keys={"enthalpy","generation"}) + MetaKeyPacket(molecule_keys={"cost","toxicity"}, live_operator=True)
-    MetaKeyPacket(operator_keys=frozenset(), molecule_keys={'enthalpy', 'cost', 'generation', 'toxicity'}, live_operator=True, live_molecule=False)
+    >>> MetaKeyPacket(molecule_keys={"enthalpy","generation"}) + \
+    >>> MetaKeyPacket(molecule_keys={"cost","toxicity"}, live_operator=True)
+    MetaKeyPacket(operator_keys=frozenset(), molecule_keys={'enthalpy', 'cost',
+    'generation', 'toxicity'}, live_operator=True, live_molecule=False)
     """
 
     operator_keys: collections.abc.Set[collections.abc.Hashable] = frozenset()
@@ -706,7 +713,8 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterAnd
-            MolFilter which returns the result of `self(mol, op, arg_num) and other(mol, op, arg_num)`.
+            MolFilter which returns the result of `self(mol, op, arg_num) and
+            other(mol, op, arg_num)`.
         """
         return MolFilterAnd(self, other)
 
@@ -730,7 +738,8 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterOr
-            MolFilter which returns the result of `self(mol, op, arg_num) or other(mol, op, arg_num)`.
+            MolFilter which returns the result of `self(mol, op, arg_num) or
+            other(mol, op, arg_num)`.
         """
         return MolFilterOr(self, other)
 
@@ -742,7 +751,8 @@ class MolFilter(abc.ABC):
         Returns
         -------
         MolFilterXor
-            MolFilter which returns the result of `self(mol, op, arg_num) != other(mol, op, arg_num)`
+            MolFilter which returns the result of `self(mol, op, arg_num) !=
+            other(mol, op, arg_num)`
         """
         return MolFilterXor(self, other)
 
@@ -1680,7 +1690,8 @@ class ReactionFilterTypes(typing.NamedTuple):
         Filter which limits reactions producing molecules larger than a certain
         threshold # of atoms.
     generation : filters.GenerationFilter
-        Filter which limits the maximum number of "generations" based on integer metadata.
+        Filter which limits the maximum number of "generations" based on integer
+        metadata.
     """
 
     max_atoms: _max_atoms_from_num
@@ -2136,19 +2147,27 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         """
         Retrieve metadata for contained objects.
 
-        Metadata is returned as Mappings.  If a single index is specified, a single Mapping will be returned.  If None or an iterable of indices is specified, an iterable of Mappings will be returned corresponding to those indices.
+        Metadata is returned as Mappings.  If a single index is specified, a
+        single Mapping will be returned.  If None or an iterable of indices is
+        specified, an iterable of Mappings will be returned corresponding to
+        those indices.
 
         Parameters
         ----------
-        indices : typing.Optional[typing.Union[T_int, collections.abc.Iterable[T_int]]] (default: None)
-            Indices of objects to be queried.  A single value (not in an Iterable) will return a single Mapping.  `None` indicates all objects are to be queried.
-        keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] (default: None)
+        indices : typing.Optional[typing.Union[T_int,
+                  collections.abc.Iterable[T_int]]] (default: None)
+            Indices of objects to be queried.  A single value (not in an
+            Iterable) will return a single Mapping.  `None` indicates all
+            objects are to be queried.
+        keys : typing.Optional[collections.abc.Iterable[
+               collections.abc.Hashable]] (default: None)
             Subset of keys to be queried.  `None` indicates all key-value pairs
             will be returned.
 
         Returns
         -------
-        typing.Union[collections.abc.Iterable[collections.abc.Mapping],collections.abc.Mapping]
+        typing.Union[collections.abc.Iterable[collections.abc.Mapping],
+        collections.abc.Mapping]
             Mappings relevant to specified object indices, or the Mapping
             relevant to the single specified object index.
 
@@ -2310,19 +2329,27 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         """
         Retrieve metadata for contained objects.
 
-        Metadata is returned as Mappings.  If a single index is specified, a single Mapping will be returned.  If None or an iterable of indices is specified, an iterable of Mappings will be returned corresponding to those indices.
+        Metadata is returned as Mappings.  If a single index is specified, a
+        single Mapping will be returned.  If None or an iterable of indices is
+        specified, an iterable of Mappings will be returned corresponding to
+        those indices.
 
         Parameters
         ----------
-        indices : typing.Optional[typing.Union[T_int, collections.abc.Iterable[T_int]]] (default: None)
-            Indices of objects to be queried.  A single value (not in an Iterable) will return a single Mapping.  `None` indicates all objects are to be queried.
-        keys : typing.Optional[collections.abc.Iterable[collections.abc.Hashable]] (default: None)
+        indices : typing.Optional[typing.Union[T_int,
+                  collections.abc.Iterable[T_int]]] (default: None)
+            Indices of objects to be queried.  A single value (not in an
+            Iterable) will return a single Mapping.  `None` indicates all
+            objects are to be queried.
+        keys : typing.Optional[collections.abc.Iterable[
+               collections.abc.Hashable]] (default: None)
             Subset of keys to be queried.  `None` indicates all key-value pairs
             will be returned.
 
         Returns
         -------
-        typing.Union[collections.abc.Iterable[collections.abc.Mapping],collections.abc.Mapping]
+        typing.Union[collections.abc.Iterable[collections.abc.Mapping],
+        collections.abc.Mapping]
             Mappings relevant to specified object indices, or the Mapping
             relevant to the single specified object index.
 
@@ -2598,7 +2625,8 @@ class ChemNetwork(abc.ABC):
 
         Other Parameters
         ----------------
-        _custom_compat : typing.Optional[collections.abc.Collection[tuple[OpIndex,int]]]
+        _custom_compat : typing.Optional[collections.abc.Collection[tuple[
+                         OpIndex,int]]]
             Custom compatibility table.  Prevents default compatibility testing.
             Intended ONLY for internal use within strategies to parallelize
             compatibility testing.
@@ -2650,9 +2678,11 @@ class ChemNetwork(abc.ABC):
         ----------
         operator : typing.Optional[OpIndex] (default: None)
             Index of operator involved in reaction.
-        reactants : typing.Optional[collections.abc.Sequence[MolIndex]] (default: None)
+        reactants : typing.Optional[collections.abc.Sequence[MolIndex]]
+                    (default: None)
             Indices of reactants involved in the reaction.
-        products : typing.Optional[collections.abc.Sequence[MolIndex]] (default: None)
+        products : typing.Optional[collections.abc.Sequence[MolIndex]] (default:
+                   None)
             Indices of products involved in the reaction.
         meta : typing.Optional[collections.abc.Mapping] (default: None)
             Metadata associated with reaction.
@@ -2868,7 +2898,8 @@ class CompositeRecipeRanker(RecipeRanker[SizedTuple]):
             return SizedTuple(r(recipe) for r in self._internal_rankers)
         if not isinstance(min_rank, SizedTuple):
             raise NotImplementedError(
-                f"Invalid min_rank type: {type(min_rank)}; have you mixed ranking functions?"
+                f"""Invalid min_rank type: {type(min_rank)}; have you mixed
+                    ranking functions?"""
             )
         return SizedTuple(
             r(recipe, m)
@@ -2997,7 +3028,8 @@ class PriorityQueueStrategy(abc.ABC):
             and existing network data.  `None` or missing functions indicate
             that metadata will never conflict, otherwise an error will be
             raised.
-        global_hooks : typing.Optional[collections.abc.Sequence[GlobalUpdateHook]] (default: None)
+        global_hooks : typing.Optional[collections.abc.Sequence[
+                       GlobalUpdateHook]] (default: None)
             Hook functions to run after a loop has completed.  If any return a
             boolean, expansion will terminate before running any more reactions.
             Return value of True terminates immediately, whereas return value
