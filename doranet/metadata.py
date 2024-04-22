@@ -187,17 +187,23 @@ class KeyOutput:
         new_mol_keys = self.mol_keys | other.mol_keys
         if len(new_mol_keys) > len(self.mol_keys) + len(other.mol_keys):
             raise KeyError(
-                f"Conflicting molecule metadata key outputs {self.mol_keys & other.mol_keys}; separate expressions with >> or combine using other operator"
+                f"""Conflicting molecule metadata key outputs {self.mol_keys & 
+                    other.mol_keys}; separate expressions with >> or combine
+                    using other operator"""
             )
         new_op_keys = self.op_keys | other.op_keys
         if len(new_op_keys) > len(self.op_keys) + len(other.op_keys):
             raise KeyError(
-                f"Conflicting operator metadata key outputs {self.op_keys & other.op_keys}; separate expressions with >> or combine using other operator"
+                f"""Conflicting operator metadata key outputs {self.op_keys &
+                    other.op_keys}; separate expressions with >> or combine
+                    using other operator"""
             )
         new_rxn_keys = self.rxn_keys | other.rxn_keys
         if len(new_rxn_keys) > len(self.rxn_keys) + len(other.rxn_keys):
             raise KeyError(
-                f"Conflicting reaction metadata key outputs {self.rxn_keys & other.rxn_keys}; separate expressions with >> or combine using other operator"
+                f"""Conflicting reaction metadata key outputs {self.rxn_keys &
+                    other.rxn_keys}; separate expressions with >> or combine
+                    using other operator"""
             )
         return KeyOutput(new_mol_keys, new_op_keys, new_rxn_keys)
 
@@ -931,10 +937,12 @@ def _as_property_compositor(
         return RxnPropertyCompositor(arg)
     elif isinstance(arg, LocalPropertyCalc):
         raise TypeError(
-            f"Argument is of type {type(arg)}, relevant PropertyCompositor has not been provided"
+            f"""Argument is of type {type(arg)}, relevant PropertyCompositor has
+                not been provided"""
         )
     raise TypeError(
-        f"Argument is of type {type(arg)}, must be of type PropertyCompositor or LocalPropertyCalc"
+        f"""Argument is of type {type(arg)}, must be of type PropertyCompositor
+            or LocalPropertyCalc"""
     )
 
 
@@ -955,7 +963,8 @@ def as_rxn_analysis_step(
     elif isinstance(arg, RxnAnalysisStep):
         return arg
     raise TypeError(
-        f"Argument is of type {type(arg)}, must be of type RxnAnalysisStep, PropertyCompositor, ReactionFilterBase, or LocalPropertyCalc"
+        f"""Argument is of type {type(arg)}, must be of type RxnAnalysisStep,
+            PropertyCompositor, ReactionFilterBase, or LocalPropertyCalc"""
     )
 
 
