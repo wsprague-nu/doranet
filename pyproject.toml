@@ -42,14 +42,15 @@ module = [
 ignore_missing_imports = true
 
 [tool.ruff]
+extend-include = ["*.ipynb"]
 line-length = 80
 indent-width = 4
 target-version = "py310"
 
 [tool.ruff.format]
-quote-style = "double"
-line-ending = "lf"
 indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "SIM", "W"]
