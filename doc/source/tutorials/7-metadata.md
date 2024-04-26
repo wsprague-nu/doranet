@@ -1,4 +1,4 @@
-# Tutorial 7: Metadata
+# Metadata
 
 In this tutorial, you will learn how to generate metadata during network expansion.
 

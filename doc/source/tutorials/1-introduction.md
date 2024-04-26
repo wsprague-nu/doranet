@@ -1,4 +1,4 @@
-# Tutorial 1
+# Introduction
 
 In this tutorial, you will learn what background information is necessary to use DORAnet, what purpose it is meant to serve, and the basic ideas behind it.
 

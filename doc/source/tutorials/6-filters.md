@@ -1,4 +1,4 @@
-# Tutorial 6: Filters
+# Filters
 
 In this tutorial, you will learn how to apply and compose filters in a network expansion context.
 

@@ -1,4 +1,4 @@
-# Tutorial 4: Creating a Basic Network
+# Creating a Basic Network
 
 In this tutorial, you will learn how to set up a network with some pre-existing data, how to store it in a file, and how to assign metadata.
 

@@ -1,4 +1,4 @@
-# Tutorial 8: Global Hooks
+# Global Hooks
 
 In this tutorial, you will learn how to write, apply, and compose global hook functions in order to implement stopping criteria and global metadata updates.
 

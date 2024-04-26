@@ -1,4 +1,4 @@
-# Tutorial 3: Writing Operators
+# Writing Operators
 
 In this tutorial, you will learn how to write RDKit SMARTS-based operators. Custom operators are also possible but require more advanced programming knowledge, and come later in the documentation.
 

@@ -1,4 +1,4 @@
-# Tutorial 5: Cartesian Expansion
+# Cartesian Expansion
 
 In this tutorial, you will learn how to perform an automated network expansion using a Cartesian strategy.
 

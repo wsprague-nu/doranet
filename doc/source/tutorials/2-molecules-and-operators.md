@@ -1,4 +1,4 @@
-# Tutorial 2: Molecules and Operators
+# Molecules and Operators
 
 In this tutorial, you will learn how to create a molecule, create a chemical operator, and use the operator to perform a reaction. Let's start by importing doranet and giving it an alias.
 
