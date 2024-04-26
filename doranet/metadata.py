@@ -187,7 +187,7 @@ class KeyOutput:
         new_mol_keys = self.mol_keys | other.mol_keys
         if len(new_mol_keys) > len(self.mol_keys) + len(other.mol_keys):
             raise KeyError(
-                f"""Conflicting molecule metadata key outputs {self.mol_keys & 
+                f"""Conflicting molecule metadata key outputs {self.mol_keys &
                     other.mol_keys}; separate expressions with >> or combine
                     using other operator"""
             )

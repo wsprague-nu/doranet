@@ -43,6 +43,8 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 80
+indent-width = 4
+target-version = "py310"
 
 [tool.ruff.format]
 quote-style = "double"
@@ -50,4 +52,4 @@ line-ending = "lf"
 indent-style = "space"
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "SIM"]
+select = ["E", "F", "B", "I", "SIM", "W"]
