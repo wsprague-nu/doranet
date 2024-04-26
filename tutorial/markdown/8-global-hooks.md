@@ -5,9 +5,9 @@ In this tutorial, you will learn how to write, apply, and compose global hook fu
 First, create an engine and network with some reactants and initial reagents, saving the network to a file in order to run multiple experiments from the same initial state.
 
 ```python
-import pickaxe_generic as pg
+import doranet as dn
 
-engine = pg.create_engine()
+engine = dn.create_engine()
 
 network = engine.new_network()
 
@@ -38,9 +38,9 @@ network.save_to_file("8-global-hooks")
 
 ## Stopping Criteria
 
-When expanding the synthetic network, there may be some criterion which, when met, causes the expansion to cease.  One of these may be that a certain maximum number of molecules is reached (possibly for memory reasons).  Another may be that a target molecule has been produced.  In each of these scenarios, a global hook function can provide the answer.
+When expanding the synthetic network, there may be some criterion which, when met, causes the expansion to cease. One of these may be that a certain maximum number of molecules is reached (possibly for memory reasons). Another may be that a target molecule has been produced. In each of these scenarios, a global hook function can provide the answer.
 
-In the example below, a hook function is added to one strategy which sets a total molecule threshold at 10.  When this threshold is exceeded, the network will not be expanded by further iterations.  This strategy is compared to one without the global hook function.
+In the example below, a hook function is added to one strategy which sets a total molecule threshold at 10. When this threshold is exceeded, the network will not be expanded by further iterations. This strategy is compared to one without the global hook function.
 
 Note also that the hook function is put in a list; it must be passed in as a sequence so that multiple hook functions can be used in the same context.
 
@@ -111,11 +111,11 @@ strat_with_hook.expand(
  (11, 'CCOC(C)O', {'gen': 2})]
 ```
 
-Notice that the second run, with the maximum molecules hook, stopped at an earlier generation than the first.  It has more than 10 molecules, but the hook is not called between iterations (here generations), so it has no way of stopping the additional molecules from being generated.
+Notice that the second run, with the maximum molecules hook, stopped at an earlier generation than the first. It has more than 10 molecules, but the hook is not called between iterations (here generations), so it has no way of stopping the additional molecules from being generated.
 
 If this behavior is confusing, check the flow diagram from the [filters tutorial](./6-filters.md#using-filters-to-mitigate-network-growth).
 
-Another hook which may be useful is one which stops expansion when a target molecule has been generated.  An example is shown below.
+Another hook which may be useful is one which stops expansion when a target molecule has been generated. An example is shown below.
 
 ```python
 network = engine.network_from_file("8-global-hooks")
@@ -127,7 +127,6 @@ gen_calc = engine.meta.generation("gen")
 
 strat.expand(num_iter=3, global_hooks=[target_hook], reaction_plan=gen_calc)
 ```
-
 
 ```sh
 >>> pprint(
@@ -152,17 +151,17 @@ Even with all of the same arguments besides the hook, once the target (molecule 
 
 ## Global Metadata
 
-Global hooks can also be used in order to refresh/update metadata in order to reconcile conflicts that may have accumulated.  For example, in the mass waste example above there may be a lower mass waste calculated for a molecule which was previously generated and assigned a mass waste.  Therefore, molecule produced from that one must have their metadata updated.  A global hook function is useful for such an update.
+Global hooks can also be used in order to refresh/update metadata in order to reconcile conflicts that may have accumulated. For example, in the mass waste example above there may be a lower mass waste calculated for a molecule which was previously generated and assigned a mass waste. Therefore, molecule produced from that one must have their metadata updated. A global hook function is useful for such an update.
 
 🚧UNDER CONSTRUCTION🚧
 
-There are not currently any global hook functions providing such a functionality.  However, the implementation is relatively simple and looking over the examples in [hooks.py](../pickaxe_generic/hooks.py) should provide some suggestions as to how these may be implemented.  In addition, the interface that global hooks subclass from (located in [interfaces.py](../pickaxe_generic/interfaces.py)) contains a docstring for the `__call__` method which describes the meaning of the different `Enum` return types.
+There are not currently any global hook functions providing such a functionality. However, the implementation is relatively simple and looking over the examples in [hooks.py](../pickaxe_generic/hooks.py) should provide some suggestions as to how these may be implemented. In addition, the interface that global hooks subclass from (located in [interfaces.py](../pickaxe_generic/interfaces.py)) contains a docstring for the `__call__` method which describes the meaning of the different `Enum` return types.
 
 ## Addendum: Global Hook Functions and the Cartesian Strategy
 
-It may be of some interest that the Cartesian strategy is actually the same as the [priority queue](./9-priority-queue.md) strategy.  It accomplishes this by adding a default global hook which limits the number of iterations, as well as defining both the heap size and beam size as uncapped.
+It may be of some interest that the Cartesian strategy is actually the same as the [priority queue](./9-priority-queue.md) strategy. It accomplishes this by adding a default global hook which limits the number of iterations, as well as defining both the heap size and beam size as uncapped.
 
-This also means that the Cartesian strategy can run out of RAM if the number of possible recipes in a particular generation becomes too large.  If a higher-memory solution is desired, a method involving recipe filtering and generation metadata may be used with limited beam/heap sizes in order to guarantee a replication of the Cartesian strategy with a lower memory requirement.  However this has not been implemented as of the present time.
+This also means that the Cartesian strategy can run out of RAM if the number of possible recipes in a particular generation becomes too large. If a higher-memory solution is desired, a method involving recipe filtering and generation metadata may be used with limited beam/heap sizes in order to guarantee a replication of the Cartesian strategy with a lower memory requirement. However this has not been implemented as of the present time.
 
 ## Takeaways
 
@@ -170,4 +169,4 @@ This also means that the Cartesian strategy can run out of RAM if the number of 
 1. Global hook functions are fairly straightforward to implement, requiring only a single function implementation.
 1. The Cartesian strategy is a thin layer over the Priority Queue strategy, and uses its own global function to limit the number of iterations.
 
-Congratulations!  You have finished the eighth part of the Pickaxe-Generic tutorial.  Proceed to the [next part](./9-priority-queue.md) to learn how the advanced Priority Queue strategy works and use it to implement a number of network search algorithms.
+Congratulations! You have finished the eighth part of the DORAnet tutorial. Proceed to the [next part](./9-priority-queue.md) to learn how the advanced Priority Queue strategy works and use it to implement a number of network search algorithms.
