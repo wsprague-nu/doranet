@@ -18,7 +18,7 @@
 
 <!-- PROJECT LOGO -->
 
-<h3 align="center">DORAnet</h3>
+<h3 align="center">DORAnet (Designing Optimal Reaction Avenues Network Enumeration Tool)</h3>
 
   <p align="center">
     This is a repo containing the DORAnet network generation framework.
