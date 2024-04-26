@@ -53,4 +53,7 @@ line-ending = "lf"
 quote-style = "double"
 
 [tool.ruff.lint]
-select = ["B", "E", "F", "I", "PL", "SIM", "W"]
+select = ["B", "D", "E", "F", "I", "PL", "SIM", "W"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
