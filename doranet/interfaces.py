@@ -1,5 +1,5 @@
 """
-Contains interfaces for major datatypes in Pickaxe-Generic.
+Contains interfaces for major datatypes in DORAnet.
 """
 
 import abc
