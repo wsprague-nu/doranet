@@ -53,4 +53,4 @@ line-ending = "lf"
 quote-style = "double"
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "SIM", "W"]
+select = ["B", "E", "F", "I", "PL", "SIM", "W"]
