@@ -1,82 +1,9 @@
-"""
-Contains classes which define and implement relevant smart containers.
-"""
+"""Contains classes which define and implement relevant smart containers."""
 
 import collections.abc
 import typing
 
 from doranet import interfaces
-
-
-@typing.final
-class ObjectLibraryBasic(
-    interfaces.ObjectLibrary, typing.Generic[interfaces.T_data]
-):
-    """
-    Minimal class implementing the ObjectLibrary interface.
-
-    .. deprecated:: 0.3.0
-        `ObjectLibrary` will be removed in pickaxe_generic 0.4.0.  The pattern
-        of several ObjectLibraries representing a network has been replaced by
-        the ChemNetwork object representing all nodes.  However,
-        ObjectLibraries generated through a NetworkEngine will temporarily be
-        available via a facade to ChemNetwork.
-
-    This class wraps a dict.
-
-    Parameters
-    ----------
-    objects : Optional[Iterable[DataUnit]]
-        Objects which are to be included in the object library.
-    """
-
-    __slots__ = ("_lookup",)
-
-    _lookup: dict[interfaces.Identifier, interfaces.T_data]
-
-    def __init__(
-        self,
-        objects: typing.Optional[
-            typing.Union[
-                collections.abc.Iterable[interfaces.T_data], interfaces.T_data
-            ]
-        ] = None,
-    ) -> None:
-        self._lookup = {}
-        if isinstance(objects, collections.abc.Iterable):
-            for item in objects:
-                self._lookup[item.uid] = item
-        elif objects is not None:
-            self._lookup[objects.uid] = objects
-
-    def add(
-        self,
-        obj: typing.Union[
-            collections.abc.Iterable[interfaces.T_data], interfaces.T_data
-        ],
-    ) -> None:
-        if isinstance(obj, collections.abc.Iterable):
-            for item in obj:
-                self._lookup[item.uid] = item
-        else:
-            self._lookup[obj.uid] = obj
-
-    def ids(
-        self,
-    ) -> collections.abc.Generator[interfaces.Identifier, None, None]:
-        return (key for key in self._lookup)
-
-    def __contains__(self, item: interfaces.T_data) -> bool:
-        return item.uid in self._lookup
-
-    def __getitem__(self, item: interfaces.Identifier) -> interfaces.T_data:
-        return self._lookup[item]
-
-    def __iter__(self) -> collections.abc.Iterator[interfaces.T_data]:
-        return iter(self._lookup.values())
-
-    def __len__(self) -> int:
-        return len(self._lookup)
 
 
 @typing.final

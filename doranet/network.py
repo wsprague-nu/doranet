@@ -702,48 +702,6 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
     def rxns(self):
         return self.network.rxns
 
-    def mol_meta(self, index, key, value=None):
-        raise NotImplementedError(
-            """This method is deprecated, if you're using it you need to recode,
-               or signal to William that he hasn't gotten around to fixing
-               things yet"""
-        )
-
-    def op_meta(self, index, key, value=None):
-        raise NotImplementedError(
-            """This method is deprecated, if you're using it you need to recode,
-               or signal to William that he hasn't gotten around to fixing
-               things yet"""
-        )
-
-    def rxn_meta(self, index, key, value=None):
-        raise NotImplementedError(
-            """This method is deprecated, if you're using it you need to recode,
-               or signal to William that he hasn't gotten around to fixing
-               things yet"""
-        )
-
-    def mol_metas(self, indices=None, keys=None):
-        raise NotImplementedError(
-            """This method is deprecated, if you're using it you need to recode,
-               or signal to William that he hasn't gotten around to fixing
-               things yet"""
-        )
-
-    def op_metas(self, indices=None, keys=None):
-        raise NotImplementedError(
-            """This method is deprecated, if you're using it you need to recode,
-               or signal to William that he hasn't gotten around to fixing
-               things yet"""
-        )
-
-    def rxn_metas(self, indices=None, keys=None):
-        raise NotImplementedError(
-            """This method is deprecated, if you're using it you need to recode,
-               or signal to William that he hasn't gotten around to fixing
-               things yet"""
-        )
-
     def compat_table(self, index):
         return self.network.compat_table(index)
 
