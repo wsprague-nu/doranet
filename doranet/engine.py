@@ -12,7 +12,6 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 from doranet import (
-    containers,
     datatypes,
     filters,
     hooks,
@@ -135,49 +134,6 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     _Op_Lib: typing.Any
     _Rxn_Lib: typing.Any
 
-    def __init__(self, speed: int = 5, np: int = 1):
-        match speed:
-            case 1:
-                self._Mol = datatypes.MolDatBasicV2
-                raise NotImplementedError("Speed not yet implemented")
-            case 2:
-                self._Mol = datatypes.MolDatBasicV2
-                raise NotImplementedError("Speed not yet implemented")
-            case 3:
-                self._Mol = datatypes.MolDatBasicV2
-                raise NotImplementedError("Speed not yet implemented")
-            case 4:
-                self._Mol = datatypes.MolDatBasicV2
-                self._Mol_Lib = lambda: containers.ObjectLibraryKeyVal(
-                    initializer=self.Mol
-                )
-                self._Op_Lib = lambda: containers.ObjectLibraryKeyVal(
-                    initializer=self.Op
-                )
-                self._Rxn_Lib = containers.ObjectLibraryBasic
-            case 5:
-                self._Mol = datatypes.MolDatBasicV1
-                self._Mol_Lib = containers.ObjectLibraryBasic
-                self._Op_Lib = containers.ObjectLibraryBasic
-                self._Rxn_Lib = containers.ObjectLibraryBasic
-            case 6:
-                self._Mol = datatypes.MolDatBasicV2
-                self._Mol_Lib = containers.ObjectLibraryBasic
-                self._Op_Lib = containers.ObjectLibraryBasic
-                self._Rxn_Lib = containers.ObjectLibraryBasic
-            case _:
-                raise ValueError(f"speed = {speed} is invalid")
-
-        self._Op = datatypes.OpDatBasic
-        self._Rxn = datatypes.RxnDatBasic
-        self._CartesianStrategy = strategies.CartesianStrategy
-        self._speed = speed
-        if np != 1:
-            raise NotImplementedError(
-                "Multiprocessing has not yet been implemented"
-            )
-        self._np = np
-
     @property
     def speed(self) -> int:
         return self._speed
@@ -185,75 +141,6 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     @property
     def np(self) -> int:
         return self._np
-
-    def Mol(
-        self,
-        molecule: typing.Union[rdkit.Chem.rdchem.Mol, str, bytes],
-        sanitize: bool = True,
-        neutralize: bool = False,
-    ) -> interfaces.MolDatRDKit:
-        return self._Mol(
-            molecule=molecule, sanitize=sanitize, neutralize=neutralize
-        )
-
-    def Op(
-        self,
-        operator: typing.Union[
-            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
-        ],
-        kekulize: bool = False,
-        drop_errors: bool = False,
-    ) -> datatypes.OpDatBasic:
-        return self._Op(
-            operator=operator,
-            engine=self,
-            kekulize=kekulize,
-            drop_errors=drop_errors,
-        )
-
-    def Rxn(
-        self,
-        operator: typing.Optional[interfaces.Identifier] = None,
-        reactants: typing.Optional[
-            collections.abc.Iterable[interfaces.Identifier]
-        ] = None,
-        products: typing.Optional[
-            collections.abc.Iterable[interfaces.Identifier]
-        ] = None,
-        reaction: typing.Optional[bytes] = None,
-    ) -> datatypes.RxnDatBasic:
-        return self._Rxn(
-            operator=operator,
-            reactants=reactants,
-            products=products,
-            reaction=reaction,
-        )
-
-    def Libs(
-        self,
-    ) -> tuple[
-        interfaces.ObjectLibrary[interfaces.MolDatBase],
-        interfaces.ObjectLibrary[interfaces.OpDatBase],
-        interfaces.ObjectLibrary[interfaces.RxnDatBase],
-    ]:
-        mol_lib: interfaces.ObjectLibrary[
-            interfaces.MolDatBase
-        ] = self._Mol_Lib()
-        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase] = self._Op_Lib()
-        rxn_lib: interfaces.ObjectLibrary[
-            interfaces.RxnDatBase
-        ] = self._Rxn_Lib()
-        return (mol_lib, op_lib, rxn_lib)
-
-    def CartesianStrategy(
-        self,
-        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
-        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
-        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
-    ) -> strategies.CartesianStrategy:
-        return self._CartesianStrategy(
-            mol_lib=mol_lib, op_lib=op_lib, rxn_lib=rxn_lib, engine=self
-        )
 
     @property
     def mol(self):

@@ -11,86 +11,86 @@ import rdkit.Chem.rdqueries
 from doranet import interfaces, metadata
 
 
-class AlwaysTrueFilter(interfaces.ReactionFilter):
-    def __call__(self, operator, reactants, products):
-        return True
+# class AlwaysTrueFilter(interfaces.ReactionFilter):
+#     def __call__(self, operator, reactants, products):
+#         return True
 
 
-class ChainFilter(interfaces.ReactionFilter):
-    def __init__(
-        self, filters: collections.abc.Iterable[interfaces.ReactionFilter]
-    ):
-        self._filters = filters
+# class ChainFilter(interfaces.ReactionFilter):
+#     def __init__(
+#         self, filters: collections.abc.Iterable[interfaces.ReactionFilter]
+#     ):
+#         self._filters = filters
 
-    def __call__(self, operator, reactants, products):
-        return all(
-            (filter(operator, reactants, products) for filter in self._filters)
-        )
-
-
-class LessThanNElementTypeFilter(interfaces.ReactionFilter):
-    def __init__(self, n: int, proton_number: int):
-        self._n = n
-        self._p = proton_number
-        self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(proton_number)
-
-    def __call__(self, operator, reactants, products):
-        for mol in products:
-            if (
-                isinstance(mol, interfaces.MolDatRDKit)
-                and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n
-            ):
-                return False
-        return True
-
-    def __getstate__(self):
-        return (self._n, self._p)
-
-    def __setstate__(self, arg) -> None:
-        self._n = arg[0]
-        self._p = arg[1]
-        self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(self._p)
+#     def __call__(self, operator, reactants, products):
+#         return all(
+#             (filter(operator, reactants, products) for filter in self._filters)
+#         )
 
 
-class TanimotoSimilarityFilter(interfaces.ReactionFilter):
-    def __init__(self, n: float, smi: str):
-        self._n = n
-        self._s = smi
-        self._tmol = rdkit.Chem.MolFromSmiles(self._s)
-        self._tfp = rdkit.Chem.RDKFingerprint(self._tmol)
+# class LessThanNElementTypeFilter(interfaces.ReactionFilter):
+#     def __init__(self, n: int, proton_number: int):
+#         self._n = n
+#         self._p = proton_number
+#         self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(proton_number)
 
-    def __call__(self, operator, reactants, products):
-        for mol in products:
-            if isinstance(mol, interfaces.MolDatRDKit):
-                mol_fp = rdkit.Chem.RDKFingerprint(mol.rdkitmol)
-                similarity = rdkit.DataStructs.TanimotoSimilarity(
-                    mol_fp, self._tfp
-                )
+#     def __call__(self, operator, reactants, products):
+#         for mol in products:
+#             if (
+#                 isinstance(mol, interfaces.MolDatRDKit)
+#                 and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n
+#             ):
+#                 return False
+#         return True
 
-                if similarity > self._n:
-                    return True
-        return False
+#     def __getstate__(self):
+#         return (self._n, self._p)
 
-
-class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
-    def __call__(
-        self,
-        operator: interfaces.Identifier,
-        reactants: collections.abc.Sequence[interfaces.Identifier],
-    ) -> bool:
-        return True
+#     def __setstate__(self, arg) -> None:
+#         self._n = arg[0]
+#         self._p = arg[1]
+#         self._q = rdkit.Chem.rdqueries.AtomNumEqualsQueryAtom(self._p)
 
 
-@dataclasses.dataclass(frozen=True)
-class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
-    coreactants: collections.abc.Container[interfaces.Identifier]
+# class TanimotoSimilarityFilter(interfaces.ReactionFilter):
+#     def __init__(self, n: float, smi: str):
+#         self._n = n
+#         self._s = smi
+#         self._tmol = rdkit.Chem.MolFromSmiles(self._s)
+#         self._tfp = rdkit.Chem.RDKFingerprint(self._tmol)
 
-    def __call__(
-        self,
-        operator: interfaces.Identifier,
-        reactants: collections.abc.Sequence[interfaces.Identifier],
-    ) -> bool:
-        return any(uid not in self.coreactants for uid in reactants)
+#     def __call__(self, operator, reactants, products):
+#         for mol in products:
+#             if isinstance(mol, interfaces.MolDatRDKit):
+#                 mol_fp = rdkit.Chem.RDKFingerprint(mol.rdkitmol)
+#                 similarity = rdkit.DataStructs.TanimotoSimilarity(
+#                     mol_fp, self._tfp
+#                 )
+
+#                 if similarity > self._n:
+#                     return True
+#         return False
+
+
+# class AlwaysTrueUIDPreFilter(interfaces.UIDPreFilter):
+#     def __call__(
+#         self,
+#         operator: interfaces.Identifier,
+#         reactants: collections.abc.Sequence[interfaces.Identifier],
+#     ) -> bool:
+#         return True
+
+
+# @dataclasses.dataclass(frozen=True)
+# class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
+#     coreactants: collections.abc.Container[interfaces.Identifier]
+
+#     def __call__(
+#         self,
+#         operator: interfaces.Identifier,
+#         reactants: collections.abc.Sequence[interfaces.Identifier],
+#     ) -> bool:
+#         return any(uid not in self.coreactants for uid in reactants)
 
 
 @typing.final

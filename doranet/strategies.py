@@ -12,20 +12,6 @@ from doranet import interfaces, metadata
 from doranet import network as pgnetworks
 
 
-class _ReactionProvider(typing.Protocol):
-    def Rxn(
-        self,
-        operator: typing.Optional[interfaces.Identifier] = None,
-        reactants: typing.Optional[
-            collections.abc.Collection[interfaces.Identifier]
-        ] = None,
-        products: typing.Optional[
-            collections.abc.Collection[interfaces.Identifier]
-        ] = None,
-    ) -> interfaces.RxnDatBase:
-        ...
-
-
 def _generate_recipes_from_compat_table(
     compat: dict[interfaces.Identifier, list[list[interfaces.Identifier]]],
     known_cache: typing.Optional[
@@ -67,73 +53,6 @@ def _generate_recipes_from_compat_table(
                 continue
 
 
-def _evaluate_reaction(
-    operator: interfaces.OpDatBase,
-    reactants: collections.abc.Sequence[interfaces.MolDatBase],
-    engine: _ReactionProvider,
-    rxn_filter: typing.Optional[
-        collections.abc.Callable[
-            [
-                interfaces.OpDatBase,
-                collections.abc.Sequence[interfaces.MolDatBase],
-                collections.abc.Sequence[interfaces.MolDatBase],
-            ],
-            bool,
-        ]
-    ] = None,
-    return_rejects: bool = False,
-) -> tuple[
-    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
-    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
-]:
-    resultslist: list[
-        tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]]
-    ] = []
-    rejectslist: list[
-        tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]]
-    ] = []
-    for productset in operator(*reactants):
-        productset = tuple(productset)
-        if rxn_filter is not None and not rxn_filter(
-            operator, reactants, productset
-        ):
-            if not return_rejects:
-                continue
-            reactant_uids = tuple((mol.uid for mol in reactants))
-            product_uids = tuple((mol.uid for mol in productset))
-            reaction = engine.Rxn(operator.uid, reactant_uids, product_uids)
-            rejectslist.append((reaction, productset))
-            continue
-        reactant_uids = tuple((mol.uid for mol in reactants))
-        product_uids = tuple((mol.uid for mol in productset))
-        reaction = engine.Rxn(operator.uid, reactant_uids, product_uids)
-        resultslist.append((reaction, productset))
-    return tuple(resultslist), tuple(rejectslist)
-
-
-def _evaluate_reaction_unpack(
-    job: tuple[
-        interfaces.OpDatBase,
-        collections.abc.Sequence[interfaces.MolDatBase],
-        _ReactionProvider,
-        typing.Optional[
-            collections.abc.Callable[
-                [
-                    interfaces.OpDatBase,
-                    collections.abc.Sequence[interfaces.MolDatBase],
-                    collections.abc.Sequence[interfaces.MolDatBase],
-                ],
-                bool,
-            ]
-        ],
-    ],
-) -> tuple[
-    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
-    tuple[tuple[interfaces.RxnDatBase, tuple[interfaces.MolDatBase, ...]], ...],
-]:
-    return _evaluate_reaction(*job)
-
-
 T = typing.TypeVar("T")
 
 
@@ -150,425 +69,425 @@ def _chunk_generator(
         yield itertools.chain((first_el,), chunk_it)
 
 
-@typing.final
-class CartesianStrategy(interfaces.ExpansionStrategy):
-    """
-    Implements interfaces.ExpansionStrategy interface via Cartesian product of
-    molecules and operators.
-    """
+# @typing.final
+# class CartesianStrategy(interfaces.ExpansionStrategy):
+#     """
+#     Implements interfaces.ExpansionStrategy interface via Cartesian product of
+#     molecules and operators.
+#     """
 
-    def __init__(
-        self,
-        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
-        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
-        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
-        engine: _ReactionProvider,
-        blacklist: typing.Optional[set[interfaces.Identifier]] = None,
-    ) -> None:
-        """Initialize strategy by attaching libraries.
+#     def __init__(
+#         self,
+#         mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
+#         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
+#         rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
+#         engine: _ReactionProvider,
+#         blacklist: typing.Optional[set[interfaces.Identifier]] = None,
+#     ) -> None:
+#         """Initialize strategy by attaching libraries.
 
-        Parameters
-        ----------
-        mol_lib : interfaces.ObjectLibrary[interfaces.MolDatBase]
-            Library containing molecules.
-        op_lib : interfaces.ObjectLibrary[interfaces.OpDatBase]
-            Library containing operators.
-        rxn_lib : interfaces.ObjectLibrary[interfaces.RxnDatBase]
-            Library containing reactions.
-        engine : _ReactionProvider
-            Object used to initialize reactions.
-        """
-        self._mol_lib = mol_lib
-        self._op_lib = op_lib
-        self._rxn_lib = rxn_lib
-        self._engine = engine
-        if blacklist is None:
-            blacklist = set()
-        self._blacklist = blacklist
+#         Parameters
+#         ----------
+#         mol_lib : interfaces.ObjectLibrary[interfaces.MolDatBase]
+#             Library containing molecules.
+#         op_lib : interfaces.ObjectLibrary[interfaces.OpDatBase]
+#             Library containing operators.
+#         rxn_lib : interfaces.ObjectLibrary[interfaces.RxnDatBase]
+#             Library containing reactions.
+#         engine : _ReactionProvider
+#             Object used to initialize reactions.
+#         """
+#         self._mol_lib = mol_lib
+#         self._op_lib = op_lib
+#         self._rxn_lib = rxn_lib
+#         self._engine = engine
+#         if blacklist is None:
+#             blacklist = set()
+#         self._blacklist = blacklist
 
-        # stores active molecule IDs
-        self._active_mols: set[interfaces.Identifier] = set(
-            (uid for uid in self._mol_lib.ids())
-        )
-        # stores active operator IDs
-        self._active_ops: set[interfaces.Identifier] = set(
-            (uid for uid in self._op_lib.ids())
-        )
-        # stores combinations of reagents and operators which have been tried
-        self._recipe_cache: set[
-            tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]
-        ] = set()
+#         # stores active molecule IDs
+#         self._active_mols: set[interfaces.Identifier] = set(
+#             (uid for uid in self._mol_lib.ids())
+#         )
+#         # stores active operator IDs
+#         self._active_ops: set[interfaces.Identifier] = set(
+#             (uid for uid in self._op_lib.ids())
+#         )
+#         # stores combinations of reagents and operators which have been tried
+#         self._recipe_cache: set[
+#             tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]
+#         ] = set()
 
-        # create operator-molecule compatibility table
-        self._compat_table: dict[
-            interfaces.Identifier, list[list[interfaces.Identifier]]
-        ] = {}
-        for op_uid in self._active_ops:
-            self._add_op_to_compat(op_uid)
+#         # create operator-molecule compatibility table
+#         self._compat_table: dict[
+#             interfaces.Identifier, list[list[interfaces.Identifier]]
+#         ] = {}
+#         for op_uid in self._active_ops:
+#             self._add_op_to_compat(op_uid)
 
-        # fill operator-molecule compatibility table
-        for mol_uid in self._active_mols:
-            self._add_mol_to_compat(mol_uid)
+#         # fill operator-molecule compatibility table
+#         for mol_uid in self._active_mols:
+#             self._add_mol_to_compat(mol_uid)
 
-    def _add_mol_to_compat(
-        self, mol: typing.Union[interfaces.Identifier, interfaces.MolDatBase]
-    ) -> None:
-        """
-        Add entries to compat_table for new molecule.
+#     def _add_mol_to_compat(
+#         self, mol: typing.Union[interfaces.Identifier, interfaces.MolDatBase]
+#     ) -> None:
+#         """
+#         Add entries to compat_table for new molecule.
 
-        Parameters
-        ----------
-        mol : interfaces.Identifier | interfaces.MolDatBase
-            Molecule to be added to compat_table.
-        """
-        if isinstance(mol, interfaces.MolDatBase):
-            mol_uid = mol.uid
-        else:
-            mol_uid = mol
-            mol = self._mol_lib[mol]
+#         Parameters
+#         ----------
+#         mol : interfaces.Identifier | interfaces.MolDatBase
+#             Molecule to be added to compat_table.
+#         """
+#         if isinstance(mol, interfaces.MolDatBase):
+#             mol_uid = mol.uid
+#         else:
+#             mol_uid = mol
+#             mol = self._mol_lib[mol]
 
-        for op_uid in self._active_ops:
-            op = self._op_lib[op_uid]
-            for arg in range(len(self._compat_table[op_uid])):
-                if op.compat(mol, arg):
-                    self._compat_table[op_uid][arg].append(mol_uid)
+#         for op_uid in self._active_ops:
+#             op = self._op_lib[op_uid]
+#             for arg in range(len(self._compat_table[op_uid])):
+#                 if op.compat(mol, arg):
+#                     self._compat_table[op_uid][arg].append(mol_uid)
 
-    def _add_op_to_compat(
-        self, op: typing.Union[interfaces.Identifier, interfaces.OpDatBase]
-    ) -> None:
-        """
-        Add entries to compat_table for new operator.
+#     def _add_op_to_compat(
+#         self, op: typing.Union[interfaces.Identifier, interfaces.OpDatBase]
+#     ) -> None:
+#         """
+#         Add entries to compat_table for new operator.
 
-        Parameters
-        ----------
-        op : interfaces.Identifier | interfaces.OpDatBase
-            Operator to be added to compat_table.
-        """
-        if isinstance(op, interfaces.OpDatBase):
-            op_uid = op.uid
-        else:
-            op_uid = op
-            op = self._op_lib[op]
+#         Parameters
+#         ----------
+#         op : interfaces.Identifier | interfaces.OpDatBase
+#             Operator to be added to compat_table.
+#         """
+#         if isinstance(op, interfaces.OpDatBase):
+#             op_uid = op.uid
+#         else:
+#             op_uid = op
+#             op = self._op_lib[op]
 
-        optable: list[list[interfaces.Identifier]] = [
-            [] for _ in range(len(op))
-        ]
-        for arg in range(len(optable)):
-            for mol_uid in self._active_mols:
-                mol = self._mol_lib[mol_uid]
-                if op.compat(mol, arg):
-                    optable[arg].append(mol_uid)
-        self._compat_table[op_uid] = optable
+#         optable: list[list[interfaces.Identifier]] = [
+#             [] for _ in range(len(op))
+#         ]
+#         for arg in range(len(optable)):
+#             for mol_uid in self._active_mols:
+#                 mol = self._mol_lib[mol_uid]
+#                 if op.compat(mol, arg):
+#                     optable[arg].append(mol_uid)
+#         self._compat_table[op_uid] = optable
 
-    @property
-    def blacklist(self) -> set[interfaces.Identifier]:
-        return self._blacklist
+#     @property
+#     def blacklist(self) -> set[interfaces.Identifier]:
+#         return self._blacklist
 
-    @blacklist.setter
-    def blacklist(self, value: set[interfaces.Identifier]) -> None:
-        self._blacklist = value
+#     @blacklist.setter
+#     def blacklist(self, value: set[interfaces.Identifier]) -> None:
+#         self._blacklist = value
 
-    def reset_recipe_cache(self) -> None:
-        self._recipe_cache = set()
+#     def reset_recipe_cache(self) -> None:
+#         self._recipe_cache = set()
 
-    def refresh(self) -> None:
-        if len(self._mol_lib) > len(self._active_mols):
-            for mol_uid in self._mol_lib.ids():
-                if (
-                    mol_uid not in self._active_mols
-                    and mol_uid not in self._blacklist
-                ):
-                    self._active_mols.add(mol_uid)
-                    self._add_mol_to_compat(mol_uid)
+#     def refresh(self) -> None:
+#         if len(self._mol_lib) > len(self._active_mols):
+#             for mol_uid in self._mol_lib.ids():
+#                 if (
+#                     mol_uid not in self._active_mols
+#                     and mol_uid not in self._blacklist
+#                 ):
+#                     self._active_mols.add(mol_uid)
+#                     self._add_mol_to_compat(mol_uid)
 
-        if len(self._op_lib) > len(self._active_ops):
-            for op_uid in self._op_lib.ids():
-                if op_uid not in self._active_ops:
-                    self._active_ops.add(op_uid)
-                    self._add_op_to_compat(op_uid)
+#         if len(self._op_lib) > len(self._active_ops):
+#             for op_uid in self._op_lib.ids():
+#                 if op_uid not in self._active_ops:
+#                     self._active_ops.add(op_uid)
+#                     self._add_op_to_compat(op_uid)
 
-    def expand(
-        self,
-        max_rxns: typing.Optional[int] = None,
-        max_mols: typing.Optional[int] = None,
-        num_gens: typing.Optional[int] = None,
-        custom_filter: typing.Optional[
-            collections.abc.Callable[
-                [
-                    interfaces.OpDatBase,
-                    collections.abc.Sequence[interfaces.MolDatBase],
-                    collections.abc.Sequence[interfaces.MolDatBase],
-                ],
-                bool,
-            ]
-        ] = None,
-        custom_uid_prefilter: typing.Optional[
-            collections.abc.Callable[
-                [
-                    interfaces.Identifier,
-                    collections.abc.Sequence[interfaces.Identifier],
-                ],
-                bool,
-            ]
-        ] = None,
-        retain_products_to_blacklist: bool = False,
-    ) -> None:
-        # value used to tell if any new reactions have occurred in a generation
-        exhausted: bool = False
-        num_mols: int = 0
-        num_rxns: int = 0
-        gen: int = 0
+#     def expand(
+#         self,
+#         max_rxns: typing.Optional[int] = None,
+#         max_mols: typing.Optional[int] = None,
+#         num_gens: typing.Optional[int] = None,
+#         custom_filter: typing.Optional[
+#             collections.abc.Callable[
+#                 [
+#                     interfaces.OpDatBase,
+#                     collections.abc.Sequence[interfaces.MolDatBase],
+#                     collections.abc.Sequence[interfaces.MolDatBase],
+#                 ],
+#                 bool,
+#             ]
+#         ] = None,
+#         custom_uid_prefilter: typing.Optional[
+#             collections.abc.Callable[
+#                 [
+#                     interfaces.Identifier,
+#                     collections.abc.Sequence[interfaces.Identifier],
+#                 ],
+#                 bool,
+#             ]
+#         ] = None,
+#         retain_products_to_blacklist: bool = False,
+#     ) -> None:
+#         # value used to tell if any new reactions have occurred in a generation
+#         exhausted: bool = False
+#         num_mols: int = 0
+#         num_rxns: int = 0
+#         gen: int = 0
 
-        while not exhausted:
-            if num_gens is not None and gen >= num_gens:
-                return
-            exhausted = True
+#         while not exhausted:
+#             if num_gens is not None and gen >= num_gens:
+#                 return
+#             exhausted = True
 
-            # iterate through possible reactant combinations
-            for recipe in _generate_recipes_from_compat_table(
-                self._compat_table, self._recipe_cache, custom_uid_prefilter
-            ):
-                operator = self._op_lib[recipe[0]]
-                reactants = tuple(
-                    (self._mol_lib[mol_uid] for mol_uid in recipe[1])
-                )
+#             # iterate through possible reactant combinations
+#             for recipe in _generate_recipes_from_compat_table(
+#                 self._compat_table, self._recipe_cache, custom_uid_prefilter
+#             ):
+#                 operator = self._op_lib[recipe[0]]
+#                 reactants = tuple(
+#                     (self._mol_lib[mol_uid] for mol_uid in recipe[1])
+#                 )
 
-                # iterate through evaluated reactions
-                results, rejects = _evaluate_reaction(
-                    operator,
-                    reactants,
-                    self._engine,
-                    custom_filter,
-                    retain_products_to_blacklist,
-                )
-                for reaction, products in rejects:
-                    num_mols += len(products)
-                    num_rxns += 1
-                    if max_mols is not None and num_mols > max_mols:
-                        return
-                    if max_rxns is not None and num_rxns > max_rxns:
-                        return
-                    for mol in products:
-                        self._blacklist.add(mol.uid)
-                        self._mol_lib.add(mol)
-                    self._rxn_lib.add(reaction)
-                    exhausted = False
-                for reaction, products in results:
-                    num_mols += len(products)
-                    num_rxns += 1
-                    if max_mols is not None and num_mols > max_mols:
-                        return
-                    if max_rxns is not None and num_rxns > max_rxns:
-                        return
-                    for mol in products:
-                        self._blacklist.discard(mol.uid)
-                        self._mol_lib.add(mol)
-                    self._rxn_lib.add(reaction)
-                    exhausted = False
-            gen += 1
-            self.refresh()
+#                 # iterate through evaluated reactions
+#                 results, rejects = _evaluate_reaction(
+#                     operator,
+#                     reactants,
+#                     self._engine,
+#                     custom_filter,
+#                     retain_products_to_blacklist,
+#                 )
+#                 for reaction, products in rejects:
+#                     num_mols += len(products)
+#                     num_rxns += 1
+#                     if max_mols is not None and num_mols > max_mols:
+#                         return
+#                     if max_rxns is not None and num_rxns > max_rxns:
+#                         return
+#                     for mol in products:
+#                         self._blacklist.add(mol.uid)
+#                         self._mol_lib.add(mol)
+#                     self._rxn_lib.add(reaction)
+#                     exhausted = False
+#                 for reaction, products in results:
+#                     num_mols += len(products)
+#                     num_rxns += 1
+#                     if max_mols is not None and num_mols > max_mols:
+#                         return
+#                     if max_rxns is not None and num_rxns > max_rxns:
+#                         return
+#                     for mol in products:
+#                         self._blacklist.discard(mol.uid)
+#                         self._mol_lib.add(mol)
+#                     self._rxn_lib.add(reaction)
+#                     exhausted = False
+#             gen += 1
+#             self.refresh()
 
 
-@typing.final
-class CartesianStrategyParallel(interfaces.ExpansionStrategy):
-    """
-    Implements interfaces.ExpansionStrategy interface via Cartesian product of
-    molecules and operators.
-    """
+# @typing.final
+# class CartesianStrategyParallel(interfaces.ExpansionStrategy):
+#     """
+#     Implements interfaces.ExpansionStrategy interface via Cartesian product of
+#     molecules and operators.
+#     """
 
-    def __init__(
-        self,
-        mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
-        op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
-        rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
-        engine: _ReactionProvider,
-        num_procs: int,
-    ) -> None:
-        """Initialize strategy by attaching libraries.
+#     def __init__(
+#         self,
+#         mol_lib: interfaces.ObjectLibrary[interfaces.MolDatBase],
+#         op_lib: interfaces.ObjectLibrary[interfaces.OpDatBase],
+#         rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
+#         engine: _ReactionProvider,
+#         num_procs: int,
+#     ) -> None:
+#         """Initialize strategy by attaching libraries.
 
-        Parameters
-        ----------
-        mol_lib : interfaces.ObjectLibrary[interfaces.MolDatBase]
-            Library containing molecules.
-        op_lib : interfaces.ObjectLibrary[interfaces.OpDatBase]
-            Library containing operators.
-        rxn_lib : interfaces.ObjectLibrary[interfaces.RxnDatBase]
-            Library containing reactions.
-        engine : _ReactionProvider
-            Object used to initialize reactions.
-        """
-        self._mol_lib = mol_lib
-        self._op_lib = op_lib
-        self._rxn_lib = rxn_lib
-        self._engine = engine
-        self._num_procs = num_procs
+#         Parameters
+#         ----------
+#         mol_lib : interfaces.ObjectLibrary[interfaces.MolDatBase]
+#             Library containing molecules.
+#         op_lib : interfaces.ObjectLibrary[interfaces.OpDatBase]
+#             Library containing operators.
+#         rxn_lib : interfaces.ObjectLibrary[interfaces.RxnDatBase]
+#             Library containing reactions.
+#         engine : _ReactionProvider
+#             Object used to initialize reactions.
+#         """
+#         self._mol_lib = mol_lib
+#         self._op_lib = op_lib
+#         self._rxn_lib = rxn_lib
+#         self._engine = engine
+#         self._num_procs = num_procs
 
-        # stores active molecule IDs
-        self._active_mols: set[interfaces.Identifier] = set(
-            (uid for uid in self._mol_lib.ids())
-        )
-        # stores active operator IDs
-        self._active_ops: set[interfaces.Identifier] = set(
-            (uid for uid in self._op_lib.ids())
-        )
-        # stores combinations of reagents and operators which have been tried
-        self._recipe_cache: set[
-            tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]
-        ] = set()
+#         # stores active molecule IDs
+#         self._active_mols: set[interfaces.Identifier] = set(
+#             (uid for uid in self._mol_lib.ids())
+#         )
+#         # stores active operator IDs
+#         self._active_ops: set[interfaces.Identifier] = set(
+#             (uid for uid in self._op_lib.ids())
+#         )
+#         # stores combinations of reagents and operators which have been tried
+#         self._recipe_cache: set[
+#             tuple[interfaces.Identifier, tuple[interfaces.Identifier, ...]]
+#         ] = set()
 
-        # create operator-molecule compatibility table
-        self._compat_table: dict[
-            interfaces.Identifier, list[list[interfaces.Identifier]]
-        ] = {}
-        for op_uid in self._active_ops:
-            self._add_op_to_compat(op_uid)
+#         # create operator-molecule compatibility table
+#         self._compat_table: dict[
+#             interfaces.Identifier, list[list[interfaces.Identifier]]
+#         ] = {}
+#         for op_uid in self._active_ops:
+#             self._add_op_to_compat(op_uid)
 
-        # fill operator-molecule compatibility table
-        for mol_uid in self._active_mols:
-            self._add_mol_to_compat(mol_uid)
+#         # fill operator-molecule compatibility table
+#         for mol_uid in self._active_mols:
+#             self._add_mol_to_compat(mol_uid)
 
-    def _add_mol_to_compat(
-        self, mol: typing.Union[interfaces.Identifier, interfaces.MolDatBase]
-    ) -> None:
-        """
-        Add entries to compat_table for new molecule.
+#     def _add_mol_to_compat(
+#         self, mol: typing.Union[interfaces.Identifier, interfaces.MolDatBase]
+#     ) -> None:
+#         """
+#         Add entries to compat_table for new molecule.
 
-        Parameters
-        ----------
-        mol : interfaces.Identifier | interfaces.MolDatBase
-            Molecule to be added to compat_table.
-        """
-        if isinstance(mol, interfaces.MolDatBase):
-            mol_uid = mol.uid
-        else:
-            mol_uid = mol
-            mol = self._mol_lib[mol]
+#         Parameters
+#         ----------
+#         mol : interfaces.Identifier | interfaces.MolDatBase
+#             Molecule to be added to compat_table.
+#         """
+#         if isinstance(mol, interfaces.MolDatBase):
+#             mol_uid = mol.uid
+#         else:
+#             mol_uid = mol
+#             mol = self._mol_lib[mol]
 
-        for op_uid in self._active_ops:
-            op = self._op_lib[op_uid]
-            for arg in range(len(self._compat_table[op_uid])):
-                if op.compat(mol, arg):
-                    self._compat_table[op_uid][arg].append(mol_uid)
+#         for op_uid in self._active_ops:
+#             op = self._op_lib[op_uid]
+#             for arg in range(len(self._compat_table[op_uid])):
+#                 if op.compat(mol, arg):
+#                     self._compat_table[op_uid][arg].append(mol_uid)
 
-    def _add_op_to_compat(
-        self, op: typing.Union[interfaces.Identifier, interfaces.OpDatBase]
-    ) -> None:
-        """
-        Add entries to compat_table for new operator.
+#     def _add_op_to_compat(
+#         self, op: typing.Union[interfaces.Identifier, interfaces.OpDatBase]
+#     ) -> None:
+#         """
+#         Add entries to compat_table for new operator.
 
-        Parameters
-        ----------
-        op : interfaces.Identifier | interfaces.OpDatBase
-            Operator to be added to compat_table.
-        """
-        if isinstance(op, interfaces.OpDatBase):
-            op_uid = op.uid
-        else:
-            op_uid = op
-            op = self._op_lib[op]
+#         Parameters
+#         ----------
+#         op : interfaces.Identifier | interfaces.OpDatBase
+#             Operator to be added to compat_table.
+#         """
+#         if isinstance(op, interfaces.OpDatBase):
+#             op_uid = op.uid
+#         else:
+#             op_uid = op
+#             op = self._op_lib[op]
 
-        optable: list[list[interfaces.Identifier]] = [
-            [] for _ in range(len(op))
-        ]
-        for arg in range(len(optable)):
-            for mol_uid in self._active_mols:
-                mol = self._mol_lib[mol_uid]
-                if op.compat(mol, arg):
-                    optable[arg].append(mol_uid)
-        self._compat_table[op_uid] = optable
+#         optable: list[list[interfaces.Identifier]] = [
+#             [] for _ in range(len(op))
+#         ]
+#         for arg in range(len(optable)):
+#             for mol_uid in self._active_mols:
+#                 mol = self._mol_lib[mol_uid]
+#                 if op.compat(mol, arg):
+#                     optable[arg].append(mol_uid)
+#         self._compat_table[op_uid] = optable
 
-    def reset_recipe_cache(self) -> None:
-        self._recipe_cache = set()
+#     def reset_recipe_cache(self) -> None:
+#         self._recipe_cache = set()
 
-    def refresh(self) -> None:
-        if len(self._mol_lib) > len(self._active_mols):
-            for mol_uid in self._mol_lib.ids():
-                if mol_uid not in self._active_mols:
-                    self._active_mols.add(mol_uid)
-                    self._add_mol_to_compat(mol_uid)
+#     def refresh(self) -> None:
+#         if len(self._mol_lib) > len(self._active_mols):
+#             for mol_uid in self._mol_lib.ids():
+#                 if mol_uid not in self._active_mols:
+#                     self._active_mols.add(mol_uid)
+#                     self._add_mol_to_compat(mol_uid)
 
-        if len(self._op_lib) > len(self._active_ops):
-            for op_uid in self._op_lib.ids():
-                if op_uid not in self._active_ops:
-                    self._active_ops.add(op_uid)
-                    self._add_op_to_compat(op_uid)
+#         if len(self._op_lib) > len(self._active_ops):
+#             for op_uid in self._op_lib.ids():
+#                 if op_uid not in self._active_ops:
+#                     self._active_ops.add(op_uid)
+#                     self._add_op_to_compat(op_uid)
 
-    def expand(
-        self,
-        max_rxns: typing.Optional[int] = None,
-        max_mols: typing.Optional[int] = None,
-        num_gens: typing.Optional[int] = None,
-        custom_filter: typing.Optional[
-            collections.abc.Callable[
-                [
-                    interfaces.OpDatBase,
-                    collections.abc.Sequence[interfaces.MolDatBase],
-                    collections.abc.Sequence[interfaces.MolDatBase],
-                ],
-                bool,
-            ]
-        ] = None,
-        custom_uid_prefilter: typing.Optional[
-            collections.abc.Callable[
-                [
-                    interfaces.Identifier,
-                    collections.abc.Sequence[interfaces.Identifier],
-                ],
-                bool,
-            ]
-        ] = None,
-    ) -> None:
-        # value used to tell if any new reactions have occurred in a generation
-        exhausted: bool = False
-        num_mols: int = 0
-        num_rxns: int = 0
-        gen: int = 0
+#     def expand(
+#         self,
+#         max_rxns: typing.Optional[int] = None,
+#         max_mols: typing.Optional[int] = None,
+#         num_gens: typing.Optional[int] = None,
+#         custom_filter: typing.Optional[
+#             collections.abc.Callable[
+#                 [
+#                     interfaces.OpDatBase,
+#                     collections.abc.Sequence[interfaces.MolDatBase],
+#                     collections.abc.Sequence[interfaces.MolDatBase],
+#                 ],
+#                 bool,
+#             ]
+#         ] = None,
+#         custom_uid_prefilter: typing.Optional[
+#             collections.abc.Callable[
+#                 [
+#                     interfaces.Identifier,
+#                     collections.abc.Sequence[interfaces.Identifier],
+#                 ],
+#                 bool,
+#             ]
+#         ] = None,
+#     ) -> None:
+#         # value used to tell if any new reactions have occurred in a generation
+#         exhausted: bool = False
+#         num_mols: int = 0
+#         num_rxns: int = 0
+#         gen: int = 0
 
-        while not exhausted:
-            if num_gens is not None and gen >= num_gens:
-                return
-            exhausted = True
+#         while not exhausted:
+#             if num_gens is not None and gen >= num_gens:
+#                 return
+#             exhausted = True
 
-            job_generator = _chunk_generator(
-                self._num_procs * 100,
-                (
-                    (
-                        self._op_lib[recipe[0]],
-                        [self._mol_lib[mol_uid] for mol_uid in recipe[1]],
-                        self._engine,
-                        custom_filter,
-                    )
-                    for recipe in _generate_recipes_from_compat_table(
-                        self._compat_table,
-                        self._recipe_cache,
-                        custom_uid_prefilter,
-                    )
-                ),
-            )
+#             job_generator = _chunk_generator(
+#                 self._num_procs * 100,
+#                 (
+#                     (
+#                         self._op_lib[recipe[0]],
+#                         [self._mol_lib[mol_uid] for mol_uid in recipe[1]],
+#                         self._engine,
+#                         custom_filter,
+#                     )
+#                     for recipe in _generate_recipes_from_compat_table(
+#                         self._compat_table,
+#                         self._recipe_cache,
+#                         custom_uid_prefilter,
+#                     )
+#                 ),
+#             )
 
-            # iterate through possible reactant combinations
-            with concurrent.futures.ProcessPoolExecutor(
-                max_workers=self._num_procs
-            ) as executor:
-                for jobchunk in job_generator:
-                    jobchunk = tuple(jobchunk)
-                    for results, _ in executor.map(
-                        _evaluate_reaction_unpack, jobchunk
-                    ):
-                        # for result in _evaluate_reaction_unpack(jobchunk):
-                        for reaction, products in results:
-                            num_mols += len(products)
-                            num_rxns += 1
-                            if max_mols is not None and num_mols > max_mols:
-                                return
-                            if max_rxns is not None and num_rxns > max_rxns:
-                                return
-                            for mol in products:
-                                self._mol_lib.add(mol)
-                            self._rxn_lib.add(reaction)
-                            exhausted = False
-            gen += 1
-            self.refresh()
+#             # iterate through possible reactant combinations
+#             with concurrent.futures.ProcessPoolExecutor(
+#                 max_workers=self._num_procs
+#             ) as executor:
+#                 for jobchunk in job_generator:
+#                     jobchunk = tuple(jobchunk)
+#                     for results, _ in executor.map(
+#                         _evaluate_reaction_unpack, jobchunk
+#                     ):
+#                         # for result in _evaluate_reaction_unpack(jobchunk):
+#                         for reaction, products in results:
+#                             num_mols += len(products)
+#                             num_rxns += 1
+#                             if max_mols is not None and num_mols > max_mols:
+#                                 return
+#                             if max_rxns is not None and num_rxns > max_rxns:
+#                                 return
+#                             for mol in products:
+#                                 self._mol_lib.add(mol)
+#                             self._rxn_lib.add(reaction)
+#                             exhausted = False
+#             gen += 1
+#             self.refresh()
 
 
 @dataclasses.dataclass(frozen=True)

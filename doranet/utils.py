@@ -12,133 +12,6 @@ import rdkit.Chem
 from doranet import interfaces
 
 
-class RxnTrackerDepthFirst(interfaces.RxnTracker):
-    """Implements RxnTracker interface; stores lookups as a hash table within
-    the object.  Will eventually deprecate this functionality when the
-    ObjectLibrary interface is updated to include native search functionality.
-    """
-
-    _mol_lookup: dict[interfaces.Identifier, list[interfaces.Identifier]]
-    _rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase]
-
-    def __init__(
-        self, rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase]
-    ) -> None:
-        self._mol_lookup = {}
-        self._rxn_lib = rxn_lib
-        for rxnid in rxn_lib.ids():
-            for product_mol in rxn_lib[rxnid].products:
-                if product_mol not in self._mol_lookup:
-                    self._mol_lookup[product_mol] = []
-                self._mol_lookup[product_mol].append(rxnid)
-
-    def _getchains(
-        self,
-        cur_gen_mols: collections.abc.Collection[interfaces.Identifier],
-        prev_gens_mols: typing.Optional[set[interfaces.Identifier]] = None,
-        prev_gens_rxns: typing.Optional[set[interfaces.Identifier]] = None,
-        reagent_table: typing.Optional[
-            collections.abc.Iterable[interfaces.Identifier]
-        ] = None,
-        fail_on_unknown_reagent: bool = False,
-        depth: typing.Optional[int] = None,
-    ) -> collections.abc.Generator[
-        list[frozenset[interfaces.Identifier]], None, None
-    ]:
-        if depth is not None:
-            if depth <= 0:
-                return
-            new_depth = depth - 1
-        else:
-            new_depth = None
-        if len(cur_gen_mols) == 0:
-            yield []
-            return
-        if prev_gens_mols is None:
-            prev_gens_mols = set()
-        if prev_gens_rxns is None:
-            prev_gens_rxns = set()
-        if reagent_table is None:
-            reagent_table = set()
-        rxnsets: list[list[interfaces.Identifier]] = []
-        for mol in cur_gen_mols:
-            if mol in reagent_table:
-                continue
-            elif mol not in self._mol_lookup:
-                rxnsets.append([])
-                continue
-            newrxnset: list[interfaces.Identifier] = [
-                rxn
-                for rxn in self._mol_lookup[mol]
-                if rxn not in prev_gens_rxns
-                and all(
-                    mol not in prev_gens_mols
-                    for mol in self._rxn_lib[rxn].reactants
-                )
-            ]
-            rxnsets.append(newrxnset)
-        if not fail_on_unknown_reagent:
-            rxnsets = [rxnset for rxnset in rxnsets if len(rxnset) > 0]
-            if len(rxnsets) == 0:  # these two lines
-                return  # close the loophole
-        if len(rxnsets) == 0:
-            yield []
-            return
-        tested_combos = set()
-        for rxntuple in itertools.product(*rxnsets):
-            rxncombo: frozenset[interfaces.Identifier] = frozenset(rxntuple)
-            if rxncombo in tested_combos:
-                continue
-            else:
-                tested_combos.add(frozenset(rxncombo))
-            required_reagents = set(
-                mol
-                for mol in itertools.chain(
-                    *(self._rxn_lib[rxn].reactants for rxn in rxncombo)
-                )
-                if mol not in reagent_table
-            )
-            if len(required_reagents) == 0:
-                yield [rxncombo]
-                continue
-            for path in self._getchains(
-                required_reagents,
-                prev_gens_mols.union(cur_gen_mols),
-                prev_gens_rxns.union(rxncombo),
-                reagent_table,
-                fail_on_unknown_reagent,
-                new_depth,
-            ):
-                path.append(rxncombo)
-                yield path
-
-    def getParentChains(
-        self,
-        target: interfaces.Identifier,
-        reagent_table: collections.abc.Sequence[
-            interfaces.Identifier
-        ] = tuple(),
-        fail_on_unknown_reagent: bool = False,
-        max_depth: typing.Optional[int] = None,
-    ) -> collections.abc.Generator[
-        list[frozenset[interfaces.Identifier]], None, None
-    ]:
-        if fail_on_unknown_reagent and not reagent_table:
-            raise ValueError(
-                "reagent table must be specified if fail_on_unknown_reagent is "
-                "True"
-            )
-        return (
-            path
-            for path in self._getchains(
-                [target],
-                reagent_table=reagent_table,
-                fail_on_unknown_reagent=fail_on_unknown_reagent,
-                depth=max_depth,
-            )
-        )
-
-
 @dataclasses.dataclass(frozen=True, slots=True)
 class RxnTrackerDepthFirstNetwork(interfaces.RxnTrackerNetwork):
     """Implements RxnTrackerNetwork interface."""
@@ -313,100 +186,100 @@ def _logreduce(
     return f(x, y), False
 
 
-def getFigures(
-    target_smiles: str,
-    mol_smiles: tuple[str, ...],
-    num_gens: int,
-    engine: interfaces.NetworkEngine,
-    rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
-    job_name: str,
-):
-    """
-    Create and display figures of reaction pathways.
+# def getFigures(
+#     target_smiles: str,
+#     mol_smiles: tuple[str, ...],
+#     num_gens: int,
+#     engine: interfaces.NetworkEngine,
+#     rxn_lib: interfaces.ObjectLibrary[interfaces.RxnDatBase],
+#     job_name: str,
+# ):
+#     """
+#     Create and display figures of reaction pathways.
 
-    If the target is found at the end of the expansion, create figures of the
-    reaction routes. Each figure contains all generations of one route. Also
-    prints reaction operators, reactants, and products. Figures are displayed,
-    also saved in the working folder. Based on the example code for using
-    RxnTrackerDepthFirst(rxn_lib).  Currently need to have the font file
-    'OpenSans-Regular.ttf' in the working folder.  May not work due to legacy
-    code source.
+#     If the target is found at the end of the expansion, create figures of the
+#     reaction routes. Each figure contains all generations of one route. Also
+#     prints reaction operators, reactants, and products. Figures are displayed,
+#     also saved in the working folder. Based on the example code for using
+#     RxnTrackerDepthFirst(rxn_lib).  Currently need to have the font file
+#     'OpenSans-Regular.ttf' in the working folder.  May not work due to legacy
+#     code source.
 
-    Parameters
-    ----------
-    target_smiles : str
-        Target molecule SMILES.
-    mol_smiles : tuple[str,...]
-        SMILES of starting chemicals.
-    num_gens : int
-        Number of expansion generations performed.
-    engine : NetworkEngine
-        Network Engine used to create data objects.
-    rxn_lib : ObjectLibrary[RxnDatBase]
-        Reaction library where reactions are contained.
-    job_name: str
-        Name of the job.
-    """
-    doubletracker = RxnTrackerDepthFirst(rxn_lib)
-    route = 1
-    for chain in doubletracker.getParentChains(
-        engine.Mol(target_smiles).uid,
-        reagent_table=[engine.Mol(smiles).uid for smiles in mol_smiles],
-        max_depth=num_gens,
-    ):
-        g = 0
-        rxn_image_list = []
-        for gen in chain:
-            print(f"Generation {g}:")
-            for rxnid in gen:
-                print(rxn_lib[rxnid])
-                rxn_smiles_str = ""
-                for molecule in rxn_lib[rxnid].reactants:
-                    if not isinstance(molecule, str):
-                        raise TypeError(
-                            f"""Identifier {molecule} of type {type(molecule)}
-                                must be SMILES string."""
-                        )
-                    rxn_smiles_str += molecule
-                    rxn_smiles_str += "."
-                rxn_smiles_str += ">>"
-                for molecule in rxn_lib[rxnid].products:
-                    if not isinstance(molecule, str):
-                        raise TypeError(
-                            f"""Identifier {molecule} of type {type(molecule)}
-                                must be SMILES string."""
-                        )
-                    rxn_smiles_str += molecule
-                    rxn_smiles_str += "."
-                rxn1 = rdkit.Chem.rdchemreactions.ReactionFromSmarts(
-                    rxn_smiles_str, useSmiles=True
-                )
-                img1 = rdkit.Chem.Draw.ReactionToImage(rxn1)
-                msg = f"Route {route}, Generation {g}"
-                img_w, img_h = img1.size
-                I1 = PIL.ImageDraw.Draw(img1)
-                myFont = PIL.ImageFont.truetype("OpenSans-Regular.ttf", 25)
-                new_box = I1.textbbox((0, 0), msg, font=myFont)
-                I1.text(
-                    ((img_w - new_box[2]) / 2, 0),
-                    msg,
-                    font=myFont,
-                    fill="black",
-                )
-                rxn_image_list.append(img1)
-            g += 1
-        max_width = 0
-        total_hight = 0
-        for img in rxn_image_list:
-            total_hight += img.size[1]
-            max_width = max(max_width, img.size[0])
-        combined_image = PIL.Image.new("RGB", (max_width, total_hight), "white")
-        current_hight = 0
-        for img in rxn_image_list:
-            combined_image.paste(
-                img, ((max_width - img.size[0]) // 2, current_hight)
-            )
-            current_hight += img.size[1]
-        IPython.display(combined_image)  # type: ignore
-        combined_image.save(f"{job_name} route {route}.png")
-        route += 1
+#     Parameters
+#     ----------
+#     target_smiles : str
+#         Target molecule SMILES.
+#     mol_smiles : tuple[str,...]
+#         SMILES of starting chemicals.
+#     num_gens : int
+#         Number of expansion generations performed.
+#     engine : NetworkEngine
+#         Network Engine used to create data objects.
+#     rxn_lib : ObjectLibrary[RxnDatBase]
+#         Reaction library where reactions are contained.
+#     job_name: str
+#         Name of the job.
+#     """
+#     doubletracker = RxnTrackerDepthFirst(rxn_lib)
+#     route = 1
+#     for chain in doubletracker.getParentChains(
+#         engine.Mol(target_smiles).uid,
+#         reagent_table=[engine.Mol(smiles).uid for smiles in mol_smiles],
+#         max_depth=num_gens,
+#     ):
+#         g = 0
+#         rxn_image_list = []
+#         for gen in chain:
+#             print(f"Generation {g}:")
+#             for rxnid in gen:
+#                 print(rxn_lib[rxnid])
+#                 rxn_smiles_str = ""
+#                 for molecule in rxn_lib[rxnid].reactants:
+#                     if not isinstance(molecule, str):
+#                         raise TypeError(
+#                             f"""Identifier {molecule} of type {type(molecule)}
+#                                 must be SMILES string."""
+#                         )
+#                     rxn_smiles_str += molecule
+#                     rxn_smiles_str += "."
+#                 rxn_smiles_str += ">>"
+#                 for molecule in rxn_lib[rxnid].products:
+#                     if not isinstance(molecule, str):
+#                         raise TypeError(
+#                             f"""Identifier {molecule} of type {type(molecule)}
+#                                 must be SMILES string."""
+#                         )
+#                     rxn_smiles_str += molecule
+#                     rxn_smiles_str += "."
+#                 rxn1 = rdkit.Chem.rdchemreactions.ReactionFromSmarts(
+#                     rxn_smiles_str, useSmiles=True
+#                 )
+#                 img1 = rdkit.Chem.Draw.ReactionToImage(rxn1)
+#                 msg = f"Route {route}, Generation {g}"
+#                 img_w, img_h = img1.size
+#                 I1 = PIL.ImageDraw.Draw(img1)
+#                 myFont = PIL.ImageFont.truetype("OpenSans-Regular.ttf", 25)
+#                 new_box = I1.textbbox((0, 0), msg, font=myFont)
+#                 I1.text(
+#                     ((img_w - new_box[2]) / 2, 0),
+#                     msg,
+#                     font=myFont,
+#                     fill="black",
+#                 )
+#                 rxn_image_list.append(img1)
+#             g += 1
+#         max_width = 0
+#         total_hight = 0
+#         for img in rxn_image_list:
+#             total_hight += img.size[1]
+#             max_width = max(max_width, img.size[0])
+#         combined_image = PIL.Image.new("RGB", (max_width, total_hight), "white")
+#         current_hight = 0
+#         for img in rxn_image_list:
+#             combined_image.paste(
+#                 img, ((max_width - img.size[0]) // 2, current_hight)
+#             )
+#             current_hight += img.size[1]
+#         IPython.display(combined_image)  # type: ignore
+#         combined_image.save(f"{job_name} route {route}.png")
+#         route += 1
