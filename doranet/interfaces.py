@@ -62,6 +62,7 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
             Integer representing hashed value of object.  Should be
             (effectively) unique.
         """
+        ...
 
     def __eq__(self, other) -> bool:
         """
@@ -79,6 +80,7 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
         bool
             True if object is equivalent to other, False otherwise.
         """
+        ...
 
     def __lt__(self, other) -> bool:
         """
@@ -96,6 +98,7 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
         bool
             True if other is after self when ordered, False otherwise.
         """
+        ...
 
 
 class DataUnit(abc.ABC):
