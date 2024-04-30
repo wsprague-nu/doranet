@@ -9,6 +9,7 @@ import typing
 import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
+import rdkit.Chem.rdmolfiles
 
 from doranet import interfaces
 
@@ -71,7 +72,7 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
 
     def _buildfrommol(self, in_val: rdkit.Chem.rdchem.Mol) -> None:
         self._blob = in_val.ToBinary()
-        self._smiles = rdkit.Chem.MolToSmiles(in_val)
+        self._smiles = rdkit.Chem.rdmolfiles.MolToSmiles(in_val)
 
     @property
     def blob(self) -> bytes:
@@ -124,7 +125,7 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
 
     def _buildfrommol(self, in_val: rdkit.Chem.rdchem.Mol) -> None:
         self._rdkitmol = in_val
-        self._smiles = rdkit.Chem.MolToSmiles(in_val)
+        self._smiles = rdkit.Chem.rdmolfiles.MolToSmiles(in_val)
 
     @property
     def blob(self) -> bytes:
