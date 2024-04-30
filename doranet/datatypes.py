@@ -8,8 +8,11 @@ import typing
 
 import rdkit
 import rdkit.Chem
+import rdkit.Chem.rdchem
 import rdkit.Chem.rdChemReactions
+import rdkit.Chem.rdinchi
 import rdkit.Chem.rdmolfiles
+import rdkit.Chem.rdmolops
 
 from doranet import interfaces
 
@@ -80,11 +83,11 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
 
     @property
     def inchikey(self) -> str:
-        return rdkit.Chem.inchi.MolToInchiKey(self.rdkitmol)
+        return rdkit.Chem.rdinchi.MolToInchiKey(self.rdkitmol)
 
     @property
     def rdkitmol(self) -> rdkit.Chem.rdchem.Mol:
-        return rdkit.Chem.Mol(self._blob)
+        return rdkit.Chem.rdchem.Mol(self._blob)
 
     @property
     def smiles(self) -> str:
@@ -136,7 +139,7 @@ class MolDatBasicV2(interfaces.MolDatRDKit):
     @property
     def inchikey(self) -> str:
         if self._inchikey is None:
-            self._inchikey = rdkit.Chem.inchi.MolToInchiKey(self._rdkitmol)
+            self._inchikey = rdkit.Chem.rdinchi.MolToInchiKey(self._rdkitmol)
         return self._inchikey
 
     @property
@@ -265,7 +268,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
         if isinstance(mol, interfaces.MolDatRDKit):
             tempmol = mol.rdkitmol
             if self._kekulize:
-                tempmol = rdkit.Chem.Mol(tempmol)
+                tempmol = rdkit.Chem.rdchem.Mol(tempmol)
                 rdkit.Chem.rdmolops.Kekulize(tempmol, clearAromaticFlags=True)
             return tempmol.HasSubstructMatch(
                 self._templates[arg], useChirality=True
@@ -288,10 +291,10 @@ class OpDatBasic(interfaces.OpDatRDKit):
     def _process_new_mol(self, mol) -> interfaces.MolDatRDKit | None:
         if self._drop_errors:
             try:
-                return self._engine.Mol(mol)
+                return self._engine.mol.rdkit(mol)
             except Exception:
                 return None
-        return self._engine.Mol(mol)
+        return self._engine.mol.rdkit(mol)
 
     def __call__(
         self, *reactants: interfaces.MolDatBase
@@ -302,7 +305,9 @@ class OpDatBasic(interfaces.OpDatRDKit):
             if isinstance(reactant, interfaces.MolDatRDKit)
         ]
         if self._kekulize:
-            rdkitmols = [rdkit.Chem.Mol(rdkitmol) for rdkitmol in rdkitmols]
+            rdkitmols = [
+                rdkit.Chem.rdchem.Mol(rdkitmol) for rdkitmol in rdkitmols
+            ]
             for rdkitmol in rdkitmols:
                 rdkit.Chem.rdmolops.Kekulize(rdkitmol, clearAromaticFlags=True)
         try:
