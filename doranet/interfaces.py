@@ -1911,10 +1911,6 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         """
 
     @abc.abstractmethod
-    def __getitem__(self, item: typing.Union[slice, T_int, Identifier]):
-        ...
-
-    @abc.abstractmethod
     def i(self, uid: Identifier) -> T_int:
         """
         Retrieve item index from container.
@@ -1941,6 +1937,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
             All keys (UIDs) of items in container.
         """
 
+    @abc.abstractmethod
     @typing.overload
     def meta(
         self,
@@ -1951,6 +1948,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
     ) -> collections.abc.Mapping[typing.Hashable, typing.Any]:
         ...
 
+    @abc.abstractmethod
     @typing.overload
     def meta(
         self,
@@ -2104,10 +2102,6 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         Identifier
             Item to be retrieved.
         """
-
-    @abc.abstractmethod
-    def __getitem__(self, item: typing.Union[slice, T_int]):
-        ...
 
     @abc.abstractmethod
     def i(self, item: T_id) -> T_int:

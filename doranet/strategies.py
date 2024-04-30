@@ -706,7 +706,7 @@ def assemble_recipe_batch_job(
     ]
     op_data = network.ops[op_index] if keyset.live_operator else None
     if keyset.operator_keys:
-        op_meta = network.ops.meta((op_index,), keyset.operator_keys)[0]
+        op_meta = network.ops.meta(op_index, keyset.operator_keys)
     else:
         op_meta = None
     op = interfaces.DataPacket(op_index, op_data, op_meta)
@@ -716,7 +716,7 @@ def assemble_recipe_batch_job(
         mol_data = ((None for _ in mol_list) for mol_list in batch)
     if keyset.molecule_keys:
         mol_meta = (
-            network.mols.meta(mol_list, keyset.molecule_keys)
+            tuple(network.mols.meta(mol_list, keyset.molecule_keys))
             for mol_list in batch
         )
     else:
@@ -761,7 +761,7 @@ def assemble_reaction_job(
     op_data = network.ops[op_index]
 
     if keyset.operator_keys:
-        op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
+        op_meta = network.ops.meta(op_index, keyset.operator_keys)
     else:
         op_meta = None
 
@@ -769,7 +769,7 @@ def assemble_reaction_job(
 
     mol_meta: collections.abc.Iterable[typing.Optional[collections.abc.Mapping]]
     if keyset.molecule_keys:
-        mol_meta = network.mol_metas(recipe.reactants, keyset.molecule_keys)
+        mol_meta = network.mols.meta(recipe.reactants, keyset.molecule_keys)
     else:
         mol_meta = (None for _ in recipe.reactants)
 
@@ -842,7 +842,10 @@ def execute_recipe_ranking(
                         reactants_data,
                         interfaces.Recipe(
                             interfaces.OpIndex(job.operator.i),
-                            tuple(reactant.i for reactant in reactants_data),
+                            tuple(
+                                interfaces.MolIndex(reactant.i)
+                                for reactant in reactants_data
+                            ),
                         ),
                     )
                     for reactants_data in itertools.product(*bundle.args)
@@ -1270,13 +1273,13 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:
-                                cur_val = network.mol_meta(m_dat[0], key)
+                                cur_val = network.mols.meta(m_dat[0], key)
                                 if cur_val is not None:
                                     value = mc_update.mol_updates[key](
                                         value, cur_val
                                     )
-                            if network.mol_meta(m_dat[0], key) != value:
-                                network.mol_meta(m_dat[0], key, value)
+                            if network.mols.meta(m_dat[0], key) != value:
+                                network.mols.set_meta(m_dat[0], {key: value})
                                 if key in total_keyset.molecule_keys:
                                     updated_mols_set.add(m_dat[0])
 
@@ -1285,13 +1288,13 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     if m_dat[1].meta is not None:
                         for key, value in m_dat[1].meta.items():
                             if key in mc_update.mol_updates:
-                                cur_val = network.mol_meta(m_dat[0], key)
+                                cur_val = network.mols.meta(m_dat[0], key)
                                 if cur_val is not None:
                                     value = mc_update.mol_updates[key](
                                         value, cur_val
                                     )
-                            if network.mol_meta(m_dat[0], key) != value:
-                                network.mol_meta(m_dat[0], key, value)
+                            if network.mols.meta(m_dat[0], key) != value:
+                                network.mols.set_meta(m_dat[0], {key: value})
                                 if key in total_keyset.molecule_keys:
                                     updated_mols_set.add(m_dat[0])
 
@@ -1299,16 +1302,23 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 if rxn.operator.meta is not None:
                     for key, value in rxn.operator.meta.items():
                         if key in mc_update.op_updates:
-                            cur_val = network.op_meta(
+                            cur_val = network.ops.meta(
                                 rxn_implicit.operator, key
                             )
                             if cur_val is not None:
                                 value = mc_update.op_updates[key](
                                     value,
-                                    network.op_meta(rxn_implicit.operator, key),
+                                    network.ops.meta(
+                                        rxn_implicit.operator, key
+                                    ),
                                 )
-                        if network.op_meta(rxn_implicit.operator, key) != value:
-                            network.op_meta(rxn_implicit.operator, key, value)
+                        if (
+                            network.ops.meta(rxn_implicit.operator, key)
+                            != value
+                        ):
+                            network.ops.set_meta(
+                                rxn_implicit.operator, {key: value}
+                            )
                             if key in total_keyset.operator_keys:
                                 updated_ops_set.add(rxn_implicit.operator)
 
@@ -1316,13 +1326,13 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 if rxn.reaction_meta is not None:
                     for key, value in rxn.reaction_meta.items():
                         if key in mc_update.rxn_updates:
-                            cur_val = network.rxn_meta(rxn_index, key)
+                            cur_val = network.rxns.meta(rxn_index, key)
                             if cur_val is not None:
                                 value = mc_update.rxn_updates[key](
                                     value, cur_val
                                 )
-                        if network.rxn_meta(rxn_index, key) != value:
-                            network.rxn_meta(rxn_index, key, value)
+                        if network.rxns.meta(rxn_index, key) != value:
+                            network.rxns.set_meta(rxn_index, {key: value})
 
             recipes_tested.update(
                 (reciperank.recipe for reciperank in recipes_to_be_expanded)
