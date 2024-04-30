@@ -1,7 +1,6 @@
 """Contains classes which define and implement dependency-injection engines."""
 
 import base64
-import collections.abc
 import dataclasses
 import gzip
 import pickle
@@ -12,7 +11,6 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 from doranet import (
-    datatypes,
     filters,
     hooks,
     interfaces,

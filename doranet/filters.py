@@ -10,7 +10,6 @@ import rdkit.Chem.rdqueries
 
 from doranet import interfaces, metadata
 
-
 # class AlwaysTrueFilter(interfaces.ReactionFilter):
 #     def __call__(self, operator, reactants, products):
 #         return True
