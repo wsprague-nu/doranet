@@ -11,6 +11,7 @@ import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
 from doranet import (
+    datatypes,
     filters,
     hooks,
     interfaces,
@@ -120,17 +121,63 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         "_Mol",
         "_Op",
         "_Rxn",
-        "_Mol_Lib",
-        "_Op_Lib",
-        "_Rxn_Lib",
-        "_CartesianStrategy",
         "_speed",
         "_np",
     )
     _Mol: typing.Any
-    _Mol_Lib: typing.Any
-    _Op_Lib: typing.Any
-    _Rxn_Lib: typing.Any
+
+    def __init__(self, speed: int = 5, np: int = 1):
+        match speed:
+            case 1:
+                self._Mol = datatypes.MolDatBasicV2
+                raise NotImplementedError("Speed not yet implemented")
+            case 2:
+                self._Mol = datatypes.MolDatBasicV2
+                raise NotImplementedError("Speed not yet implemented")
+            case 3:
+                self._Mol = datatypes.MolDatBasicV2
+                raise NotImplementedError("Speed not yet implemented")
+            case 4:
+                self._Mol = datatypes.MolDatBasicV2
+            case 5:
+                self._Mol = datatypes.MolDatBasicV1
+            case 6:
+                self._Mol = datatypes.MolDatBasicV2
+            case _:
+                raise ValueError(f"speed = {speed} is invalid")
+
+        self._Op = datatypes.OpDatBasic
+        self._speed = speed
+        if np != 1:
+            raise NotImplementedError(
+                "Multiprocessing has not yet been implemented"
+            )
+        self._np = np
+
+    def Mol(
+        self,
+        molecule: typing.Union[rdkit.Chem.rdchem.Mol, str, bytes],
+        sanitize: bool = True,
+        neutralize: bool = False,
+    ) -> interfaces.MolDatRDKit:
+        return self._Mol(
+            molecule=molecule, sanitize=sanitize, neutralize=neutralize
+        )
+
+    def Op(
+        self,
+        operator: typing.Union[
+            rdkit.Chem.rdChemReactions.ChemicalReaction, str, bytes
+        ],
+        kekulize: bool = False,
+        drop_errors: bool = False,
+    ) -> datatypes.OpDatBasic:
+        return self._Op(
+            operator=operator,
+            engine=self,
+            kekulize=kekulize,
+            drop_errors=drop_errors,
+        )
 
     @property
     def speed(self) -> int:
