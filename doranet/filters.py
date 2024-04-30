@@ -263,7 +263,7 @@ class ReactionFilterMaxAtoms(metadata.ReactionFilterBase):
 
     @classmethod
     def from_num(
-        cls, max_atoms: int, proton_number: typing.Optional[int]
+        cls, max_atoms: int, proton_number: typing.Optional[int] = None
     ) -> "ReactionFilterMaxAtoms":
         if proton_number is None:
             return ReactionFilterMaxAtoms(max_atoms, None)
