@@ -1616,7 +1616,7 @@ class _max_atoms_from_num(typing.Protocol):
     @classmethod
     @abc.abstractmethod
     def __call__(
-        self, max_atoms: int, proton_number: typing.Optional[int] = None
+        cls, max_atoms: int, proton_number: typing.Optional[int] = None
     ) -> "filters.ReactionFilterMaxAtoms":
         ...
 
