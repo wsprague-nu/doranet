@@ -1943,7 +1943,7 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Mapping:
+    ) -> collections.abc.Mapping[typing.Hashable, typing.Any]:
         ...
 
     @typing.overload
@@ -1953,7 +1953,9 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         keys: typing.Optional[
             collections.abc.Iterable[collections.abc.Hashable]
         ] = None,
-    ) -> collections.abc.Iterable[collections.abc.Mapping]:
+    ) -> collections.abc.Iterable[
+        collections.abc.Mapping[typing.Hashable, typing.Any]
+    ]:
         ...
 
     @abc.abstractmethod
@@ -2382,7 +2384,7 @@ class ChemNetwork(abc.ABC):
     @abc.abstractmethod
     def add_op(
         self,
-        mol: OpDatBase,
+        op: OpDatBase,
         meta: typing.Optional[collections.abc.Mapping] = None,
     ) -> OpIndex:
         """
@@ -2393,7 +2395,7 @@ class ChemNetwork(abc.ABC):
 
         Parameters
         ----------
-        mol : OpDatBase
+        op : OpDatBase
             Operator to be added.
         meta : typing.Optional[collections.abc.Mapping] (default: None)
             Metadata associated with operator.

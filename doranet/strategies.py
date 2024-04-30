@@ -706,7 +706,7 @@ def assemble_recipe_batch_job(
     ]
     op_data = network.ops[op_index] if keyset.live_operator else None
     if keyset.operator_keys:
-        op_meta = network.op_metas((op_index,), keyset.operator_keys)[0]
+        op_meta = network.ops.meta((op_index,), keyset.operator_keys)[0]
     else:
         op_meta = None
     op = interfaces.DataPacket(op_index, op_data, op_meta)
@@ -716,7 +716,7 @@ def assemble_recipe_batch_job(
         mol_data = ((None for _ in mol_list) for mol_list in batch)
     if keyset.molecule_keys:
         mol_meta = (
-            network.mol_metas(mol_list, keyset.molecule_keys)
+            network.mols.meta(mol_list, keyset.molecule_keys)
             for mol_list in batch
         )
     else:

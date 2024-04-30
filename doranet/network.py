@@ -684,7 +684,7 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
     updated_mol_meta: set[interfaces.MolIndex] = dataclasses.field(
         default_factory=set
     )
-    updated_op_meta: set[interfaces.MolIndex] = dataclasses.field(
+    updated_op_meta: set[interfaces.OpIndex] = dataclasses.field(
         default_factory=set
     )
 
@@ -703,11 +703,11 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
     def compat_table(self, index):
         return self.network.compat_table(index)
 
-    def consumers(self, index):
-        return self.network.consumers(index)
+    def consumers(self, mol):
+        return self.network.consumers(mol)
 
-    def producers(self, index):
-        return self.network.producers(index)
+    def producers(self, mol):
+        return self.network.producers(mol)
 
     def add_mol(self, mol, meta=None, reactive=None, _custom_compat=None):
         if meta is not None and mol in self.network:
