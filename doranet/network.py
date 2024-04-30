@@ -729,14 +729,16 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
                     continue
         return self.network.add_op(op, meta)
 
-    def add_rxn(self, operator, reactants, products, meta=None, rxn=None):
-        return self.network.add_mol(operator, reactants, products, meta, rxn)
+    def add_rxn(
+        self, operator=None, reactants=None, products=None, meta=None, rxn=None
+    ):
+        return self.network.add_rxn(operator, reactants, products, meta, rxn)
 
     @property
     def reactivity(self):
         return self.network.reactivity
 
-    def save_to_file(self, filename, path, minimal, ext):
+    def save_to_file(self, filename, path="", minimal=False, ext=".pgnet"):
         self.network.save_to_file(filename, path, minimal, ext)
 
 
