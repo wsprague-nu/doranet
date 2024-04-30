@@ -30,8 +30,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+lint = [
     "ruff",
+]
+test = [
     "pytest",
 ]
 
