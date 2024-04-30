@@ -1855,6 +1855,8 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
     @abc.abstractmethod
     def __contains__(self, item: typing.Union[Identifier, T_data]) -> bool:
         """
+        Check if container has item.
+
         Check if container has an item with a particular UID or that has a UID
         equivalent to that of the passed item.
 
@@ -2124,6 +2126,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         """
 
     @typing.overload
+    @abc.abstractmethod
     def meta(
         self,
         indices: T_int,
@@ -2134,6 +2137,7 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         ...
 
     @typing.overload
+    @abc.abstractmethod
     def meta(
         self,
         indices: typing.Optional[collections.abc.Iterable[T_int]] = None,
