@@ -64,7 +64,7 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
         """
         ...
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, value: object, /) -> bool:
         """
         Compare object to others of similar type.
 
@@ -72,17 +72,17 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
 
         Arguments
         ---------
-        other
+        value
             Object to be compared.
 
         Returns
         -------
         bool
-            True if object is equivalent to other, False otherwise.
+            True if object is equivalent to value, False otherwise.
         """
         ...
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other, /) -> bool:
         """
         Compare object to others of similar type.
 
