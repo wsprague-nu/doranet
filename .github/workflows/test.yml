@@ -30,6 +30,7 @@ jobs:
           pip install .[lint]
           ruff check --output-format=github .
           ruff format --check --output-format=github .
+          mypy --strict .
         continue-on-error: true
       - name: Test doranet with pytest
         run: |
