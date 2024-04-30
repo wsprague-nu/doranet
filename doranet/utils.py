@@ -269,7 +269,9 @@ def _logreduce(
 #         for img in rxn_image_list:
 #             total_hight += img.size[1]
 #             max_width = max(max_width, img.size[0])
-#         combined_image = PIL.Image.new("RGB", (max_width, total_hight), "white")
+#         combined_image = PIL.Image.new("RGB",
+#                                        (max_width, total_hight),
+#                                        "white")
 #         current_hight = 0
 #         for img in rxn_image_list:
 #             combined_image.paste(
