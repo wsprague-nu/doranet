@@ -575,7 +575,7 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
         return self.network.producers(mol)
 
     def add_mol(self, mol, meta=None, reactive=None, _custom_compat=None):
-        if meta is not None and mol in self.network:
+        if meta is not None and mol in self.network.mols:
             i = self.network.mols.i(mol.uid)
             exist_keys = self.network.mols.meta(i, meta.keys())
             for key in exist_keys:
@@ -585,7 +585,7 @@ class ChemNetworkFacadeMetaTrigger(interfaces.ChemNetwork):
         return self.network.add_mol(mol, meta, reactive, _custom_compat)
 
     def add_op(self, op, meta=None):
-        if meta is not None and op in self.network:
+        if meta is not None and op in self.network.ops:
             i = self.network.ops.i(op.uid)
             exist_keys = self.network.ops.meta(i, meta.keys())
             for key in exist_keys:
