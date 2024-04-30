@@ -19,6 +19,8 @@ import xml.etree.ElementTree
 import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
+import rdkit.Chem.rdmolfiles
+import rdkit.Chem.rdmolops
 
 if typing.TYPE_CHECKING:
     from doranet import filters, hooks, metacalc, metadata, strategies
@@ -246,7 +248,7 @@ class MolDatRDKit(MolDatBase):
         pickaxe_generic.interfaces.MolDatRDKit
             Molecule returned from processing bytestring.
         """
-        return engine.Mol(rdkit.Chem.Mol(data), sanitize=False)
+        return engine.mol.rdkit(rdkit.Chem.rdchem.Mol(data), sanitize=False)
 
     @property
     @abc.abstractmethod
@@ -294,7 +296,7 @@ class MolDatRDKit(MolDatBase):
         neutralize: bool = False,
     ) -> rdkit.Chem.rdchem.Mol:
         if isinstance(molecule, bytes):
-            rdkitmol = rdkit.Chem.Mol(molecule)
+            rdkitmol = rdkit.Chem.rdchem.Mol(molecule)
             # if sanitize:
             #    SanitizeMol(rdkitmol)
             #    AssignStereochemistry(rdkitmol, True, True, True)
@@ -312,9 +314,13 @@ class MolDatRDKit(MolDatBase):
                 raise NotImplementedError("No neutralize function coded")
         elif isinstance(molecule, str):
             if sanitize:
-                rdkitmol = rdkit.Chem.MolFromSmiles(molecule, sanitize=True)
+                rdkitmol = rdkit.Chem.rdmolfiles.MolFromSmiles(
+                    molecule, sanitize=True
+                )
             else:
-                rdkitmol = rdkit.Chem.MolFromSmiles(molecule, sanitize=False)
+                rdkitmol = rdkit.Chem.rdmolfiles.MolFromSmiles(
+                    molecule, sanitize=False
+                )
             if neutralize:
                 raise NotImplementedError("No neutralize function coded")
         else:
@@ -465,7 +471,7 @@ class OpDatRDKit(OpDatBase):
             rdkit.Chem.rdChemReactions.ChemicalReaction, bool
         ] = pickle.loads(data)
         operator, kekulize = unpacked
-        return engine.Op(operator, kekulize)
+        return engine.op.rdkit(operator, kekulize)
 
     @property
     @abc.abstractmethod
