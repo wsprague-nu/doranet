@@ -454,6 +454,8 @@ class OpDatRDKit(OpDatBase):
         engine: "NetworkEngine",
     ) -> "OpDatRDKit":
         """
+        Load operator from bytestring.
+
         Generate new RDKit operator from bytestring, according to engine
         configuration.
 
@@ -505,6 +507,8 @@ class OpDatRDKit(OpDatBase):
 @dataclasses.dataclass(frozen=True, slots=True)
 class MetaKeyPacket:
     """
+    Metadata flag class.
+
     Dataclass containing information about metadata keys necessary for filters
     and process-local metadata calculators to operate.
 
