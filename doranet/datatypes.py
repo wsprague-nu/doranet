@@ -31,7 +31,7 @@ class __SafeUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"global '{module}.{name}' is forbidden")
 
 
-def loads(string_in: bytes) -> typing.Any:
+def _loads(string_in: bytes) -> typing.Any:
     return __SafeUnpickler(io.BytesIO(string_in)).load()
 
     # @final
@@ -220,7 +220,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
             self._drop_errors = drop_errors
             # SanitizeRxn(self._rdkitrxn)
         elif isinstance(operator, bytes):
-            self._rdkitrxn, self._kekulize, self._drop_errors = loads(operator)
+            self._rdkitrxn, self._kekulize, self._drop_errors = _loads(operator)
             self._blob = operator
         else:
             raise NotImplementedError("Invalid operator type")
