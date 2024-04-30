@@ -1,6 +1,4 @@
-"""
-Contains classes which define and implement utility functions.
-"""
+"""Contains classes which define and implement utility functions."""
 
 import collections.abc
 import dataclasses
@@ -263,7 +261,7 @@ def logreduce(
     iterable: collections.abc.Iterable[T],
 ) -> T:
     """
-    logreduce(function, iterable[, initial]) -> value
+    logreduce(function, iterable[, initial]) -> value.
 
     Apply a function of two arguments (satisfying the associative property)
     cumulatively to the items of a sequence or iterable, from left to right, so

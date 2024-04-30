@@ -1,6 +1,4 @@
-"""
-Contains classes which define and implement network expansion strategies.
-"""
+"""Contains classes which define and implement network expansion strategies."""
 
 import collections.abc
 import concurrent.futures

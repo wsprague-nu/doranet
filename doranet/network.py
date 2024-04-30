@@ -1,6 +1,4 @@
-"""
-Contains classes for network representation and data storage.
-"""
+"""Contains classes for network representation and data storage."""
 
 import collections.abc
 import dataclasses
@@ -640,8 +638,8 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
 
         # sanity check that all reactants and products exist in the network
         if (
-            max(max(rxn.reactants), max(rxn.products)) >= len(self._mol_list)
-            or min(min(rxn.reactants), min(rxn.products)) < 0
+            max(*rxn.reactants, *rxn.products) >= len(self._mol_list)
+            or min(*rxn.reactants, *rxn.products) < 0
         ):
             raise IndexError(
                 f"""One of the molecule components for reaction {rxn} is not in

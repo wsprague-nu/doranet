@@ -1,6 +1,4 @@
-"""
-Contains classes which define and implement dependency-injection engines.
-"""
+"""Contains classes which define and implement dependency-injection engines."""
 
 import base64
 import collections.abc

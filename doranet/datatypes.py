@@ -1,6 +1,4 @@
-"""
-Contains classes which define and implement molecule-operator data units.
-"""
+"""Contains classes which define and implement molecule-operator data units."""
 
 import builtins
 import collections.abc

@@ -1,6 +1,4 @@
-"""
-Contains classes which implement global hook functions.
-"""
+"""Contains classes which implement global hook functions."""
 
 import dataclasses
 

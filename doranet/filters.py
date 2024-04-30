@@ -1,6 +1,4 @@
-"""
-Contains classes which implement various filter components.
-"""
+"""Contains classes which implement various filter components."""
 
 import collections.abc
 import dataclasses

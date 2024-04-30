@@ -1,6 +1,4 @@
-"""
-Contains interfaces for major datatypes in DORAnet.
-"""
+"""Contains interfaces for major datatypes in DORAnet."""
 
 import abc
 import base64
@@ -577,7 +575,7 @@ class DataPacket(typing.Generic[T_data]):
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class DataPacketE(DataPacket, typing.Generic[T_data]):
-    """mostly unused type???"""
+    """mostly unused type???."""
 
     item: T_data
 
@@ -930,9 +928,7 @@ class Reaction:
 
 @dataclasses.dataclass(frozen=True, slots=True, order=True)
 class ReactionExplicit:
-    """
-    Unused???
-    """
+    """Unused???."""
 
     operator: DataPacketE[OpDatBase]
     reactants: tuple[DataPacketE[MolDatBase], ...]
@@ -2505,9 +2501,7 @@ class ChemNetwork(abc.ABC):
 
 
 class RankValue(typing.Protocol):
-    """
-    Protocol which guarantees support for sorting.
-    """
+    """Protocol which guarantees support for sorting."""
 
     @abc.abstractmethod
     def __lt__(self, other: "RankValue") -> bool:
@@ -2570,9 +2564,7 @@ class SizedTuple(tuple[typing.Optional[RankValue], ...]):
 
 
 class RecipeRanker(abc.ABC, typing.Generic[T_rank]):
-    """
-    Protocol which defines recipe ranking function.
-    """
+    """Protocol which defines recipe ranking function."""
 
     __slots__ = ()
 
@@ -2613,17 +2605,13 @@ class RecipeRanker(abc.ABC, typing.Generic[T_rank]):
         """
 
     def append(self, other: "RecipeRanker") -> "CompositeRecipeRanker":
-        """
-        Add additional Recipe ranking function with lower priority.
-        """
+        """Add additional Recipe ranking function with lower priority."""
         if isinstance(other, CompositeRecipeRanker):
             return other.prepend(self)
         return CompositeRecipeRanker((self, other))
 
     def prepend(self, other: "RecipeRanker") -> "CompositeRecipeRanker":
-        """
-        Add additional Recipe ranking function with lower priority.
-        """
+        """Add additional Recipe ranking function with lower priority."""
         if isinstance(other, CompositeRecipeRanker):
             return other.append(self)
         return CompositeRecipeRanker((self, other))

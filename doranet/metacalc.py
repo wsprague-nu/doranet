@@ -1,6 +1,4 @@
-"""
-Contains metadata calculator classes.
-"""
+"""Contains metadata calculator classes."""
 
 import collections.abc
 import dataclasses
