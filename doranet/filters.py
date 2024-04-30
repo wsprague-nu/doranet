@@ -23,7 +23,10 @@ from doranet import interfaces, metadata
 
 #     def __call__(self, operator, reactants, products):
 #         return all(
-#             (filter(operator, reactants, products) for filter in self._filters)
+#             (
+#                 filter(operator, reactants, products)
+#                 for filter in self._filters
+#             )  # yo
 #         )
 
 
