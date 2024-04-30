@@ -55,7 +55,7 @@ class _rdkit_op_init(typing.NamedTuple):
         drop_errors=False,
     ) -> interfaces.OpDatRDKit:
         """
-        Creates an object which manages an RDKit SMARTS operator.
+        Create an object which manages an RDKit SMARTS operator.
 
         Agents are treated as arguments following reagent arguments.  Classes
         implementing this interface manage information about a single
