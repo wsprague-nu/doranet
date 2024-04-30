@@ -979,9 +979,7 @@ class RecipeHeap:
         )
 
     @typing.overload
-    def __getitem__(
-        self, item: slice
-    ) -> collections.abc.Sequence[RecipePriorityItem]:
+    def __getitem__(self, item: slice) -> list[RecipePriorityItem]:
         ...
 
     @typing.overload
