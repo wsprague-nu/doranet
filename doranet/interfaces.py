@@ -947,7 +947,7 @@ class ReactionExplicit:
     @property
     def uid(
         self,
-    ) -> tuple[Identifier, tuple[Identifier, ...], tuple[Identifier, ...]]:
+    ) -> Identifier:
         return (
             self.operator.item.uid,
             tuple(mol.item.uid for mol in self.reactants),
