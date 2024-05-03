@@ -1704,12 +1704,14 @@ class NetworkEngine(abc.ABC):
         -----
         Speed is an integer between 1 and 6 determining speed/memory tradeoff
         of bulk data.
+
             6: Maximum caching in RAM, no disk use.
             5: Most data in RAM, no disk use.
             4: Bare minimum data in RAM, no disk use.
             3: Fast primary keys in RAM, disk caches values.
             2: Smallest possible primary keys in RAM, disk caches values.
             1: Fast primary keys and values both stored on disk.
+
         """
 
     @property
