@@ -47,9 +47,12 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
 
     Methods
     -------
-    __hash__
-    __eq__
-    __lt__
+    __hash__:
+        Hash function for object.
+    __eq__:
+        Equality function for object.
+    __lt__:
+        Ordering function for object.
     """
 
     def __hash__(self) -> int:
@@ -350,9 +353,12 @@ class OpDatBase(DataUnit):
 
     Methods
     -------
-    __call__
-    __len__
-    compat
+    __call__:
+        Generate reactions from molecules.
+    __len__:
+        Number of arguments in operator.
+    compat:
+        Check compatibility of molecules with operator argument.
     """
 
     __slots__ = ()
