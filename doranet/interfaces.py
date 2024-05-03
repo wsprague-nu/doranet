@@ -70,8 +70,8 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
 
         If x == y, then x is equivalent to y.  This enables hashtables.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         value
             Object to be compared.
 
@@ -88,8 +88,8 @@ class Identifier(collections.abc.Hashable, typing.Protocol):
 
         If canonical, this functionality allows canonical sorting.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         other
             Object to be compared.
 
