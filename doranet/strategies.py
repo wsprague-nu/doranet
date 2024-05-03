@@ -37,9 +37,8 @@ def _generate_recipes_from_compat_table(
             if known_cache is not None:
                 if recipe in known_cache:
                     continue
-                else:
-                    if add_to_cache:
-                        known_cache.add(recipe)
+                elif add_to_cache:
+                    known_cache.add(recipe)
             if uid_prefilter is not None and not uid_prefilter(
                 op_uid, reactants
             ):
