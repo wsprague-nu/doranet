@@ -1078,7 +1078,7 @@ def execute_reactions(
 
 
 class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
-    __slots__ = "_network"
+    __slots__ = ("_network",)
 
     def __init__(
         self,

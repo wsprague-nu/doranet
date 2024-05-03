@@ -123,7 +123,7 @@ class MolFilterMetaVal(interfaces.MolFilter):
 @typing.final
 @dataclasses.dataclass(frozen=True)
 class MolFilterMetaExist(interfaces.MolFilter):
-    __slots__ = "key"
+    __slots__ = ("key",)
     key: collections.abc.Hashable
 
     def __call__(
@@ -221,7 +221,7 @@ class BundleFilterCoreactants(interfaces.BundleFilter):
 @typing.final
 @dataclasses.dataclass(frozen=True)
 class CoreactantFilter(interfaces.RecipeFilter):
-    __slots__ = "coreactants"
+    __slots__ = ("coreactants",)
     coreactants: collections.abc.Container[interfaces.MolIndex]
 
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
