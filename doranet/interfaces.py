@@ -1877,41 +1877,15 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
             True if item is in container.
         """
 
-    @typing.overload
     @abc.abstractmethod
+    @typing.overload
     def __getitem__(self, item: slice) -> collections.abc.Sequence[T_data]:
-        """
-        Retrieve items from container.
+        ...
 
-        Parameters
-        ----------
-        item : slice
-            Data representing item indices to be retrieved.
-
-        Returns
-        -------
-        collections.abc.Sequence[DataUnit]
-            Items which correspond to the indices in `item`.
-        """
-
-    @typing.overload
     @abc.abstractmethod
+    @typing.overload
     def __getitem__(self, item: typing.Union[T_int, Identifier]) -> T_data:
-        """
-        Retrieve item from container.
-
-        Parameters
-        ----------
-        item : typing.Union[int, Identifier]
-            Data representing item to be retrieved.  If int, a single item with
-            that index is returned.  If an Identifier, then the item
-            corresponding with that Identifier is returned.
-
-        Returns
-        -------
-        typing.Union[int, Identifier]
-            Item to be retrieved.
-        """
+        ...
 
     @abc.abstractmethod
     def i(self, uid: Identifier) -> T_int:
@@ -2075,36 +2049,12 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
     @typing.overload
     @abc.abstractmethod
     def __getitem__(self, item: slice) -> collections.abc.Sequence[T_id]:
-        """
-        Retrieve items from container.
-
-        Parameters
-        ----------
-        item : slice
-            Data representing item indices to be retrieved.
-
-        Returns
-        -------
-        collections.abc.Sequence[DataUnit]
-            Items which correspond to the indices in `item`.
-        """
+        ...
 
     @typing.overload
     @abc.abstractmethod
     def __getitem__(self, item: T_int) -> T_id:
-        """
-        Retrieve item from container.
-
-        Parameters
-        ----------
-        item : int
-            Index of item to be retrieved.
-
-        Returns
-        -------
-        Identifier
-            Item to be retrieved.
-        """
+        ...
 
     @abc.abstractmethod
     def i(self, item: T_id) -> T_int:
