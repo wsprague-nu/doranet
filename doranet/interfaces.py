@@ -1456,7 +1456,7 @@ class _op_init_type_rdkit(typing.Protocol):
         drop_errors: bool = False,
     ) -> OpDatRDKit:
         """
-        Creates an object which manages an RDKit SMARTS operator.
+        Create an object which manages an RDKit SMARTS operator.
 
         Agents are treated as arguments following reagent arguments.  Classes
         implementing this interface manage information about a single
@@ -1484,7 +1484,7 @@ class _strat_init_type_cartesian(typing.Protocol):
         #        gen_key: collections.abc.Hashable = "generation",
     ) -> "strategies.CartesianStrategyUpdated":
         """
-        Creates a Cartesian Strategy object.
+        Create a Cartesian Strategy object.
 
         This strategy separates molecules into "generations."  When molecules
         react, their products have a generation equal to the highest generation
@@ -2845,7 +2845,7 @@ class RxnTracker(abc.ABC):
         collections.abc.Iterable[collections.abc.Iterable[Identifier]]
     ]:
         """
-        Gets parent chains for a particular target molecule.
+        Get parent chains for a particular target molecule.
 
         Parameters
         ----------
@@ -2878,7 +2878,7 @@ class RxnTrackerNetwork(abc.ABC):
         collections.abc.Iterable[collections.abc.Iterable[RxnIndex]]
     ]:
         """
-        Gets parent chains for a particular target molecule.
+        Get parent chains for a particular target molecule.
 
         Parameters
         ----------
