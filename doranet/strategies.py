@@ -1270,7 +1270,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     reactants_indices, rxn.reactants, strict=False
                 ):
                     if m_dat[1].meta is not None:
-                        for key, value in m_dat[1].meta.items():
+                        for key, v in m_dat[1].meta.items():
+                            value = v
                             if key in mc_update.mol_updates:
                                 cur_val = network.mols.meta(m_dat[0], key)
                                 if cur_val is not None:
@@ -1285,7 +1286,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                 # update product metadata
                 for m_dat in zip(products_indices, rxn.products, strict=False):
                     if m_dat[1].meta is not None:
-                        for key, value in m_dat[1].meta.items():
+                        for key, v in m_dat[1].meta.items():
+                            value = v
                             if key in mc_update.mol_updates:
                                 cur_val = network.mols.meta(m_dat[0], key)
                                 if cur_val is not None:
@@ -1299,7 +1301,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
                 # update operator metadata
                 if rxn.operator.meta is not None:
-                    for key, value in rxn.operator.meta.items():
+                    for key, v in rxn.operator.meta.items():
+                        value = v
                         if key in mc_update.op_updates:
                             cur_val = network.ops.meta(
                                 rxn_implicit.operator, key
@@ -1323,7 +1326,8 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
 
                 # update reaction metadata
                 if rxn.reaction_meta is not None:
-                    for key, value in rxn.reaction_meta.items():
+                    for key, v in rxn.reaction_meta.items():
+                        value = v
                         if key in mc_update.rxn_updates:
                             cur_val = network.rxns.meta(rxn_index, key)
                             if cur_val is not None:
