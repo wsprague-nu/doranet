@@ -231,7 +231,8 @@ def _chunk_generator(
 #         ] = None,
 #         retain_products_to_blacklist: bool = False,
 #     ) -> None:
-#         # value used to tell if any new reactions have occurred in a generation
+#         # value used to tell if any new reactions have occurred in a
+#         # generation
 #         exhausted: bool = False
 #         num_mols: int = 0
 #         num_rxns: int = 0
@@ -436,7 +437,8 @@ def _chunk_generator(
 #             ]
 #         ] = None,
 #     ) -> None:
-#         # value used to tell if any new reactions have occurred in a generation
+#         # value used to tell if any new reactions have occurred in a
+#         # generation
 #         exhausted: bool = False
 #         num_mols: int = 0
 #         num_rxns: int = 0
