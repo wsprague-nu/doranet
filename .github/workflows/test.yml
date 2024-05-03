@@ -28,10 +28,9 @@ jobs:
       - name: Lint with Ruff and mypy
         run: |
           pip install .[lint]
-          ruff check --output-format=github .
-          ruff format --check --output-format=github .
-          mypy --strict .
-        continue-on-error: true
+          ruff check --output-format=github doranet
+          ruff format --check --output-format=github doranet
+          mypy doranet
       - name: Test doranet with pytest
         run: |
           pip install .[test]
