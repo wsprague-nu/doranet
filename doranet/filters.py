@@ -40,7 +40,8 @@ from doranet import interfaces, metadata
 #         for mol in products:
 #             if (
 #                 isinstance(mol, interfaces.MolDatRDKit)
-#                 and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >= self._n
+#                 and len(mol.rdkitmol.GetAtomsMatchingQuery(self._q)) >=
+#                     self._n
 #             ):
 #                 return False
 #         return True
