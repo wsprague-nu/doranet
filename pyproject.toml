@@ -63,6 +63,7 @@ quote-style = "double"
 
 [tool.ruff.lint]
 select = ["B", "D", "E", "F", "I", "PL", "SIM", "W"]
+ignore = ["D101","D102","D103","D105","PLR0911","PLR0912","PLR0913","PLR0915"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
