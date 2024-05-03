@@ -1,7 +1,4 @@
-"""
-Contains logic and interfaces for metadata processing, plus reaction filter
-interface class.
-"""
+"""Logic and interfaces for metadata processing."""
 
 import abc
 import collections.abc

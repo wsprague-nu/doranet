@@ -1686,8 +1686,7 @@ class MetaCalcTypes(typing.NamedTuple):
 
 class NetworkEngine(abc.ABC):
     """
-    Interface representing an object which serves up other objects based on
-    configuration parameters.
+    Interface representing an object configuration engine/factory.
 
     Classes implementing this interface determine which type of network objects
     are constructed based on configuration options.
