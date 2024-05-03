@@ -516,9 +516,11 @@ class MetaKeyPacket:
     ----------
     operator_keys : collections.abc.Set[collections.abc.Hashable] (default:
                     frozenset())
+
         Collection of operator keys.
     molecule_keys : collections.abc.Set[collections.abc.Hashable] (default:
                     frozenset())
+
         Collection of molecule keys.
     live_operator : bool (default: False)
         Whether initialized operators are required (True) or only index + UID
@@ -1960,11 +1962,13 @@ class ValueQueryData(typing.Protocol[T_data, T_int]):
         ----------
         indices : typing.Optional[typing.Union[T_int,
                   collections.abc.Iterable[T_int]]] (default: None)
+
             Indices of objects to be queried.  A single value (not in an
             Iterable) will return a single Mapping.  `None` indicates all
             objects are to be queried.
         keys : typing.Optional[collections.abc.Iterable[
                collections.abc.Hashable]] (default: None)
+
             Subset of keys to be queried.  `None` indicates all key-value pairs
             will be returned.
 
@@ -2116,11 +2120,13 @@ class ValueQueryAssoc(typing.Protocol[T_id, T_int]):
         ----------
         indices : typing.Optional[typing.Union[T_int,
                   collections.abc.Iterable[T_int]]] (default: None)
+
             Indices of objects to be queried.  A single value (not in an
             Iterable) will return a single Mapping.  `None` indicates all
             objects are to be queried.
         keys : typing.Optional[collections.abc.Iterable[
                collections.abc.Hashable]] (default: None)
+
             Subset of keys to be queried.  `None` indicates all key-value pairs
             will be returned.
 
@@ -2327,6 +2333,7 @@ class ChemNetwork(abc.ABC):
         ----------------
         _custom_compat : typing.Optional[collections.abc.Collection[tuple[
                          OpIndex,int]]]
+
             Custom compatibility table.  Prevents default compatibility testing.
             Intended ONLY for internal use within strategies to parallelize
             compatibility testing.
@@ -2380,9 +2387,11 @@ class ChemNetwork(abc.ABC):
             Index of operator involved in reaction.
         reactants : typing.Optional[collections.abc.Sequence[MolIndex]]
                     (default: None)
+
             Indices of reactants involved in the reaction.
         products : typing.Optional[collections.abc.Sequence[MolIndex]] (default:
                    None)
+
             Indices of products involved in the reaction.
         meta : typing.Optional[collections.abc.Mapping] (default: None)
             Metadata associated with reaction.
@@ -2706,12 +2715,16 @@ class PriorityQueueStrategy(abc.ABC):
             Function which evaluates recipes and assigns them a sortable rank.
         reaction_plan : typing.Optional[
                        typing.Union[
+
                            pickaxe_generic.metadata.RxnAnalysisStep,
                            pickaxe_generic.metadata.PropertyCompositor,
                            pickaxe_generic.metadata.ReactionFilterBase,
                            pickaxe_generic.metadata.LocalPropertyCalc,
+
                        ]
+
                    ] (default: None)
+
             Metadata calculator and reaction filter.  Should be a "Reaction
             Analysis Flow" as detailed in examples.
         mc_update : typing.Optional[metadata.MetaUpdateResolver] (default: None)
@@ -2722,6 +2735,7 @@ class PriorityQueueStrategy(abc.ABC):
             raised.
         global_hooks : typing.Optional[collections.abc.Sequence[
                        GlobalUpdateHook]] (default: None)
+
             Hook functions to run after a loop has completed.  If any return a
             boolean, expansion will terminate before running any more reactions.
             Return value of True terminates immediately, whereas return value
