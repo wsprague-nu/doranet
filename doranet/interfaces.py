@@ -1557,12 +1557,7 @@ class MolFilterTypes(typing.NamedTuple):
 
 @typing.final
 class OpFilterTypes(typing.NamedTuple):
-    """
-    Container class which provides operator filters.
-
-    Attributes
-    ----------
-    """
+    """Container class which provides operator filters."""
 
 
 @typing.final
