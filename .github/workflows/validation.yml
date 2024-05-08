@@ -34,7 +34,7 @@ jobs:
         run: |
           pip install .[lint]
           ruff check --output-format=github doranet
-          ruff format -v --check doranet
+          ruff format --diff doranet
       - name: Test doranet with pytest
         run: |
           pip install .[test]
