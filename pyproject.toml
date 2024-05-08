@@ -47,6 +47,11 @@ test = [
 dev = [
     "doranet[doc,lint,test]"
 ]
+profile = [
+    "doranet[dev]",
+    "scalene",
+    "snakeviz"
+]
 
 [project.urls]
 Homepage = "https://github.com/wsprague-nu/doranet"
