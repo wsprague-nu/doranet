@@ -1,19 +1,55 @@
 [build-system]
-requires = ["setuptools>=24.2.0","wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.black]
-line-length = 80
+[project]
+name = 'doranet'
+version = '0.4.1a2'
+authors = [
+    { name='William Sprague', email='wsprague@u.northwestern.edu' },
+    { name='Quan Zhang', email='quanzhang@northwestern.edu' },
+]
+description = 'Python package for generating and analyzing chemical reaction networks'
+readme = 'README.md'
+requires-python = '>=3.10'
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 2 - Pre-Alpha",
+]
+license = {file = "LICENSE"}
+dependencies = [
+    "ipython",
+    "numpy",
+    "pandas",
+    "pillow",
+    "pyarrow",
+    "rdkit",
+    "scipy",
+]
 
-[tool.flake8]
-max-line-length = 80
-extend-ignore = ["E203"]
-docstring-convention = "numpy"
-exclude = ["./docs/**","./test/**"]
+[project.optional-dependencies]
+doc = [
+    "myst-parser",
+    "numpydoc",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+lint = [
+    "mypy",
+    "ruff",
+]
+test = [
+    "pytest",
+]
+dev = [
+    "doranet[doc,lint,test]"
+]
 
-[tool.isort]
-profile = "black"
-line_length = 80
+[project.urls]
+Homepage = "https://github.com/wsprague-nu/doranet"
+Issues = "https://github.com/wsprague-nu/doranet/issues"
 
 [[tool.mypy.overrides]]
 module = [
@@ -23,23 +59,20 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.pylint.format]
-max-line-length = "80"
+[tool.ruff]
+extend-include = ["*.ipynb"]
+line-length = 80
+indent-width = 4
+target-version = "py310"
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py
-isolated_build = true
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
 
-[testenv]
-deps =
-    black
-    isort
-    jupyter-black
-    mypy
-commands =
-    black --check .
-    isort --check .
-    mypy .
-"""
+[tool.ruff.lint]
+select = ["B", "D", "E", "F", "I", "PL", "SIM", "W"]
+ignore = ["D101","D102","D103","D105","PLR0911","PLR0912","PLR0913","PLR0915"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
