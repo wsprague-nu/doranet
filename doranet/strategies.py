@@ -980,12 +980,10 @@ class RecipeHeap:
         )
 
     @typing.overload
-    def __getitem__(self, item: slice) -> list[RecipePriorityItem]:
-        ...
+    def __getitem__(self, item: slice) -> list[RecipePriorityItem]: ...
 
     @typing.overload
-    def __getitem__(self, item: int) -> RecipePriorityItem:
-        ...
+    def __getitem__(self, item: int) -> RecipePriorityItem: ...
 
     def __getitem__(self, item: typing.Union[int, slice]):
         if self._ordered is None:
