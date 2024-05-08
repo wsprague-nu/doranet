@@ -1,5 +1,10 @@
-name: test
-on: [push, pull_request]
+name: validation
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id}}
@@ -29,7 +34,7 @@ jobs:
         run: |
           pip install .[lint]
           ruff check --output-format=github doranet
-          ruff format --check --output-format=github doranet
+          ruff format --check doranet
           mypy doranet
       - name: Test doranet with pytest
         run: |
