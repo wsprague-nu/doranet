@@ -22,11 +22,13 @@ release = "0.4.1a1"
 extensions = [
     "myst_parser",
     "numpydoc",
+    "sphinxcontrib.mermaid",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autosummary",
 ]
 autosummary_generate = True
+myst_fence_as_directive = ["mermaid"]
 numpydoc_show_class_members = False
 
 templates_path = ["_templates"]
@@ -43,4 +45,3 @@ source_suffix = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
