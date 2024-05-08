@@ -30,12 +30,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+doc = [
+    "myst-parser",
+    "numpydoc",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
 lint = [
     "mypy",
     "ruff",
 ]
 test = [
     "pytest",
+]
+dev = [
+    "doranet[doc,lint,test]"
 ]
 
 [project.urls]
