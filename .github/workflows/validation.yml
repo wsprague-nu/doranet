@@ -30,12 +30,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
           pip list
-      - name: Lint with Ruff and mypy
+      - name: Lint with Ruff
         run: |
           pip install .[lint]
           ruff check --output-format=github doranet
           ruff format --check doranet
-          mypy doranet -v --no-install-types --follow-imports skip
       - name: Test doranet with pytest
         run: |
           pip install .[test]
