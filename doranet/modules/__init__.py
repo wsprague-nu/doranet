@@ -2,4 +2,4 @@
 
 __all__ = ["synthetic"]
 
-import synthetic
+from . import synthetic

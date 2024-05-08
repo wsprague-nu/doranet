@@ -2,4 +2,4 @@
 
 __all__ = ["generate_network"]
 
-from _function_generation import generate_network
+from ._function_generation import generate_network

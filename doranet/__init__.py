@@ -15,16 +15,18 @@ __all__ = [
     "utils",
 ]
 
-import datatypes
-import engine
-import filters
-import hooks
-import interfaces
-import metacalc
-import metadata
-import modules
-import network
-import strategies
-import utils
+from doranet.engine import create_engine
 
-from doranet.engine import create_engine  # noqa:F401
+from . import (
+    datatypes,
+    engine,
+    filters,
+    hooks,
+    interfaces,
+    metacalc,
+    metadata,
+    modules,
+    network,
+    strategies,
+    utils,
+)
