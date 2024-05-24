@@ -1185,15 +1185,15 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                         + count * recipe.operator.meta["reactants_stoi"][idx]
                     )
             for idx, mol in enumerate(recipe.products):
-                if (
-                    "." in mol.item.uid
-                ):  # if there're fragments in a mol, indicates invalid rxn
-                    return False
                 if not isinstance(mol.item, dn.interfaces.MolDatRDKit):
                     raise NotImplementedError(
                         f"""Ring_Issues_Filter not implemented for molecule type
                             {type(mol.item)}"""
                     )
+                if (
+                    "." in mol.item.smiles
+                ):  # if there're fragments in a mol, indicates invalid rxn
+                    return False
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
