@@ -1,3 +1,5 @@
+"""Reverse (retro-) synthetic operators in SMARTS form."""
+
 import dataclasses
 import typing
 

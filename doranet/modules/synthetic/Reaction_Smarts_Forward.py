@@ -1,3 +1,5 @@
+"""Forward synthetic operators in SMARTS form."""
+
 import dataclasses
 import typing
 
