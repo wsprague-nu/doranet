@@ -1164,9 +1164,8 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class No_helpers_reaction_Filter(metadata.ReactionFilterBase):  # mol.item.uid
-    __slots__ = "intermediate_smiles"
     intermediate_smiles: str
 
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
