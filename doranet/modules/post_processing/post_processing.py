@@ -540,14 +540,17 @@ def pathway_finder(
     Returns
     -------
                     Create a txt file with found pathways
-                    Create a txt file with all reactions in pathways, can be used as input file for reaxys batch query
+                    Create a txt file with all reactions in pathways, can be
+                      used as input file for reaxys batch query
 
     """
     start_time = time.time()
     target_smiles = Chem.MolToSmiles(Chem.MolFromSmiles(target))
     generation = search_depth  # number of generations to backtrack
     pathway_max_length = max_num_rxns  # max number of rxns allowed in a pathway
-    min_atom_economy = min_rxn_atom_economy  # 0~1, apply to each rxn in path, not suitable if a rxn produces 2 products and both are useful
+    min_atom_economy = min_rxn_atom_economy  # 0~1, apply to each rxn in path
+    # min_atom_economy is not suitable if a rxn produces 2 products and both are
+    # useful
 
     mol_smiles = tuple(helpers.keys()) + tuple(starters)
     temp_ms = list()
@@ -586,12 +589,12 @@ def pathway_finder(
     consumers_dict = dict()
 
     # economy cal overhead: 61.66 seconds for 532 k rxns
-    for rxn_idx in rxn_dict:  # build consumers_dict, producers_dict for find_consumers(), find_producers()
-        products = rxn_dict[
-            rxn_idx
-        ][
-            "pros"
-        ]  # also build atom econmy in producer_dict: {smiles: {rxn_idx: economy, rxn_idx2: economy ...}}
+    for rxn_idx in rxn_dict:
+        # build consumers_dict, producers_dict for
+        # find_consumers(), find_producers()
+        products = rxn_dict[rxn_idx]["pros"]
+        # also build atom econmy in producer_dict:
+        # {smiles: {rxn_idx: economy, rxn_idx2: economy ...}}
         reas = rxn_dict[rxn_idx]["reas"]
         pro_stoi = eval(rxn_dict[rxn_idx]["mid"].split("$")[2])
         products_weight = dict()  # {pro: weight}
@@ -643,7 +646,9 @@ def pathway_finder(
 
     # find min distance to starters
     expanded_nodes = copy.deepcopy(starters_set)
-    expand_gen = generation  # set to the generation number during pickaxe expansion, could be more but not less
+    # set to the generation number during pickaxe expansion,
+    # could be more but not less
+    expand_gen = generation
     i = 0
     while i < expand_gen:
         temp_set = set()
@@ -670,7 +675,6 @@ def pathway_finder(
         else:
             return 999  # not produced by starters (retro network)
 
-    # CC(=O)OC(=O)CC=O.OCC(O)C(O)C(O)O>Transesterification>-16.860000610351562$(1.0, 1.0)$(1.0, 1.0)>CC(=O)OC(CO)C(O)C(O)O.O=CCC(=O)O
     work_list = deque()  #   [finished: 1, dead end: 2, to expand: 0, [(mol,  int),(mol,  int)], rxn_idx1, rxn_idx2, ... ]
     work_list.append([0, [(target_smiles, 0)]])
     gen_limit = generation
