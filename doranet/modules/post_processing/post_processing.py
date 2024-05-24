@@ -168,14 +168,13 @@ def pretreat_networks(
         dH = 0.0
         if rxn_type == "Enzymatic":
             dH = -9999
-        elif rxn_type == "Catalytic":
-            if not return_zero:
-                for idx, mol in enumerate(pros):
-                    dH = dH + ngHCal(mol, network_name) * products_stoi[idx]
-                for idx, mol in enumerate(reas):
-                    dH = dH - ngHCal(mol, network_name) * reactants_stoi[idx]
-                if Hcorr is not None:
-                    dH = dH + Hcorr
+        elif rxn_type == "Catalytic" and not return_zero:
+            for idx, mol in enumerate(pros):
+                dH = dH + ngHCal(mol, network_name) * products_stoi[idx]
+            for idx, mol in enumerate(reas):
+                dH = dH - ngHCal(mol, network_name) * reactants_stoi[idx]
+            if Hcorr is not None:
+                dH = dH + Hcorr
         dH = round(dH, 4)
         return str(dH) + "$" + str(reactants_stoi) + "$" + str(products_stoi)
 
@@ -367,7 +366,7 @@ def pretreat_networks(
         starters_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
 
     helpers_set = set()
-    for i in helpers.keys():
+    for i in helpers:
         if Chem.MolToSmiles(Chem.MolFromSmiles(i)) not in starters_set:
             helpers_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
 
@@ -522,7 +521,7 @@ def pathway_finder(
     consider_name_difference=True,
 ):
     """
-    Search for pathways within pretreated reaction network
+    Search for pathways within pretreated reaction network.
 
     Parameters
     ----------
@@ -799,7 +798,7 @@ def pathway_finder(
     ):  # return bool, if there're cycles in the pathway
         G = nx.DiGraph()
         rxn_node = 0
-        for idx, rxn in enumerate(
+        for _idx, rxn in enumerate(
             _pathway["SMILES"]
         ):  # add nodes and edges to graph
             reas = rxn.split(">>")[0].split(".")
@@ -877,7 +876,7 @@ def pathway_finder(
         for i in starters:
             clean_starters.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
         clean_helpers = set()
-        for i in helpers.keys():
+        for i in helpers:
             clean_helpers.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
 
         for path in pathways_list:
@@ -1530,9 +1529,8 @@ def pathway_ranking(
 
             key_list = list()
             for key in left_dict:  # balance left and right dict
-                if key not in starters:
-                    if key in right_dict:
-                        key_list.append(key)
+                if key not in starters and key in right_dict:
+                    key_list.append(key)
             for key in key_list:
                 if left_dict[key] == right_dict[key]:
                     # print(left_dict)
@@ -2379,12 +2377,14 @@ def pathway_visualization(
     num_process,
     reaxys_result_name=False,
     job_name="default_job_name",
-    exclude_smiles=[],
+    exclude_smiles=None,
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
 ):
     from PyPDF2 import PdfFileMerger, PdfFileReader
 
+    if exclude_smiles is None:
+        exclude_smiles = []
     start_time = time.time()
 
     my_start = set()
