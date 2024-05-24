@@ -22,7 +22,7 @@ from rdkit.Chem import Descriptors, Draw
 
 try:
     from pgthermo.properties import Hf
-except:
+except ImportError:
     print("pgthermo not installed. All Hf will be 0")
 
     def Hf(SMILES):
