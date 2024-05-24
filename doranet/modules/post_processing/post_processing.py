@@ -405,8 +405,12 @@ def pretreat_networks(
         rea_stoi = eval(rea_stoi)
         pro_stoi = eval(pro_stoi)
 
-        reas_sorted, rea_stoi = zip(*sorted(zip(reas, rea_stoi)))
-        pros_sorted, pro_stoi = zip(*sorted(zip(pros, pro_stoi)))
+        reas_sorted, rea_stoi = zip(
+            *sorted(zip(reas, rea_stoi, strict=False)), strict=False
+        )
+        pros_sorted, pro_stoi = zip(
+            *sorted(zip(pros, pro_stoi, strict=False)), strict=False
+        )
 
         if len(reas) != len(reas_sorted) or len(pros) != len(pros_sorted):
             print("sorting error", i)
@@ -729,7 +733,11 @@ def pathway_finder(
                             to_append[1] = [
                                 x
                                 for _, x in sorted(
-                                    zip(Y_num_of_producers, to_append[1])
+                                    zip(
+                                        Y_num_of_producers,
+                                        to_append[1],
+                                        strict=False,
+                                    )
                                 )
                             ]
                             if not to_append[1]:
@@ -1925,8 +1933,10 @@ def pathway_ranking(
                 salt_score_list,
                 reaxys_score_list,
                 cool_score_list,
+                strict=False,
             )
-        )
+        ),
+        strict=False,
     )
 
     def clean_rxn_strings(
