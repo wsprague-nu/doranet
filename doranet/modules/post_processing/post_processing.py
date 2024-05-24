@@ -1082,8 +1082,10 @@ class MaxEnthalpyFilter(metadata.ReactionFilterBase):
 
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         dH = 0.0
+        if recipe.operator.meta is None:
+            return False
         for idx, mol in enumerate(recipe.products):
-            if mol.meta[self.H_key] == float("nan"):
+            if mol.meta is None or mol.meta[self.H_key] == float("nan"):
                 return False
             dH = (
                 dH
@@ -1091,7 +1093,7 @@ class MaxEnthalpyFilter(metadata.ReactionFilterBase):
                 * recipe.operator.meta["products_stoi"][idx]
             )
         for idx, mol in enumerate(recipe.reactants):
-            if mol.meta[self.H_key] == float("nan"):
+            if mol.meta is None or mol.meta[self.H_key] == float("nan"):
                 return False
             dH = (
                 dH
