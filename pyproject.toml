@@ -64,6 +64,7 @@ module = [
     "PIL.*",
     "IPython.*",
     "networkx.*",
+    "pgthermo.*",
 ]
 ignore_missing_imports = true
 
