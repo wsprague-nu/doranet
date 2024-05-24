@@ -555,11 +555,10 @@ def pathway_finder(
         temp_ms.append(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
     mol_smiles = temp_ms
 
-    f = open(
+    with open(
         f"{job_name}_network_pretreated.json", encoding="utf-8"
-    )  # open json file
-    data = json.load(f)
-    f.close()
+    ) as f:  # open json file
+        data = json.load(f)
     starters_set = set(mol_smiles)
 
     print("total number of reactions", len(data))
@@ -877,46 +876,52 @@ def pathway_finder(
         path_rxnlist_set = list()
         path_dH_set = list()
 
-        f_result = open(f"{job_name}_pathways.txt", "w", encoding="utf-8")
-        new_ranking = 1
+        with open(
+            f"{job_name}_pathways.txt", "w", encoding="utf-8"
+        ) as f_result:
+            new_ranking = 1
 
-        clean_starters = set()
-        for i in starters:
-            clean_starters.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
-        clean_helpers = set()
-        for i in helpers:
-            clean_helpers.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+            clean_starters = set()
+            for i in starters:
+                clean_starters.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+            clean_helpers = set()
+            for i in helpers:
+                clean_helpers.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
 
-        for path in pathways_list:
-            if (
-                consider_name_difference
-                or path["SMILES"] not in path_rxnlist_set
-                or path["enthalpy"] not in path_dH_set
-            ) and find_cyc(path, clean_starters, clean_helpers) is False:
-                f_result.write("pathway number " + str(new_ranking) + "\n")
-                f_result.write("place holder " + path["final_score"] + "\n")
-                f_result.write("place holder " + path["atomic_economy"] + "\n")
-                f_result.write(
-                    "place holder " + path["pathway_by-product"] + "\n"
-                )
-                f_result.write(
-                    "reaction SMILES stoichiometry " + str(path["stoi"]) + "\n"
-                )
-                f_result.write("reaction SMILES, name, and enthalpy:" + "\n")
+            for path in pathways_list:
+                if (
+                    consider_name_difference
+                    or path["SMILES"] not in path_rxnlist_set
+                    or path["enthalpy"] not in path_dH_set
+                ) and find_cyc(path, clean_starters, clean_helpers) is False:
+                    f_result.write("pathway number " + str(new_ranking) + "\n")
+                    f_result.write("place holder " + path["final_score"] + "\n")
+                    f_result.write(
+                        "place holder " + path["atomic_economy"] + "\n"
+                    )
+                    f_result.write(
+                        "place holder " + path["pathway_by-product"] + "\n"
+                    )
+                    f_result.write(
+                        "reaction SMILES stoichiometry "
+                        + str(path["stoi"])
+                        + "\n"
+                    )
+                    f_result.write(
+                        "reaction SMILES, name, and enthalpy:" + "\n"
+                    )
 
-                for i in path["SMILES"]:
-                    f_result.write(i + "\n")
-                for i in path["name"]:
-                    f_result.write(i + "\n")
-                for i in path["enthalpy"]:
-                    f_result.write(i + "\n")
+                    for i in path["SMILES"]:
+                        f_result.write(i + "\n")
+                    for i in path["name"]:
+                        f_result.write(i + "\n")
+                    for i in path["enthalpy"]:
+                        f_result.write(i + "\n")
 
-                f_result.write("\n")
-                new_ranking += 1
-            path_rxnlist_set.append(path["SMILES"])
-            path_dH_set.append(path["enthalpy"])
-
-        f_result.close()
+                    f_result.write("\n")
+                    new_ranking += 1
+                path_rxnlist_set.append(path["SMILES"])
+                path_dH_set.append(path["enthalpy"])
 
         min_num = 999
         max_num = 0
@@ -984,15 +989,14 @@ def pathway_finder(
 
         # if len(rxn_set) < max_rxns_per_batch:
         if True:
-            f_result = open(
+            with open(
                 f"{job_name}_reaxys_batch_query.txt", "w", encoding="utf-8"
-            )
-            for rxn in rxn_set:
-                print_flag = True
-                if print_flag is True:
-                    f_result.write("SMILES='" + rxn + "'")
-                    f_result.write("\n")
-            f_result.close()
+            ) as f_result:
+                for rxn in rxn_set:
+                    print_flag = True
+                    if print_flag is True:
+                        f_result.write("SMILES='" + rxn + "'")
+                        f_result.write("\n")
 
         # else:
         if len(rxn_set) > max_rxns_per_batch:
@@ -1018,11 +1022,10 @@ def pathway_finder(
                     ]
 
             for key in output_dict:
-                f_result = open(key + ".txt", "w", encoding="utf-8")
-                for query in output_dict[key]:
-                    f_result.write("SMILES='" + query + "'")
-                    f_result.write("\n")
-                f_result.close()
+                with open(key + ".txt", "w", encoding="utf-8") as f_result:
+                    for query in output_dict[key]:
+                        f_result.write("SMILES='" + query + "'")
+                        f_result.write("\n")
 
 
 @typing.final
@@ -1959,98 +1962,99 @@ def pathway_ranking(
         return clean_path
 
     k = 0
-    f_result = open(f"{job_name}_ranked_pathways.txt", "w", encoding="utf-8")
-    for idx, path in reversed(list(enumerate(data))):  # print result
-        print_flag = True
-        if print_flag is True:
-            k += 1
-            print("ranking", k)
-            f_result.write("ranking " + str(k))
-            f_result.write("\n")
-            print("final score", final_score[idx])
-            print(
-                "Max reaction enthalpy score",
-                H_score_list[idx],
-                " x ",
-                weight[0],
-                " = ",
-                H_score_list[idx] * weight[0],
-            )
-            print(
-                "Number of reactions score",
-                step_score_list[idx],
-                " x ",
-                weight[1],
-                " = ",
-                step_score_list[idx] * weight[1],
-            )
-            print(
-                "By-product score",
-                by_pro_score_list[idx],
-                " x ",
-                weight[2],
-                " = ",
-                by_pro_score_list[idx] * weight[2],
-            )
-            print(
-                "Pathway atom economy score",
-                eco_score_list[idx],
-                " x ",
-                weight[3],
-                " = ",
-                eco_score_list[idx] * weight[3],
-            )
-            print(
-                "Salt score",
-                salt_score_list[idx],
-                " x ",
-                weight[4],
-                " = ",
-                salt_score_list[idx] * weight[4],
-            )
-            print(
-                "Reaxys score",
-                reaxys_score_list[idx],
-                " x ",
-                weight[5],
-                " = ",
-                reaxys_score_list[idx] * weight[5],
-            )
-            print(
-                "Cool score",
-                cool_score_list[idx],
-                " x ",
-                weight[6],
-                " = ",
-                cool_score_list[idx] * weight[6],
-            )
-
-            f_result.write("final score " + str(final_score[idx]))
-            f_result.write("\n")
-            print("atom economy", eco_list[idx])
-            f_result.write("atomic economy " + str(eco_list[idx]))
-            f_result.write("\n")
-            print("pathway by-product", by_pro_list[idx])
-            f_result.write("pathway by-product " + str(by_pro_list[idx]))
-            f_result.write("\n")
-            print(
-                "intermediate by-product",
-                intermediate_by_product_dict_list[idx],
-            )
-            f_result.write(
-                "intermediate by-product "
-                + str(intermediate_by_product_dict_list[idx])
-            )
-            f_result.write("\n")
-            f_result.write("reaction SMILES, name, and enthalpy:")
-            f_result.write("\n")
-            for i in clean_rxn_strings(path):
-                print(i)
-                f_result.write(i)
+    with open(
+        f"{job_name}_ranked_pathways.txt", "w", encoding="utf-8"
+    ) as f_result:
+        for idx, path in reversed(list(enumerate(data))):  # print result
+            print_flag = True
+            if print_flag is True:
+                k += 1
+                print("ranking", k)
+                f_result.write("ranking " + str(k))
                 f_result.write("\n")
-            print()
-            f_result.write("\n")
-    f_result.close()
+                print("final score", final_score[idx])
+                print(
+                    "Max reaction enthalpy score",
+                    H_score_list[idx],
+                    " x ",
+                    weight[0],
+                    " = ",
+                    H_score_list[idx] * weight[0],
+                )
+                print(
+                    "Number of reactions score",
+                    step_score_list[idx],
+                    " x ",
+                    weight[1],
+                    " = ",
+                    step_score_list[idx] * weight[1],
+                )
+                print(
+                    "By-product score",
+                    by_pro_score_list[idx],
+                    " x ",
+                    weight[2],
+                    " = ",
+                    by_pro_score_list[idx] * weight[2],
+                )
+                print(
+                    "Pathway atom economy score",
+                    eco_score_list[idx],
+                    " x ",
+                    weight[3],
+                    " = ",
+                    eco_score_list[idx] * weight[3],
+                )
+                print(
+                    "Salt score",
+                    salt_score_list[idx],
+                    " x ",
+                    weight[4],
+                    " = ",
+                    salt_score_list[idx] * weight[4],
+                )
+                print(
+                    "Reaxys score",
+                    reaxys_score_list[idx],
+                    " x ",
+                    weight[5],
+                    " = ",
+                    reaxys_score_list[idx] * weight[5],
+                )
+                print(
+                    "Cool score",
+                    cool_score_list[idx],
+                    " x ",
+                    weight[6],
+                    " = ",
+                    cool_score_list[idx] * weight[6],
+                )
+
+                f_result.write("final score " + str(final_score[idx]))
+                f_result.write("\n")
+                print("atom economy", eco_list[idx])
+                f_result.write("atomic economy " + str(eco_list[idx]))
+                f_result.write("\n")
+                print("pathway by-product", by_pro_list[idx])
+                f_result.write("pathway by-product " + str(by_pro_list[idx]))
+                f_result.write("\n")
+                print(
+                    "intermediate by-product",
+                    intermediate_by_product_dict_list[idx],
+                )
+                f_result.write(
+                    "intermediate by-product "
+                    + str(intermediate_by_product_dict_list[idx])
+                )
+                f_result.write("\n")
+                f_result.write("reaction SMILES, name, and enthalpy:")
+                f_result.write("\n")
+                for i in clean_rxn_strings(path):
+                    print(i)
+                    f_result.write(i)
+                    f_result.write("\n")
+                print()
+                f_result.write("\n")
 
     end_time = time.time()
     elapsed_time = end_time - start_time  # /60
