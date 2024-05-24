@@ -14,8 +14,8 @@ from collections import deque
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import pickaxe_generic as pg
-from pickaxe_generic import interfaces, metadata
+import doranet as dn
+from doranet import interfaces, metadata
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
@@ -35,7 +35,7 @@ from pathlib import Path
 
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
-from .Reaction_Smarts_Forward import op_smarts
+from doranet.modules.synthetic.Reaction_Smarts_Forward import op_smarts
 
 # post-processing for doranet network files
 
@@ -101,7 +101,7 @@ def pretreat_networks(
     -------
                     Create a json file with reactions as strings
     """
-    engine = pg.create_engine()
+    engine = dn.create_engine()
     print("Loading network files, it may take a while for large networks")
 
     if network_forward_name:
@@ -1167,7 +1167,7 @@ class No_helpers_reaction_Filter(metadata.ReactionFilterBase):  # mol.item.uid
 def Byproduct_index(path_idx, _input_list):
     my_num_gens = 1
     mol_smiles = _input_list
-    engine = pg.create_engine()
+    engine = dn.create_engine()
     network = engine.new_network()
 
     for smiles in mol_smiles:
@@ -1227,7 +1227,7 @@ def Inter_byproduct(
 ):  # _intermediate included in _smiles_list
     my_num_gens = 1
     mol_smiles = _smiles_list
-    engine = pg.create_engine()
+    engine = dn.create_engine()
     network = engine.new_network()
 
     for smiles in mol_smiles:
