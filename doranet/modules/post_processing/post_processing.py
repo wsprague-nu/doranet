@@ -10,6 +10,7 @@ import textwrap
 import time
 import typing
 from collections import deque
+from collections.abc import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -40,7 +41,7 @@ from doranet.modules.synthetic.Reaction_Smarts_Forward import op_smarts
 
 # post-processing for doranet network files
 
-reaxys_not_supported = (
+reaxys_not_supported: Iterable[str] = (
     "O",
     "O=O",
     "[H][H]",
