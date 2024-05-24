@@ -1,3 +1,5 @@
+"""Post-processing code for DORAnet."""
+
 import collections.abc
 import copy
 import dataclasses
