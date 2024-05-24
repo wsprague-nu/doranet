@@ -89,9 +89,10 @@ def pretreat_networks(
     transform_enols_flag=True,
 ):
     """
-    Load pickaxe network files and unpack them into a json file
-    Remove rxn if it's between helpers
-    Remove duplicates, remove unconnected rxns
+    Load pickaxe network files and unpack them into a json file.
+
+    Will remove rxn if it's between helpers
+    Will remove duplicates, remove unconnected rxns
 
     Parameters
     ----------
