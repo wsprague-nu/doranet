@@ -21,6 +21,7 @@ classifiers = [
 license = {file = "LICENSE"}
 dependencies = [
     "ipython",
+    "networkx",
     "numpy",
     "pandas",
     "pillow",
@@ -61,7 +62,8 @@ Issues = "https://github.com/wsprague-nu/doranet/issues"
 module = [
     "rdkit.*",
     "PIL.*",
-    "IPython.*"
+    "IPython.*",
+    "networkx.*",
 ]
 ignore_missing_imports = true
 
