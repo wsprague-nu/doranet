@@ -86,7 +86,7 @@ def pretreat_networks(
     remove_pure_helpers_rxns=True,
     sanitize=True,
     calculate_dH=True,
-    transform_enols=True,
+    transform_enols_flag=True,
 ):
     """
     Load pickaxe network files and unpack them into a json file
@@ -351,7 +351,7 @@ def pretreat_networks(
         new_dH = round(new_dH, 4)
         return to_return + str(new_dH) + stoi + ">" + pros_string
 
-    if transform_enols:
+    if transform_enols_flag:
         new_whole_rxns_list = list()
         for i in whole_rxns_list:
             new_whole_rxns_list.append(transform_enols(i))
