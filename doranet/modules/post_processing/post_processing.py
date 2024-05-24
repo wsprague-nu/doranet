@@ -14,6 +14,7 @@ from collections.abc import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import networkx.exception as nxe
 import numpy as np
 import rdkit.Chem.rdmolfiles
 import rdkit.Chem.rdmolops
@@ -856,7 +857,7 @@ def pathway_finder(
         try:
             nx.find_cycle(G, orientation="original")
             return True
-        except nx.exception.NetworkXNoCycle:
+        except nxe.NetworkXNoCycle:
             return False
 
     print("pathway search finished, removing loops if there's any.")
