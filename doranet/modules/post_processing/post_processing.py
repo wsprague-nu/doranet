@@ -596,7 +596,7 @@ def pathway_finder(
         pro_stoi = eval(rxn_dict[rxn_idx]["mid"].split("$")[2])
         products_weight = dict()  # {pro: weight}
         total_weight = 0
-        for idx, rea in enumerate(reas):
+        for _idx, rea in enumerate(reas):
             if rea not in consumers_dict:
                 consumers_dict[rea] = {rxn_idx: 0}
             else:
@@ -2160,7 +2160,7 @@ def create_page(
     rxn_list = pathway_dict["SMILES"]  # list of rxns in pathway
     name_list = pathway_dict["name"]
 
-    for idx, i in enumerate(name_list):
+    for idx, _i in enumerate(name_list):
         name_list[idx] = textwrap.fill(
             name_list[idx], 25
         )  # wrape text so not too long
@@ -2178,14 +2178,14 @@ def create_page(
 
     split_list = pathway_dict["enthalpy"]
     dH_list = list()
-    for idx, i in enumerate(split_list):
+    for _idx, i in enumerate(split_list):
         dH_list.append(str("%.1f" % float(i)) + " kcal/mol")
 
-    for idx, i in enumerate(dH_list):
+    for idx, _i in enumerate(dH_list):
         if "2-step" in name_list[idx] or "&" in name_list[idx]:
             dH_list[idx] = dH_list[idx] + " ×2"
 
-    for idx, i in enumerate(name_list):  # add dH to name
+    for idx, _i in enumerate(name_list):  # add dH to name
         if name_list[idx].replace("\n", " ") in salt_name_set:
             name_list[idx] = name_list[idx] + "(salt)"
         name_list[idx] = name_list[idx] + "\n" + dH_list[idx]
