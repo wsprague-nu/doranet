@@ -65,6 +65,7 @@ module = [
     "IPython.*",
     "networkx.*",
     "pgthermo.*",
+    "PyPDF2.*",
 ]
 ignore_missing_imports = true
 
