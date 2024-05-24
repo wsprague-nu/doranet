@@ -15,6 +15,8 @@ from collections.abc import Iterable
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import rdkit.Chem.rdmolfiles
+import rdkit.Chem.rdmolops
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
@@ -64,14 +66,18 @@ reaxys_not_supported: Iterable[str] = (
 )
 temp_ms = []
 for i in reaxys_not_supported:  # clean up
-    temp_ms.append(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+    temp_ms.append(
+        rdkit.Chem.rdmolfiles.MolToSmiles(
+            rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+        )
+    )
 reaxys_not_supported = set(temp_ms)
 
 
 def clean_SMILES(smiles):
-    mol = Chem.MolFromSmiles(smiles)
-    Chem.rdmolops.RemoveStereochemistry(mol)
-    cpd_smiles = Chem.MolToSmiles(mol)
+    mol = rdkit.Chem.rdmolfiles.MolFromSmiles(smiles)
+    rdkit.Chem.rdmolops.RemoveStereochemistry(mol)
+    cpd_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(mol)
     return cpd_smiles
 
 
@@ -305,8 +311,6 @@ def pretreat_networks(
             rxn_string = rxn_string[:-1]
             whole_rxns_list.append(rxn_string)
 
-    from rdkit.Chem import AllChem
-
     def transform_enols(input_rxn_string):
         def smilesHfCal(smiles, return_Hf):
             if return_Hf:
@@ -320,20 +324,22 @@ def pretreat_networks(
         old_dH = float(input_rxn_string.split(">")[2].split("$")[0])
         stoi = "$" + "$".join(input_rxn_string.split(">")[2].split("$")[1:])
         pros = input_rxn_string.split(">")[3].split(".")
-        patt_enol = Chem.MolFromSmarts("[C]=[C]-[OH]")
-        rxn = AllChem.ReactionFromSmarts(
+        patt_enol = rdkit.Chem.rdmolfiles.MolFromSmarts("[C]=[C]-[OH]")
+        rxn = rdkit.Chem.rdChemReactions.ReactionFromSmarts(
             "[C+0:1]=[C+0:2][O+0H:3]>>[*:1][*:2]=[*:3]"
         )
         pros_string = str()
         dH = 0
         for pro in pros:
-            pro_mol = Chem.MolFromSmiles(pro)
+            pro_mol = rdkit.Chem.rdmolfiles.MolFromSmiles(pro)
             if (
                 len(pro_mol.GetSubstructMatches(patt_enol)) == 1
             ):  # ignore rare cases with multiple enol -OH
                 comb = (pro_mol,)
                 products_sets = rxn.RunReactants(comb)
-                new_smiles = Chem.MolToSmiles(products_sets[0][0])
+                new_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
+                    products_sets[0][0]
+                )
                 if (
                     smilesHfCal(new_smiles, calculate_dH) is not None
                 ):  # new keto may not be supported by the enthalpy calculator
@@ -364,12 +370,25 @@ def pretreat_networks(
     #### sanitization
     starters_set = set()
     for i in starters:
-        starters_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        starters_set.add(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
 
     helpers_set = set()
     for i in helpers:
-        if Chem.MolToSmiles(Chem.MolFromSmiles(i)) not in starters_set:
-            helpers_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        if (
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+            not in starters_set
+        ):
+            helpers_set.add(
+                rdkit.Chem.rdmolfiles.MolToSmiles(
+                    rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+                )
+            )
 
     mol_smiles = starters_set.union(helpers_set)
 
@@ -500,7 +519,7 @@ def pretreat_networks(
         if target_smiles in pros:
             total_weight = 0
             for pro in pros:
-                total_weight += Descriptors.MolWt(Chem.MolFromSmiles(pro))
+                total_weight += Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(pro))
             if target_weight/total_weight > 0.8:
                 reduced_rxns.add(rxn)
         else:
@@ -546,7 +565,9 @@ def pathway_finder(
 
     """
     start_time = time.time()
-    target_smiles = Chem.MolToSmiles(Chem.MolFromSmiles(target))
+    target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
+        rdkit.Chem.rdmolfiles.MolFromSmiles(target)
+    )
     generation = search_depth  # number of generations to backtrack
     pathway_max_length = max_num_rxns  # max number of rxns allowed in a pathway
     min_atom_economy = min_rxn_atom_economy  # 0~1, apply to each rxn in path
@@ -556,7 +577,11 @@ def pathway_finder(
     mol_smiles = tuple(helpers.keys()) + tuple(starters)
     temp_ms = list()
     for i in mol_smiles:  # clean up
-        temp_ms.append(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        temp_ms.append(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
     mol_smiles = temp_ms
 
     with open(
@@ -606,7 +631,10 @@ def pathway_finder(
             else:
                 consumers_dict[rea][rxn_idx] = 0
         for idx, pro in enumerate(products):
-            to_add = Descriptors.MolWt(Chem.MolFromSmiles(pro)) * pro_stoi[idx]
+            to_add = (
+                Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(pro))
+                * pro_stoi[idx]
+            )
             if pro not in products_weight:
                 products_weight[pro] = to_add
                 total_weight += to_add
@@ -888,10 +916,18 @@ def pathway_finder(
 
             clean_starters = set()
             for i in starters:
-                clean_starters.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+                clean_starters.add(
+                    rdkit.Chem.rdmolfiles.MolToSmiles(
+                        rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+                    )
+                )
             clean_helpers = set()
             for i in helpers:
-                clean_helpers.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+                clean_helpers.add(
+                    rdkit.Chem.rdmolfiles.MolToSmiles(
+                        rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+                    )
+                )
 
             for path in pathways_list:
                 if (
@@ -962,8 +998,9 @@ def pathway_finder(
                 if rea not in reaxys_not_supported and rea not in reas_set:
                     new_rxn = (
                         new_rxn
-                        + Chem.MolToSmiles(
-                            Chem.MolFromSmiles(rea), kekuleSmiles=True
+                        + rdkit.Chem.rdmolfiles.MolToSmiles(
+                            rdkit.Chem.rdmolfiles.MolFromSmiles(rea),
+                            kekuleSmiles=True,
                         )
                         + "."
                     )
@@ -973,8 +1010,9 @@ def pathway_finder(
                 if pro not in reaxys_not_supported and pro not in pros_set:
                     new_rxn = (
                         new_rxn
-                        + Chem.MolToSmiles(
-                            Chem.MolFromSmiles(pro), kekuleSmiles=True
+                        + rdkit.Chem.rdmolfiles.MolToSmiles(
+                            rdkit.Chem.rdmolfiles.MolFromSmiles(pro),
+                            kekuleSmiles=True,
                         )
                         + "."
                     )
@@ -1319,22 +1357,36 @@ def pathway_ranking(
     cool_reactions=False,
 ):
     start_time = time.time()
-    target_smiles = Chem.MolToSmiles(Chem.MolFromSmiles(target))
+    target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
+        rdkit.Chem.rdmolfiles.MolFromSmiles(target)
+    )
 
     just_starters = set()
     for i in starters:  # clean up
-        just_starters.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        just_starters.add(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
 
     mol_smiles = tuple(helpers.keys()) + tuple(starters)
     temp_ms = []
     for i in mol_smiles:  # clean up
-        temp_ms.append(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        temp_ms.append(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
     mol_smiles = temp_ms
 
     helpers = tuple(helpers.keys())
     temp_ms2 = []
     for i in helpers:  # clean up
-        temp_ms2.append(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        temp_ms2.append(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
     helpers = temp_ms2
 
     ## read pathway txt file
@@ -1451,7 +1503,9 @@ def pathway_ranking(
         _path = list(_path)
         left_dict = dict()  # smiles: number of mol
         right_dict = dict()
-        target_weight = Descriptors.MolWt(Chem.MolFromSmiles(target_smiles))
+        target_weight = Descriptors.MolWt(
+            rdkit.Chem.rdmolfiles.MolFromSmiles(target_smiles)
+        )
         #  target_mol = float()
         idx_remove = 0
         for idx, rxn in enumerate(
@@ -1573,7 +1627,8 @@ def pathway_ranking(
         by_product_weight = 0
         for i in right_dict:
             by_product_weight += (
-                Descriptors.MolWt(Chem.MolFromSmiles(i)) * right_dict[i]
+                Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(i))
+                * right_dict[i]
             )
         to_return = target_weight / (target_weight + by_product_weight)
         return to_return
@@ -1837,8 +1892,9 @@ def pathway_ranking(
                 if rea not in reaxys_not_supported and rea not in reas_set:
                     new_rxn = (
                         new_rxn
-                        + Chem.MolToSmiles(
-                            Chem.MolFromSmiles(rea), kekuleSmiles=True
+                        + rdkit.Chem.rdmolfiles.MolToSmiles(
+                            rdkit.Chem.rdmolfiles.MolFromSmiles(rea),
+                            kekuleSmiles=True,
                         )
                         + "."
                     )
@@ -1848,8 +1904,9 @@ def pathway_ranking(
                 if pro not in reaxys_not_supported and pro not in pros_set:
                     new_rxn = (
                         new_rxn
-                        + Chem.MolToSmiles(
-                            Chem.MolFromSmiles(pro), kekuleSmiles=True
+                        + rdkit.Chem.rdmolfiles.MolToSmiles(
+                            rdkit.Chem.rdmolfiles.MolFromSmiles(pro),
+                            kekuleSmiles=True,
                         )
                         + "."
                     )
@@ -2118,8 +2175,9 @@ def create_page(
             if rea not in reaxys_not_supported and rea not in reas_set:
                 new_rxn = (
                     new_rxn
-                    + Chem.MolToSmiles(
-                        Chem.MolFromSmiles(rea), kekuleSmiles=True
+                    + rdkit.Chem.rdmolfiles.MolToSmiles(
+                        rdkit.Chem.rdmolfiles.MolFromSmiles(rea),
+                        kekuleSmiles=True,
                     )
                     + "."
                 )
@@ -2129,8 +2187,9 @@ def create_page(
             if pro not in reaxys_not_supported and pro not in pros_set:
                 new_rxn = (
                     new_rxn
-                    + Chem.MolToSmiles(
-                        Chem.MolFromSmiles(pro), kekuleSmiles=True
+                    + rdkit.Chem.rdmolfiles.MolToSmiles(
+                        rdkit.Chem.rdmolfiles.MolFromSmiles(pro),
+                        kekuleSmiles=True,
                     )
                     + "."
                 )
@@ -2214,7 +2273,7 @@ def create_page(
     )  # set of int, rxn nodes in reaxys_result_set, used for coloring edges
 
     def addjust_mol_image(mol):
-        if Chem.MolToSmiles(mol) == "C=O":
+        if rdkit.Chem.rdmolfiles.MolToSmiles(mol) == "C=O":
             mol = Chem.AddHs(mol)
         return Draw.MolToImage(mol)
 
@@ -2246,7 +2305,11 @@ def create_page(
                     rea,
                     image1=add_text(
                         add_margin(
-                            trim(addjust_mol_image(Chem.MolFromSmiles(rea)))
+                            trim(
+                                addjust_mol_image(
+                                    rdkit.Chem.rdmolfiles.MolFromSmiles(rea)
+                                )
+                            )
                         ),
                         str(inter_py_pro[rea]),
                     ),
@@ -2260,7 +2323,9 @@ def create_page(
                                 add_margin(
                                     trim(
                                         addjust_mol_image(
-                                            Chem.MolFromSmiles(pro)
+                                            rdkit.Chem.rdmolfiles.MolFromSmiles(
+                                                pro
+                                            )
                                         )
                                     )
                                 ),
@@ -2291,7 +2356,11 @@ def create_page(
                         i + str(starter_index),
                         image1=add_text(
                             add_margin(
-                                trim(addjust_mol_image(Chem.MolFromSmiles(i)))
+                                trim(
+                                    addjust_mol_image(
+                                        rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+                                    )
+                                )
                             ),
                             str(inter_py_pro[i]),
                         ),
@@ -2409,7 +2478,11 @@ def pathway_visualization(
 
     my_start = set()
     for i in starters:
-        my_start.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        my_start.add(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
 
     if reaxys_result_name is not False:
         reaxys_batch = np.genfromtxt(
@@ -2500,15 +2573,28 @@ def pathway_visualization(
 
     exclude_set = set()
     for i in exclude_smiles:
-        exclude_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+        exclude_set.add(
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(i)
+            )
+        )
     for idx, i in enumerate(pathways_list):
         if not exclude_set & i["all_reactants"]:
             work_list.append((i, idx + 1))
 
     help_dict = dict()
     for key in helpers:
-        if Chem.MolToSmiles(Chem.MolFromSmiles(key)) not in my_start:
-            help_dict[Chem.MolToSmiles(Chem.MolFromSmiles(key))] = helpers[key]
+        if (
+            rdkit.Chem.rdmolfiles.MolToSmiles(
+                rdkit.Chem.rdmolfiles.MolFromSmiles(key)
+            )
+            not in my_start
+        ):
+            help_dict[
+                rdkit.Chem.rdmolfiles.MolToSmiles(
+                    rdkit.Chem.rdmolfiles.MolFromSmiles(key)
+                )
+            ] = helpers[key]
 
     print("Working on creating pages...")
     with Pool(processes=num_process) as pool:
