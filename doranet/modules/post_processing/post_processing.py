@@ -1170,6 +1170,11 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
             products_dict = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
+                if not isinstance(mol.item, dn.interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Ring_Issues_Filter not implemented for molecule type
+                            {type(mol.item)}"""
+                    )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
@@ -1184,6 +1189,11 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                     "." in mol.item.uid
                 ):  # if there're fragments in a mol, indicates invalid rxn
                     return False
+                if not isinstance(mol.item, dn.interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Ring_Issues_Filter not implemented for molecule type
+                            {type(mol.item)}"""
+                    )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
