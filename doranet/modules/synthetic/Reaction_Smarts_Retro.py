@@ -8,8 +8,8 @@ import typing
 class OperatorSmarts:
     name: str
     smarts: str
-    reactants_stoi: typing.Optional[tuple[int, ...]] = None
-    products_stoi: typing.Optional[tuple[int, ...]] = None
+    reactants_stoi: typing.Optional[tuple[int | float, ...]] = None
+    products_stoi: typing.Optional[tuple[int | float, ...]] = None
     enthalpy_correction: typing.Optional[
         float
     ] = None  # add a correction term for enthalpy filter
