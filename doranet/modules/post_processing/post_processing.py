@@ -773,7 +773,7 @@ def pathway_finder(
             else:
                 work_list.appendleft(first_path)
                 keep_expanding_flag = False
-        except:
+        except IndexError:
             no_pathway = True
             print("no pathway found! try adjusting pruning parameters.")
             break
