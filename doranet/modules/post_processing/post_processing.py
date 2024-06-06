@@ -579,8 +579,8 @@ def pathway_finder(
     rxn_dict = (
         dict()
     )  # { rxn_idx: {name: xx   reas: []  pros: []  mid: dH$()$()   } }
-    rxn_idx = 0
-    for _idx, rxn in enumerate(data):
+    # rxn_idx = 0
+    for rxn_idx, rxn in enumerate(data):
         pros = rxn.split(">")[3].split(".")
         reas = rxn.split(">")[0].split(".")
         name = rxn.split(">")[1]
@@ -592,7 +592,7 @@ def pathway_finder(
             "pros": pros,
             "mid": mid,
         }
-        rxn_idx += 1
+        # rxn_idx += 1
 
     producers_dict = dict()
     producers_dict_len = dict()
@@ -826,8 +826,8 @@ def pathway_finder(
         _pathway, _starters, _helpers
     ):  # return bool, if there're cycles in the pathway
         G = nx.DiGraph()
-        rxn_node = 0
-        for _idx, rxn in enumerate(
+        # rxn_node = 0
+        for rxn_node, rxn in enumerate(
             _pathway["SMILES"]
         ):  # add nodes and edges to graph
             reas = rxn.split(">>")[0].split(".")
@@ -841,7 +841,7 @@ def pathway_finder(
                         if pro not in _helpers and pro not in _starters:
                             G.add_node(pro)
                             G.add_edge(rxn_node, pro)
-            rxn_node += 1
+            # rxn_node += 1
         try:
             nx.find_cycle(G, orientation="original")
             return True
@@ -2275,7 +2275,7 @@ def create_page(
         "intermediate_by-product"
     ]  # intermediate by product number, dict, key smiles, value int
     inter_py_pro["O=C=O"] = ""  # for reagent node (CO2)
-    rxn_node = 0
+    # rxn_node = 0
     node_labels_dict = dict()
     node_labels_reagent = dict()
 
@@ -2288,7 +2288,7 @@ def create_page(
             mol = Chem.AddHs(mol)
         return Draw.MolToImage(mol)
 
-    for idx, rxn in enumerate(rxn_list):  # add nodes and edges to graph
+    for rxn_node, rxn in enumerate(rxn_list):  # add nodes and edges to graph
         reas = rxn.split(">>")[0].split(".")
         pros = rxn.split(">>")[1].split(".")
 
@@ -2303,12 +2303,12 @@ def create_page(
         G.add_node(rxn_node)
         if (
             SMILES_rm_keku(rxn) in reaxys_result_set
-            or " ".join(name_list[idx].replace("\n", " ").split()[:-2])
+            or " ".join(name_list[rxn_node].replace("\n", " ").split()[:-2])
             in known_rxn_set
         ):
             reaxys_rxn_nodes.add(rxn_node)
 
-        node_labels_dict[rxn_node] = name_list[idx]
+        node_labels_dict[rxn_node] = name_list[rxn_node]
         node_labels_reagent[rxn_node] = reagent_label + "\n"
         for rea in reas:  # add nodes and edges for non-reagents
             if rea not in help_dict:
@@ -2344,7 +2344,7 @@ def create_page(
                             ),
                         )
                         G.add_edge(rxn_node, pro, arror_margin=120)
-        rxn_node += 1
+        # rxn_node += 1
 
     fig, ax = plt.subplots(figsize=(25, 50))  # 25, 40
 
