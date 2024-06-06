@@ -512,23 +512,6 @@ def pretreat_networks(
 
     print("total number of reactions after pretreatment:", len(my_list))
 
-    # cap final product waste    target_weight
-    """
-    reduced_rxns = set()
-    for rxn in my_list:
-        pros = rxn.split(">")[3].split(".")
-        if target_smiles in pros:
-            total_weight = 0
-            for pro in pros:
-                total_weight += Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(pro))
-            if target_weight/total_weight > 0.8:
-                reduced_rxns.add(rxn)
-        else:
-            reduced_rxns.add(rxn)
-    my_list = list(reduced_rxns)
-    print(len(my_list))
-    """
-
     with open(
         f"{job_name}_network_pretreated.json", "w", encoding="utf-8"
     ) as convert_file:
@@ -705,13 +688,17 @@ def pathway_finder(
         else:
             return 999  # not produced by starters (retro network)
 
-    work_list = deque()  #   [finished: 1, dead end: 2, to expand: 0, [(mol,  int),(mol,  int)], rxn_idx1, rxn_idx2, ... ]
+    work_list = deque()  
+    # [finished:1,dead end:2,to expand:0,[(mol,int),(mol,int)],rxn_idx1,rxn_idx2,...]
     work_list.append([0, [(target_smiles, 0)]])
     gen_limit = generation
 
     keep_expanding_flag = True
     print(
-        "searching for pathways. if it is taking too long, try adjusting pruning parameters"
+        "searching for pathways."
+    )
+    print(
+        "if it is taking too long, try adjusting pruning parameters"
     )
     print()
     no_pathway = False
@@ -866,9 +853,11 @@ def pathway_finder(
     print()
     print("time used:", "{:.2f}".format(elapsed_time), "seconds")
 
-    # remove duplicates due to rxn name differences in forward and retro reaction rules, remove pathways with cycles
+    # remove duplicates due to rxn name differences in forward 
+    # and retro reaction rules, remove pathways with cycles
     if no_pathway is False:
-        pathways_list = list()  # [ {final_score: , eco:, pathy_by:, inter_by:{}, SMILES:[], Nmaes: [], dH:[]}   ]
+        pathways_list = list()  
+        # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[],Nmaes:[],dH:[]}]
         pathway_num = 1
         for path_list in to_save:
             temp_dict = dict()
@@ -893,7 +882,7 @@ def pathway_finder(
                 clean_dH_list.append(
                     each_rxn_string.split(">")[2].split("$")[0]
                 )
-                # clean_dH_list.append(str(round(float(each_rxn_string.split(">")[2].split("$")[0]), 4)))
+
                 stoi_list.append(
                     each_rxn_string.split(">")[2].split("$")[1]
                     + "$"
@@ -989,7 +978,8 @@ def pathway_finder(
 
         def SMILES_rm_keku(
             _SMILES
-        ):  # remove reaxys unsuported mols, kekulize mols, return a reaction SMILEs
+        ):  # remove reaxys unsuported mols, 
+            # kekulize mols, return a reaction SMILEs
             reas = _SMILES.split(">>")[0].split(".")
             pros = _SMILES.split(">>")[1].split(".")
             new_rxn = str()
@@ -1103,11 +1093,12 @@ class EnthalpyCalculator(
             return None
         if not isinstance(item, interfaces.MolDatRDKit):
             raise NotImplementedError(
-                f"EnthalpyCalculator has not been implemented for molecule type {type(item)}"
+                f"Not been implemented for molecule type {type(item)}"
             )
         _enthalpy_f = Hf(item.uid)
         if _enthalpy_f is None:
-            # print("None Enthalpy returned by molecule:", item.uid)  # tell user which molecule is causing problems
+            # print("None Enthalpy returned by molecule:", item.uid)  
+            # tell user which molecule is causing problems
             return float("nan")
         return _enthalpy_f
 
@@ -1410,7 +1401,8 @@ def pathway_ranking(
         if i != "\n":
             clean_list.append(i.strip())
 
-    pathways_list = list()  # [ {final_score: , eco:, pathy_by:, inter_by:{}, SMILES:[], Nmaes: [], dH:[]}   ]
+    pathways_list = list()  
+    # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[], Nmaes:[],dH:[]}]
     pathway_marker = list()
     # pathway_num = 1
     for idx, i in enumerate(clean_list):
@@ -1478,7 +1470,7 @@ def pathway_ranking(
         len(data),
     )
 
-    # Enthalpy ##############################################################
+    # Enthalpy ###############################
     if weights["reaction_dH"] != 0:
         print("reaction_dH ranking working")
         H_list = []  # store max H for each pathway
@@ -1504,7 +1496,7 @@ def pathway_ranking(
     else:
         H_score_list = [0] * len(data)
 
-    # Atom economy ##############################################################
+    # Atom economy #############################
     eco_list = list()
     eco_score_list = list()
 
@@ -1577,7 +1569,8 @@ def pathway_ranking(
                 reas = rxn.split(">")[0].split(".")
                 rea_stoi = eval(rxn.split(">")[2].split("$")[1])
                 pro_stoi = eval(rxn.split(">")[2].split("$")[2])
-                # if popkey in pros and rxn not in explored_rxns: # find a rxn that product the molecule
+                # if popkey in pros and rxn not in explored_rxns: 
+                # find a rxn that product the molecule
                 if popkey in pros:
                     # explored_rxns.add(rxn)
                     # popmol_idx = pros.index(popkey)
@@ -1607,7 +1600,7 @@ def pathway_ranking(
                                 + num_mol / popmol_stoi * rea_stoi[idx2]
                             )
 
-                    # move used rxn to end of list to avoid 
+                    # move used rxn to end of list to avoid
                     # code loop if a loop in pathway
                     del _path[idx]
                     _path.append(rxn)
@@ -1687,7 +1680,7 @@ def pathway_ranking(
         eco_score_list = [0] * len(data)
         eco_list = [0] * len(data)
 
-    # Number of steps ##############################################################
+    # Number of steps ################################
     if weights["number_of_steps"] != 0:
         print("number_of_steps ranking working")
         step_list = []
@@ -1706,7 +1699,7 @@ def pathway_ranking(
     else:
         step_score_list = [0] * len(data)
 
-    # By-product ##############################################################
+    # By-product ##############################
     if weights["by_product_number"] != 0:
         print("by_product_number ranking working")
         by_pro_list = []
@@ -1728,7 +1721,7 @@ def pathway_ranking(
             for inter_mol in mol_soup:
                 if inter_mol not in helpers or inter_mol in just_starters:
                     Inter_soup_list.append((idx, inter_mol, mol_soup))
-                    # mol_bypro_dict[inter_mol] = Inter_byproduct(inter_mol, list(mol_soup))
+
 
         with Pool(processes=num_process) as pool:
             results = [
@@ -1798,7 +1791,7 @@ def pathway_ranking(
 
             intermediate_by_product_dict_list.append(mol_bypro_dict)
 
-    # if produce salt ##############################################################
+    # if produce salt #################################
     salt_name_list = {
         "Hydrosulfide Anion Substitution with Alkyl Halides",
         "Hydrosulfide Anion Substitution with Alkyl Halides, Intramolecular",
@@ -1837,7 +1830,7 @@ def pathway_ranking(
     else:
         salt_score_list = [0] * len(data)
 
-    # coolness ##############################################################
+    # coolness ############################
     if cool_reactions and weights["coolness"] != 0:
         print("coolness ranking working")
         cool_rxn_num_list = []
@@ -1862,7 +1855,7 @@ def pathway_ranking(
     else:
         cool_score_list = [0] * len(data)
 
-    # reaxys score ##############################################################
+    # reaxys score #############################
     if weights["in_reaxys"] != 0:
         print("in_reaxys ranking working")
         # load 2 files
@@ -1897,7 +1890,8 @@ def pathway_ranking(
 
         def SMILES_rm_keku(
             _SMILES
-        ):  # remove reaxys unsuported mols, kekulize mols, return a reaction SMILES
+        ):  # remove reaxys unsuported mols, kekulize mols, 
+            # return a reaction SMILES
             reas = _SMILES.split(">")[0].split(".")
             pros = _SMILES.split(">")[3].split(".")
             new_rxn = str()
@@ -1970,7 +1964,6 @@ def pathway_ranking(
     final_score = list()
 
     for i in range(len(data)):
-        # final_score.append( H_score_list[i] * weight[0] + step_score_list[i] * weight[1]  + Toxicity_score_list[i] * weight[2] + eco_score_list[i] * weight[3])
         final_score.append(
             H_score_list[i] * weight[0]
             + step_score_list[i] * weight[1]
@@ -2229,7 +2222,9 @@ def create_page(
         "Strecker Sulfite Alkylation",
     }
 
-    known_rxn_set = {  # name of rxns we want to be colored even if they're not in returned reaxys result, should only apply to specific rxns
+    known_rxn_set = {  # name of rxns we want to be colored even if 
+        # they're not in returned reaxys result, 
+        # should only apply to specific rxns
         "Nitrogen Dioxide Disproportionation",
         "Andrussow Process",
         "Hydrogenation of Nitric Oxide",
@@ -2393,7 +2388,8 @@ def create_page(
 
     pos = nx.nx_agraph.graphviz_layout(G2, prog="dot")
 
-    edge_color_list = []  # for coloring edges, black if not in reaxys, green if in reaxys
+    edge_color_list = []  # for coloring edges, 
+    # black if not in reaxys, green if in reaxys
     for edge in G2.edges():
         if edge[0] in reaxys_rxn_nodes or edge[1] in reaxys_rxn_nodes:
             edge_color_list.append(_reaxys_rxn_color)  # "g"
@@ -2443,7 +2439,8 @@ def create_page(
     )
 
     # from networkx custom icon example
-    # Transform from data coordinates (scaled between xlim and ylim) to display coordinates
+    # Transform from data coordinates (scaled between 
+    # xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
 
     # Transform from display to figure coordinates
@@ -2535,9 +2532,9 @@ def pathway_visualization(
         if i != "\n":
             clean_list.append(i.strip())
 
-    pathways_list = list()  
-    # [{final_score: , eco:, pathy_by:, inter_by:{}, SMILES:[], Nmaes: [], dH:[]}]
-    
+    pathways_list = list()
+    # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[],Nmaes:[],dH:[]}]
+
     pathway_marker = list()
     pathway_num = 1
 
