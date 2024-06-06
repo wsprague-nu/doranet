@@ -580,7 +580,7 @@ def pathway_finder(
         dict()
     )  # { rxn_idx: {name: xx   reas: []  pros: []  mid: dH$()$()   } }
     rxn_idx = 0
-    for rxn in data:
+    for _idx, rxn in enumerate(data):
         pros = rxn.split(">")[3].split(".")
         reas = rxn.split(">")[0].split(".")
         name = rxn.split(">")[1]
