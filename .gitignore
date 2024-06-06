@@ -578,4 +578,4 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,jupyternotebooks,visualstudio
 
-docs/source/_autosummary
+doc/source/_autosummary
