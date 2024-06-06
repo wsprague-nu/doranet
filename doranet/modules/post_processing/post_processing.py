@@ -1650,7 +1650,7 @@ def pathway_ranking(
         for idx, path in enumerate(data):
             try:
                 atom_eco = path_eco(path)
-            except:
+            except KeyError:
                 atom_eco = 0
                 print("Atom economy calculation error for pathway", idx + 1)
             # print(idx)
