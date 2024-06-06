@@ -1510,8 +1510,8 @@ def pathway_ranking(
 
     def path_eco(
         _path
-    ):  # assuming no circular loops; if a middle rxn produces a starter or intermediat
-        # consumed in upstream, it's considered recycled;
+    ):  # assuming no circular loops; if a middle rxn produces a starter
+        # or intermediat consumed in upstream, it's considered recycled;
         _path = list(_path)
         left_dict = dict()  # smiles: number of mol
         right_dict = dict()
@@ -1522,7 +1522,8 @@ def pathway_ranking(
         idx_remove = 0
         for idx, rxn in enumerate(
             _path
-        ):  # find rxn for final target, add reas in left, by-product in right, remove rxn
+        ):  # find rxn for final target, add reas in left,
+            # by-product in right, remove rxn
             pros = rxn.split(">")[3].split(".")
             reas = rxn.split(">")[0].split(".")
             rea_stoi = eval(rxn.split(">")[2].split("$")[1])
@@ -1559,7 +1560,8 @@ def pathway_ranking(
         timecount = 0
         while (
             repeat_flag is True and len(_path) > 0
-        ):  # repeat until left only contain starters; check if all parents are starters
+        ):  # repeat until left only contain starters;
+            # check if all parents are starters
             timecount += 1
             popkey = 99
             for (
@@ -1575,7 +1577,7 @@ def pathway_ranking(
                 reas = rxn.split(">")[0].split(".")
                 rea_stoi = eval(rxn.split(">")[2].split("$")[1])
                 pro_stoi = eval(rxn.split(">")[2].split("$")[2])
-                # if popkey in pros and rxn not in explored_rxns:                                     # find a rxn that product the molecule
+                # if popkey in pros and rxn not in explored_rxns: # find a rxn that product the molecule
                 if popkey in pros:
                     # explored_rxns.add(rxn)
                     # popmol_idx = pros.index(popkey)
@@ -1584,7 +1586,7 @@ def pathway_ranking(
                         if pro == popkey:
                             popmol_stoi += pro_stoi[idx2]
                     for idx2, pro in enumerate(pros):
-                        # if pro != popkey:                             # add all reactants to left
+                        # if pro != popkey: # add all reactants to left
                         if pro not in right_dict:
                             right_dict[pro] = (
                                 num_mol / popmol_stoi * pro_stoi[idx2]
@@ -1605,7 +1607,8 @@ def pathway_ranking(
                                 + num_mol / popmol_stoi * rea_stoi[idx2]
                             )
 
-                    # move used rxn to end of list to avoid code loop if a loop in pathway
+                    # move used rxn to end of list to avoid 
+                    # code loop if a loop in pathway
                     del _path[idx]
                     _path.append(rxn)
                     break
@@ -2532,7 +2535,9 @@ def pathway_visualization(
         if i != "\n":
             clean_list.append(i.strip())
 
-    pathways_list = list()  # [ {final_score: , eco:, pathy_by:, inter_by:{}, SMILES:[], Nmaes: [], dH:[]}   ]
+    pathways_list = list()  
+    # [{final_score: , eco:, pathy_by:, inter_by:{}, SMILES:[], Nmaes: [], dH:[]}]
+    
     pathway_marker = list()
     pathway_num = 1
 
