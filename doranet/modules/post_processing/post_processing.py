@@ -688,8 +688,9 @@ def pathway_finder(
         else:
             return 999  # not produced by starters (retro network)
 
-    work_list = deque()  
-    # [finished:1,dead end:2,to expand:0,[(mol,int),(mol,int)],rxn_idx1,rxn_idx2,...]
+    work_list = deque()
+    # [finished:1,dead end:2,to expand:0,
+    # [(mol,int),(mol,int)],rxn_idx1,rxn_idx2,...]
     work_list.append([0, [(target_smiles, 0)]])
     gen_limit = generation
 
@@ -853,10 +854,10 @@ def pathway_finder(
     print()
     print("time used:", "{:.2f}".format(elapsed_time), "seconds")
 
-    # remove duplicates due to rxn name differences in forward 
+    # remove duplicates due to rxn name differences in forward
     # and retro reaction rules, remove pathways with cycles
     if no_pathway is False:
-        pathways_list = list()  
+        pathways_list = list()
         # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[],Nmaes:[],dH:[]}]
         pathway_num = 1
         for path_list in to_save:
@@ -978,7 +979,7 @@ def pathway_finder(
 
         def SMILES_rm_keku(
             _SMILES
-        ):  # remove reaxys unsuported mols, 
+        ):  # remove reaxys unsuported mols,
             # kekulize mols, return a reaction SMILEs
             reas = _SMILES.split(">>")[0].split(".")
             pros = _SMILES.split(">>")[1].split(".")
@@ -1097,7 +1098,7 @@ class EnthalpyCalculator(
             )
         _enthalpy_f = Hf(item.uid)
         if _enthalpy_f is None:
-            # print("None Enthalpy returned by molecule:", item.uid)  
+            # print("None Enthalpy returned by molecule:", item.uid)
             # tell user which molecule is causing problems
             return float("nan")
         return _enthalpy_f
@@ -1401,7 +1402,7 @@ def pathway_ranking(
         if i != "\n":
             clean_list.append(i.strip())
 
-    pathways_list = list()  
+    pathways_list = list()
     # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[], Nmaes:[],dH:[]}]
     pathway_marker = list()
     # pathway_num = 1
@@ -1569,7 +1570,7 @@ def pathway_ranking(
                 reas = rxn.split(">")[0].split(".")
                 rea_stoi = eval(rxn.split(">")[2].split("$")[1])
                 pro_stoi = eval(rxn.split(">")[2].split("$")[2])
-                # if popkey in pros and rxn not in explored_rxns: 
+                # if popkey in pros and rxn not in explored_rxns:
                 # find a rxn that product the molecule
                 if popkey in pros:
                     # explored_rxns.add(rxn)
@@ -1890,7 +1891,7 @@ def pathway_ranking(
 
         def SMILES_rm_keku(
             _SMILES
-        ):  # remove reaxys unsuported mols, kekulize mols, 
+        ):  # remove reaxys unsuported mols, kekulize mols,
             # return a reaction SMILES
             reas = _SMILES.split(">")[0].split(".")
             pros = _SMILES.split(">")[3].split(".")
@@ -2222,8 +2223,8 @@ def create_page(
         "Strecker Sulfite Alkylation",
     }
 
-    known_rxn_set = {  # name of rxns we want to be colored even if 
-        # they're not in returned reaxys result, 
+    known_rxn_set = {  # name of rxns we want to be colored even if
+        # they're not in returned reaxys result,
         # should only apply to specific rxns
         "Nitrogen Dioxide Disproportionation",
         "Andrussow Process",
@@ -2388,7 +2389,7 @@ def create_page(
 
     pos = nx.nx_agraph.graphviz_layout(G2, prog="dot")
 
-    edge_color_list = []  # for coloring edges, 
+    edge_color_list = []  # for coloring edges,
     # black if not in reaxys, green if in reaxys
     for edge in G2.edges():
         if edge[0] in reaxys_rxn_nodes or edge[1] in reaxys_rxn_nodes:
@@ -2439,7 +2440,7 @@ def create_page(
     )
 
     # from networkx custom icon example
-    # Transform from data coordinates (scaled between 
+    # Transform from data coordinates (scaled between
     # xlim and ylim) to display coordinates
     tr_figure = ax.transData.transform
 
