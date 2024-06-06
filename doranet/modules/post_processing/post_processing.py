@@ -1510,7 +1510,8 @@ def pathway_ranking(
 
     def path_eco(
         _path
-    ):  # assuming no circular loops; if a middle rxn produces a starter or intermediat consumed in upstream, it's considered recycled;
+    ):  # assuming no circular loops; if a middle rxn produces a starter or intermediat 
+        # consumed in upstream, it's considered recycled;
         _path = list(_path)
         left_dict = dict()  # smiles: number of mol
         right_dict = dict()
