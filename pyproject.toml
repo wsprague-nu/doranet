@@ -21,6 +21,7 @@ classifiers = [
 license = {file = "LICENSE"}
 dependencies = [
     "ipython",
+    "matplotlib",
     "networkx",
     "numpy",
     "pandas",
