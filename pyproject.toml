@@ -46,14 +46,13 @@ lint = [
 test = [
     "pytest",
 ]
-dev = [
-    "doranet[doc,lint,test]",
-    "hatch",
-]
 profile = [
-    "doranet[dev]",
     "scalene",
     "snakeviz"
+]
+dev = [
+    "doranet[doc,lint,profile,test]",
+    "hatch",
 ]
 
 [project.urls]
