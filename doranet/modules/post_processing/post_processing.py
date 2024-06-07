@@ -695,12 +695,8 @@ def pathway_finder(
     gen_limit = generation
 
     keep_expanding_flag = True
-    print(
-        "searching for pathways."
-    )
-    print(
-        "if it is taking too long, try adjusting pruning parameters"
-    )
+    print("searching for pathways.")
+    print("if it is taking too long, try adjusting pruning parameters")
     print()
     no_pathway = False
     while keep_expanding_flag is True:
@@ -977,9 +973,7 @@ def pathway_finder(
 
         rxn_set = set()
 
-        def SMILES_rm_keku(
-            _SMILES
-        ):  # remove reaxys unsuported mols,
+        def SMILES_rm_keku(_SMILES):  # remove reaxys unsuported mols,
             # kekulize mols, return a reaction SMILEs
             reas = _SMILES.split(">>")[0].split(".")
             pros = _SMILES.split(">>")[1].split(".")
@@ -1502,7 +1496,7 @@ def pathway_ranking(
     eco_score_list = list()
 
     def path_eco(
-        _path
+        _path,
     ):  # assuming no circular loops; if a middle rxn produces a starter
         # or intermediat consumed in upstream, it's considered recycled;
         _path = list(_path)
@@ -1723,7 +1717,6 @@ def pathway_ranking(
                 if inter_mol not in helpers or inter_mol in just_starters:
                     Inter_soup_list.append((idx, inter_mol, mol_soup))
 
-
         with Pool(processes=num_process) as pool:
             results = [
                 pool.apply_async(Byproduct_index, args=(work[0], work[1]))
@@ -1890,7 +1883,7 @@ def pathway_ranking(
         reaxys_set = set(in_reaxys)
 
         def SMILES_rm_keku(
-            _SMILES
+            _SMILES,
         ):  # remove reaxys unsuported mols, kekulize mols,
             # return a reaction SMILES
             reas = _SMILES.split(">")[0].split(".")
@@ -2015,7 +2008,7 @@ def pathway_ranking(
     )
 
     def clean_rxn_strings(
-        _path
+        _path,
     ):  # for a path, return a list of clean rxn smiles, names, dH of each rxn
         clean_path = list()
         names = list()
@@ -2173,7 +2166,7 @@ def create_page(
         return img
 
     def SMILES_rm_keku(
-        _SMILES
+        _SMILES,
     ):  # remove reaxys unsuported mols, kekulize mols, return a reaction SMILES
         reas = _SMILES.split(">>")[0].split(".")
         pros = _SMILES.split(">>")[1].split(".")

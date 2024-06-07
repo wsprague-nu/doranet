@@ -10,27 +10,27 @@ class OperatorSmarts:
     smarts: str
     reactants_stoi: typing.Optional[tuple[int | float, ...]] = None
     products_stoi: typing.Optional[tuple[int | float, ...]] = None
-    enthalpy_correction: typing.Optional[
-        float
-    ] = None  # add a correction term for enthalpy filter
-    ring_issue: typing.Optional[
-        bool
-    ] = False  # if True, should check stoichiometry (including H) and connectivity (example: breaking 2 bonds and form a fragment, will have problem if the two fragments are connected by other parts. example2: cope rearrangements, C1 and C6 shouldn't connect, will have problem if they are) of reactants and products in a filter; ring issue could also cause RDkit error by breaking aromatic molecules, if a breaking group is directly on a aromatic molecule, consider use kekulize_flag as well (example Transesterification).
-    kekulize_flag: typing.Optional[
-        bool
-    ] = False  # if need to break aromatic bonds, use engine.op.rdkit(smarts, kekulize=True) to kekulize before running the SMARTS template matching
-    Retro_Not_Aromatic: typing.Optional[
-        bool
-    ] = False  # only useful in retro list. if true, the forward reaction don't apply to aromatic molecules; should check if number of aromatic rings increase to avoid producing aromatic molecules.
-    number_of_steps: typing.Optional[
-        int
-    ] = 1  # optional for multi-step rxn operators, may be useful for enthalpy filter
+    enthalpy_correction: typing.Optional[float] = (
+        None  # add a correction term for enthalpy filter
+    )
+    ring_issue: typing.Optional[bool] = (
+        False  # if True, should check stoichiometry (including H) and connectivity (example: breaking 2 bonds and form a fragment, will have problem if the two fragments are connected by other parts. example2: cope rearrangements, C1 and C6 shouldn't connect, will have problem if they are) of reactants and products in a filter; ring issue could also cause RDkit error by breaking aromatic molecules, if a breaking group is directly on a aromatic molecule, consider use kekulize_flag as well (example Transesterification).
+    )
+    kekulize_flag: typing.Optional[bool] = (
+        False  # if need to break aromatic bonds, use engine.op.rdkit(smarts, kekulize=True) to kekulize before running the SMARTS template matching
+    )
+    Retro_Not_Aromatic: typing.Optional[bool] = (
+        False  # only useful in retro list. if true, the forward reaction don't apply to aromatic molecules; should check if number of aromatic rings increase to avoid producing aromatic molecules.
+    )
+    number_of_steps: typing.Optional[int] = (
+        1  # optional for multi-step rxn operators, may be useful for enthalpy filter
+    )
     allowed_elements: typing.Optional[tuple[str, ...]] = (
         "All",
     )  # can be used to specify the allowed elements in the reactants, and use a filter during expansion to filter out reactions if reactants contain other elements. For example, allowed_elements = ("C", "H") means this operator is intended only for hydrocarbons
-    reaction_type: typing.Optional[
-        str
-    ] = "Catalytic"  # Catalytic for chemical reactions. the other option is Enzymatic, for bio rxn rules
+    reaction_type: typing.Optional[str] = (
+        "Catalytic"  # Catalytic for chemical reactions. the other option is Enzymatic, for bio rxn rules
+    )
 
 
 op_retro_smarts = (
