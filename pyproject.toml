@@ -47,7 +47,8 @@ test = [
     "pytest",
 ]
 dev = [
-    "doranet[doc,lint,test]"
+    "doranet[doc,lint,test]",
+    "hatch",
 ]
 profile = [
     "doranet[dev]",
