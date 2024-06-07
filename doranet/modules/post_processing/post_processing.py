@@ -1149,7 +1149,8 @@ class MaxEnthalpyFilter(metadata.ReactionFilterBase):
 class Ring_Issues_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if (
-            recipe.operator.meta["ring_issue"] is True
+            recipe.operator.meta is not None
+            and recipe.operator.meta["ring_issue"] is True
             and recipe.operator.meta["enthalpy_correction"] is None
         ):
             reactants_dict = dict()
