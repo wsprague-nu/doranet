@@ -1184,8 +1184,8 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
-                    element, count = match
-                    count = int(count) if count else 1
+                    element, count_s = match
+                    count = int(count_s) if count_s else 1
                     products_dict[element] = (
                         products_dict.get(element, 0)
                         + count * recipe.operator.meta["products_stoi"][idx]
