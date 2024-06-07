@@ -1153,8 +1153,8 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
             and recipe.operator.meta["ring_issue"] is True
             and recipe.operator.meta["enthalpy_correction"] is None
         ):
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, int | float] = dict()
+            products_dict: dict[str, int | float] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
                 if not isinstance(mol.item, dn.interfaces.MolDatRDKit):
@@ -1163,10 +1163,10 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                             {type(mol.item)}"""
                     )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
-                matches = re.findall(pattern, smiles)
+                matches: list[tuple[str, str]] = re.findall(pattern, smiles)
                 for match in matches:
-                    element, count = match
-                    count = int(count) if count else 1
+                    element, count_s = match
+                    count = int(count_s) if count_s else 1
                     reactants_dict[element] = (
                         reactants_dict.get(element, 0)
                         + count * recipe.operator.meta["reactants_stoi"][idx]
