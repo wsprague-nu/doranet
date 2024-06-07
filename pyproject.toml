@@ -21,6 +21,8 @@ classifiers = [
 license = {file = "LICENSE"}
 dependencies = [
     "ipython",
+    "matplotlib",
+    "networkx",
     "numpy",
     "pandas",
     "pillow",
@@ -61,14 +63,17 @@ Issues = "https://github.com/wsprague-nu/doranet/issues"
 module = [
     "rdkit.*",
     "PIL.*",
-    "IPython.*"
+    "IPython.*",
+    "networkx.*",
+    "pgthermo.*",
+    "PyPDF2.*",
 ]
 ignore_missing_imports = true
 
 [tool.ruff]
 extend-include = ["*.ipynb"]
-line-length = 80
 indent-width = 4
+line-length = 80
 target-version = "py310"
 
 [tool.ruff.format]
@@ -79,6 +84,9 @@ quote-style = "double"
 [tool.ruff.lint]
 select = ["B", "D", "E", "F", "I", "PL", "SIM", "W"]
 ignore = ["D101","D102","D103","D105","PLR0911","PLR0912","PLR0913","PLR0915"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/modules/synthetic/{Reaction_Smarts_Forward.py,Reaction_Smarts_Retro.py}" = ["E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

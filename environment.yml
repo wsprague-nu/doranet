@@ -6,3 +6,7 @@ dependencies:
  - pillow
  - python>=3.9
  - rdkit
+ - pypdf2=2.11.1
+ - pygraphviz
+ - matplotlib
+ - networkx
