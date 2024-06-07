@@ -2868,3 +2868,23 @@ class MetaDataUpdate(typing.Protocol):
         None,
         None,
     ]: ...
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class Pathway:
+    mols: frozenset[MolIndex]
+    rxns: frozenset[Reaction]
+    roots: frozenset[MolIndex]
+    termini: frozenset[MolIndex]
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class PathwayRanked(typing.Generic[T]):
+    pathway: Pathway
+    rank_info: T
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class MetaStruct(typing.Generic[T]):
+    data: T
+    meta: collections.abc.Mapping

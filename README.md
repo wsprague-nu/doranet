@@ -64,9 +64,11 @@ The aforementioned programs possess some weaknesses in terms of a lack of transf
 
 ### Built With
 
-- [Anaconda](https://www.anaconda.com/)
 - [Git](https://git-scm.com/)
 - [GitHub](https://github.com/)
+- [Numpy](https://numpy.org/)
+- [Pandas](https://pandas.pydata.org/)
+- [PyPI](https://pypi.org/)
 - [Python](https://www.python.org/)
 - [RDKit](https://rdkit.org/)
 - [Visual Studio Code](https://code.visualstudio.com/)
@@ -81,50 +83,16 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-You will need access to the Python package rdkit. The recommended way to install rdkit is via the Anaconda package/environment manager (Nix flake coming soon!). If you do not have Anaconda on your computer, install [Miniconda](https://docs.conda.io/en/latest/miniconda.html) which contains a minimal Anaconda package manager.
+You will need to the `pip` package manager to install DORAnet, either in a virtual environment (recommended) or in your system installation.  Virtual environments can be generated using [venv](https://docs.python.org/3/library/venv.html), [Anaconda](https://www.anaconda.com/), or a package manager of your choice.
 
 ### Installation
 
-1. Activate Anaconda in a terminal (CMD/bash/etc.) using the methods provided in their documentation.
-2. Navigate to the folder where you want to download pickaxe-generic using cd. Example below.
-   ```sh
-   cd $USERPROFILE/GitHub-Repos
-   ```
-3. Clone the repo using the command below. If using Windows, use Git Bash for this step only (an alternate terminal which comes with [Git](https://git-scm.com/)). Enter your GitHub credentials for the account which has been granted permissions to access the repo. You may need a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#using-a-token-on-the-command-line).
-   ```sh
-   git clone https://github.com/wsprague-nu/doranet.git
-   ```
-4. Enter the doranet/ folder in the Anaconda terminal.
-   ```sh
-   cd doranet
-   ```
-5. Create the rdkit/pickaxe environment using the guidelines below:
-
-   - If developing new code, environment-dev.yml is recommended.
-   - If using MINE-Database version of Pickaxe, environment-compat.yml is recommended.
-   - If using only DORAnet, environment.yml is recommended.
-
-   Command to create new environment (replace env.yml with your chosen environment file)
-
-   ```sh
-   conda env create -f env.yml
-   ```
-
-   Existing environment (replace env.yml with your chosen environment file, and env-name with the existing environment name)
-
-   ```sh
-   conda env update -n env-name -f env.yml --prune
-   ```
-
-6. Activate the environment you installed rdkit into (replace env-name with your chosen environment name). If a fresh environment was installed, the default environment name should be displayed on the screen.
-   ```sh
-   conda activate env-name
-   ```
-7. Install doranet using pip. Use a -e flag after "install" if you want your installation to update automatically when changing the files in this folder (recommended). Otherwise, simply use the command below.
-   ```sh
-   python -m pip install .
-   ```
-8. When running a Python program requiring doranet, make sure you first open your terminal and activate the relevant environment using the command from Step 6.
+1. Activate a virtual environment in a terminal (CMD/bash/etc.) using the methods provided in their documentation.  Make sure that `python` and `pip` are installed.
+2. Install DORAnet using `pip`.
+  ```sh
+  pip install doranet
+  ```
+3. The program is now installed!  If this is your first time, please proceed to the [Tutorial](./doc/source/tutorials/1-introduction.md)  When running a Python program requiring doranet, make sure you first open your terminal and activate the relevant environment using the command from Step 2.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

@@ -33,3 +33,7 @@ dependencies:
  - sphinx_rtd_theme
  - sqlalchemy
  - tox
+ - pypdf2=2.11.1
+ - pygraphviz
+ - matplotlib
+ - networkx
