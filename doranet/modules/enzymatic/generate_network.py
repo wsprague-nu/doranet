@@ -7,22 +7,11 @@ from doranet import metadata, interfaces
 import collections.abc
 import time
 from datetime import datetime
-#import os
 import pandas as pd
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdmolops import GetFormalCharge
 from rdkit.Chem import AllChem
 from pathlib import Path
-
-# reduced starters to shorten time
-#job_name = os.path.basename(__file__).removesuffix('.py')  
-#print(f"Job Name: {job_name}")    
-
-         
-#my_start = "O=O"          # Starting molecule SMILES; 
-#my_start_name = "Pentanediol"        # Name for saved file                       
-#my_num_gens = 1                 # number of generations
-
 
 def clean_SMILES(smiles):
     mol = Chem.MolFromSmiles(smiles)
@@ -73,7 +62,8 @@ cofactors = pd.read_csv(cofactors_path, sep='\t')
 cofactors_dict = dict()  # {"NAD_Cof": SMILES,}
 cofactors_set = set()    # { SMILES,}
 for idx, x in enumerate(cofactors["SMILES"]):    
-    cofactors_dict[cofactors["#ID"][idx]] = Chem.MolToSmiles(Chem.MolFromSmiles(x))
+    cofactors_dict[cofactors["#ID"][idx]] = Chem.MolToSmiles(
+        Chem.MolFromSmiles(x))
     cofactors_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(x)))
 
 cofactors_clean_dict = dict()
@@ -81,8 +71,6 @@ cofactors_clean = set()
 for idx, x in enumerate(cofactors["SMILES"]):    
     cofactors_clean_dict[cofactors["#ID"][idx]] = clean_SMILES(x)
     cofactors_clean.add(clean_SMILES(x))
-
-
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -110,13 +98,11 @@ class SMILESCalculator(metadata.MolPropertyCalc[float]):
             return None
         return item.smiles
 
-
 @typing.final
 @dataclasses.dataclass(frozen=True)
 class Reaction_Type_Filter(interfaces.RecipeFilter):
     # used for bio rxns, check reactants
     Allow_multi_reactants: bool
-    
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:        
         
         if not self.Allow_multi_reactants:
@@ -128,30 +114,37 @@ class Reaction_Type_Filter(interfaces.RecipeFilter):
             if len(reas) != 1:
                 # only allow A + cofactor or A + A
                 return False   
-               
         reas_type = recipe.operator.meta['Reactants'].split(";")
         for idx, mol in enumerate(recipe.reactants):
             # check if reactant type is correct
             SMILES = mol.meta["SMILES"]            
-            if reas_type[idx] == "Any" and clean_SMILES(SMILES) in cofactors_clean:
+            if (reas_type[idx] == "Any" 
+                and clean_SMILES(SMILES) in cofactors_clean):
                 return False
-            if reas_type[idx] != "Any" and clean_SMILES(SMILES) != cofactors_clean_dict[reas_type[idx]]:
+            if (reas_type[idx] != "Any" 
+                and clean_SMILES(SMILES) 
+                != cofactors_clean_dict[reas_type[idx]]):
                 return False            
         return True
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(operator_keys={"Reactants", "SMARTS"}, molecule_keys ={"SMILES"})    
+        return interfaces.MetaKeyPacket(
+            operator_keys={"Reactants", "SMARTS"}, molecule_keys ={"SMILES"})    
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
 class Product_Filter(metadata.ReactionFilterBase):
-    # used for bio rxns, check if product type is correct. Filter out radicals and fragments
+    # used for bio rxns, check if product type is correct. 
+    # Filter out radicals and fragments
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         pros_type = recipe.operator.meta['Products'].split(";")
         for idx, mol in enumerate(recipe.products):
-            if pros_type[idx] != "Any" and clean_SMILES(mol.item.smiles) != cofactors_clean_dict[pros_type[idx]]:                
+            if (pros_type[idx] != "Any" 
+                and clean_SMILES(mol.item.smiles) 
+                != cofactors_clean_dict[pros_type[idx]]):                
                 return False              
-            if Descriptors.NumRadicalElectrons(Chem.MolFromSmiles(mol.item.smiles)) != 0:
+            if Descriptors.NumRadicalElectrons(
+                    Chem.MolFromSmiles(mol.item.smiles)) != 0:
                 return False  
             if '.' in mol.item.smiles:
                 return False
@@ -179,7 +172,8 @@ class Check_balance_filter(metadata.ReactionFilterBase):
                 for match in matches:
                     element, count = match        
                     count = int(count) if count else 1
-                    reactants_dict[element] = reactants_dict.get(element, 0) + count  
+                    reactants_dict[element] = (reactants_dict.get(element, 0) 
+                                               + count)
             for idx, mol in enumerate(recipe.products):
                 charge_diff -= GetFormalCharge(mol.item.rdkitmol)
                 smiles = CalcMolFormula(mol.item.rdkitmol)
@@ -187,7 +181,8 @@ class Check_balance_filter(metadata.ReactionFilterBase):
                 for match in matches:
                     element, count = match        
                     count = int(count) if count else 1
-                    products_dict[element] = products_dict.get(element, 0) + count  
+                    products_dict[element] = (products_dict.get(element, 0) 
+                                              + count)
             if charge_diff:
                 if 'H' in reactants_dict:
                     reactants_dict['H'] = reactants_dict['H'] - charge_diff                                 
@@ -196,7 +191,12 @@ class Check_balance_filter(metadata.ReactionFilterBase):
         return True 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(operator_keys={'reactants_stoi',"products_stoi","ring_issue","enthalpy_correction","name"}) 
+        return interfaces.MetaKeyPacket(
+            operator_keys={
+                'reactants_stoi',
+                "products_stoi",
+                "ring_issue",
+                "enthalpy_correction","name"}) 
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -284,7 +284,8 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
                 Chem.rdmolops.RemoveStereochemistry(rdkit_mol)
                 if Chem.MolToSmiles(rdkit_mol) not in self.cofactors:                
                     atom_query = rdqueries.AtomNumEqualsQueryAtom(atom_number)    
-                    atom_matches = mol.item.rdkitmol.GetAtomsMatchingQuery(atom_query)    
+                    atom_matches = mol.item.rdkitmol.GetAtomsMatchingQuery(
+                        atom_query)    
                     if len(atom_matches) > max_atoms:    
                         return False
         return True 
@@ -296,15 +297,19 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
 def generate_network(
         job_name = "default_job",
         starters = {},
-        #helpers = {},
         gen = 1,
         direction = "forward",
         rxn_thermo_calculator = None,    
         max_rxn_thermo_change = 15,
         max_atoms = {"C": 20},
         allow_multiple_reactants = False,
+        targets = None, # string or list, set, etc. 
+        excluded_cofactors = ("CARBONYL_CoF", "AMINO_CoF"),
         ):
     
+    if not starters:
+        raise Exception("At least one starter is needed to generate a network")
+        
     print(f"Job Name: {job_name}") 
     print("Job Started On:", datetime.now())
     start_time = time.time() 
@@ -313,38 +318,53 @@ def generate_network(
     network = engine.new_network()
         
     for key in cofactors_dict: 
-        # add cofactors to network, they're like helpers in chem expansion
-        network.add_mol(engine.mol.rdkit(cofactors_dict[key]),
-                        meta = {"SMILES": Chem.MolToSmiles(Chem.MolFromSmiles(cofactors_dict[key]))})
+        if excluded_cofactors is None or key not in excluded_cofactors:
+            # add cofactors to network, they're like helpers in chem expansion
+            network.add_mol(engine.mol.rdkit(cofactors_dict[key]),
+                            meta = {
+                                "SMILES": Chem.MolToSmiles(
+                                    Chem.MolFromSmiles(cofactors_dict[key]))})
 
     my_start_i = -1
     for smiles in starters:
         if my_start_i == -1:
             my_start_i = network.add_mol(engine.mol.rdkit(smiles),
-                                         meta = {"SMILES": Chem.MolToSmiles(Chem.MolFromSmiles(smiles))})
+                                         meta = {
+                                             "SMILES": Chem.MolToSmiles(
+                                                 Chem.MolFromSmiles(smiles))})
         else:
             network.add_mol(engine.mol.rdkit(smiles), 
-                            meta = {"SMILES": Chem.MolToSmiles(Chem.MolFromSmiles(smiles))}
-                            )    
-            
+                            meta = {
+                                "SMILES": Chem.MolToSmiles(
+                                    Chem.MolFromSmiles(smiles))})    
 
-    #num_op = 0
-    
-    for idx, x in enumerate(bio_rules["SMARTS"]):        
-        #num_op += 1
-        network.add_op(engine.op.rdkit(x, kekulize = False, drop_errors = True,),
-                       meta={"name": bio_rules["Name"][idx],
-                             "Reactants": bio_rules["Reactants"][idx],
-                             "Products" : bio_rules["Products"][idx],
-                             "Comments": bio_rules["Comments"][idx], 
-                             "SMARTS": x,
-                             "reactants_stoi": (1,) * len(x.split(">>")[0].split(".")),
-                             "products_stoi": (1,) * len(x.split(">>")[1].split(".")),
-                             "enthalpy_correction": 0,   
-                             "Reaction_type": "Enzymatic",
-                             "Reaction_direction": direction,
-                             }
-                       )
+    for idx, x in enumerate(bio_rules["SMARTS"]):
+        reas_types = bio_rules["Reactants"][idx].split(";")
+        pros_types = bio_rules["Products"][idx].split(";")
+        
+        if (excluded_cofactors is None or 
+            (not set(excluded_cofactors) & set(reas_types) 
+             and not set(excluded_cofactors) & set(pros_types))
+                ):
+            
+            network.add_op(engine.op.rdkit(x, 
+                                           kekulize = False, 
+                                           drop_errors = True,),
+                           meta={
+                               "name": bio_rules["Name"][idx],
+                               "Reactants": bio_rules["Reactants"][idx],
+                               "Products" : bio_rules["Products"][idx],
+                               "Comments": bio_rules["Comments"][idx], 
+                               "SMARTS": x,
+                               "reactants_stoi": (1,) * len(
+                                   x.split(">>")[0].split(".")),
+                               "products_stoi": (1,) * len(
+                                   x.split(">>")[1].split(".")),
+                               "enthalpy_correction": 0,   
+                               "Reaction_type": "Enzymatic",
+                               "Reaction_direction": direction,
+                                 }
+                           )
        
     strat = engine.strat.cartesian(network)    
     
@@ -355,15 +375,21 @@ def generate_network(
     else:
         max_atoms_dict_num = dict()
         for key in max_atoms:
-            max_atoms_dict_num[periodic_table.GetAtomicNumber(key)] = max_atoms[key]
-    
-    
+            max_atoms_dict_num[
+                periodic_table.GetAtomicNumber(key)] = max_atoms[key]
     
     SMILES_Cal = SMILESCalculator("SMILES")
     Product_check = Product_Filter()
-    coreactants_filter = engine.filter.bundle.coreactants(tuple(range(my_start_i)))
+    coreactants_filter = engine.filter.bundle.coreactants(
+        tuple(range(my_start_i)))
     
-    reaction_plan = Max_Atoms_Filter(max_atoms_dict_num, cofactors_clean) >> SMILES_Cal >> Product_check >> Check_balance_filter() >> Chem_Rxn_dH_Calculator("dH", direction, rxn_thermo_calculator) >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
+    reaction_plan = (
+        Max_Atoms_Filter(max_atoms_dict_num, cofactors_clean) 
+        >> SMILES_Cal 
+        >> Product_check 
+        >> Check_balance_filter() 
+        >> Chem_Rxn_dH_Calculator("dH", direction, rxn_thermo_calculator) 
+        >> Rxn_dH_Filter(max_rxn_thermo_change, "dH"))
 
     Type_Filter = Reaction_Type_Filter(allow_multiple_reactants)
     ini_number = len(network.mols)
@@ -375,36 +401,32 @@ def generate_network(
                  save_unreactive = False
                  )
     
-    #end_number= 0    
-    #new_molecules_set = set()
-    
-    
-    #for mol in network.mols:        
-        #if network.reactivity[network.mols.i(mol.uid)] is True:            
-            #if mol.uid not in cofactors_set and neutralise_charges(clean_SMILES(mol.uid)) != Chem.MolToSmiles(Chem.MolFromSmiles(my_start)):
-                #print(mol.uid)
-                #new_molecules_set.add(neutralise_charges(clean_SMILES(mol.uid)))                   # get new product molecules
-            #end_number += 1
+    if targets is not None:
+        print("Checking for targets")
+        to_check = set()
+        if isinstance(targets, str):
+            to_check.add(clean_SMILES(targets))
+        else:
+            for i in targets:
+                to_check.add(clean_SMILES(i))
 
-    
-    print("number of generations:", gen)
-    print("number of operators loaded:", len(network.ops))
-    print("number of molecules before expantion (including cofactors):", ini_number)
-    print("number of molecules after expantion (including cofactors):", len(network.mols))
-    print("number of reactions:", len(network.rxns))
-    #print("number of new molecules: ", len(new_molecules_set))
+        for mol in network.mols:        
+            if network.reactivity[network.mols.i(mol.uid)] is True:
+                if clean_SMILES(mol.uid) in to_check:
+                    print("Target found for", mol.uid)
 
+    print("Number of generations:", gen)
+    print("Number of operators loaded:", len(network.ops))
+    print("Number of molecules before expantion (including cofactors):", 
+          ini_number)
+    print("Number of molecules after expantion (including cofactors):", 
+          len(network.mols))
+    print("Number of reactions:", len(network.rxns))
 
     end_time = time.time()          
     elapsed_time = (end_time - start_time)/60
     print("time used:", "{:.2f}".format(elapsed_time), "minutes") 
     
-    # new_molecules_set = list(new_molecules_set)
-    # new_molecules_set.sort()
-    # with open(f'{my_start_name}_{my_num_gens}gen_new_molecules.json', 'w', encoding = 'utf-8') as convert_file:  # save new molecules in json file
-    #     convert_file.write(json.dumps(new_molecules_set))
-        
     network.save_to_file(f"{job_name}_saved_network")
-    
     
     return network

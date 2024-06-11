@@ -12,7 +12,6 @@ import re
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 from doranet import interfaces, metadata
 
-
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
 class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
@@ -56,7 +55,10 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
         return round(dH, 4)
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(operator_keys={'reactants_stoi',"products_stoi","enthalpy_correction","number_of_steps"})
+        return interfaces.MetaKeyPacket(operator_keys={'reactants_stoi',
+                                                       "products_stoi",
+                                                       "enthalpy_correction",
+                                                       "number_of_steps"})
     
 @typing.final
 @dataclasses.dataclass(frozen=True)
@@ -85,7 +87,8 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
 @dataclasses.dataclass(frozen=True)
 class Ring_Issues_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:        
-        if recipe.operator.meta['ring_issue'] is True and recipe.operator.meta['enthalpy_correction'] is None:
+        if (recipe.operator.meta['ring_issue'] is True 
+            and recipe.operator.meta['enthalpy_correction'] is None):
             reactants_dict = dict()
             products_dict = dict()
             pattern = r'([A-Z][a-z]*)(\d*)'                        
@@ -95,22 +98,32 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                 for match in matches:
                     element, count = match        
                     count = int(count) if count else 1
-                    reactants_dict[element] = reactants_dict.get(element, 0) + count * recipe.operator.meta['reactants_stoi'][idx]                                                                
+                    reactants_dict[element] = (
+                        reactants_dict.get(element, 0) 
+                        + count * recipe.operator.meta['reactants_stoi'][idx])                                                                
             for idx, mol in enumerate(recipe.products):
-                if "." in mol.item.uid:              # if there're fragments in a mol, indicates invalid rxn
+                if "." in mol.item.uid:
+                    # if there're fragments in a mol, indicates invalid rxn
                     return False
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
                     element, count = match        
                     count = int(count) if count else 1
-                    products_dict[element] = products_dict.get(element, 0) + count * recipe.operator.meta['products_stoi'][idx]                                
+                    products_dict[element] = (
+                        products_dict.get(element, 0) + 
+                        count * recipe.operator.meta['products_stoi'][idx])                                
             if reactants_dict != products_dict:
                 return False       
         return True 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(operator_keys={'reactants_stoi',"products_stoi","ring_issue","enthalpy_correction"})
+        return interfaces.MetaKeyPacket(
+            operator_keys={
+                'reactants_stoi',
+                "products_stoi",
+                "ring_issue",
+                "enthalpy_correction"})
     
 @typing.final
 @dataclasses.dataclass(frozen=True)
@@ -120,21 +133,30 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
         pro_aro_ring_num = 0                   
         if recipe.operator.meta['Retro_Not_Aromatic'] is True:                      
             for idx, mol in enumerate(recipe.reactants):
-                rea_aro_ring_num += Chem.rdMolDescriptors.CalcNumAromaticRings(mol.item.rdkitmol) * recipe.operator.meta['reactants_stoi'][idx]          
+                rea_aro_ring_num += (
+                    Chem.rdMolDescriptors.CalcNumAromaticRings(mol.item.rdkitmol)
+                    * recipe.operator.meta['reactants_stoi'][idx])
             for idx, mol in enumerate(recipe.products):
-                pro_aro_ring_num += Chem.rdMolDescriptors.CalcNumAromaticRings(mol.item.rdkitmol) * recipe.operator.meta['products_stoi'][idx] 
+                pro_aro_ring_num += (
+                    Chem.rdMolDescriptors.CalcNumAromaticRings(mol.item.rdkitmol)
+                    * recipe.operator.meta['products_stoi'][idx]) 
             if rea_aro_ring_num < pro_aro_ring_num:
                 return False                              
         return True 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(operator_keys={'reactants_stoi',"products_stoi","Retro_Not_Aromatic"})
+        return interfaces.MetaKeyPacket(
+            operator_keys={
+                'reactants_stoi',
+                "products_stoi",
+                "Retro_Not_Aromatic"})
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
 class Check_balance_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:        
-        if recipe.operator.meta['enthalpy_correction'] is None and recipe.operator.meta['ring_issue'] is False: 
+        if (recipe.operator.meta['enthalpy_correction'] is None 
+            and recipe.operator.meta['ring_issue'] is False):
             reactants_dict = dict()
             products_dict = dict()
             pattern = r'([A-Z][a-z]*)(\d*)'                        
@@ -144,24 +166,35 @@ class Check_balance_filter(metadata.ReactionFilterBase):
                 for match in matches:
                     element, count = match        
                     count = int(count) if count else 1
-                    reactants_dict[element] = reactants_dict.get(element, 0) + count * recipe.operator.meta['reactants_stoi'][idx]                                                                
+                    reactants_dict[element] = (
+                        reactants_dict.get(element, 0) 
+                        + count * recipe.operator.meta['reactants_stoi'][idx])                                                                
             for idx, mol in enumerate(recipe.products):
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
                     element, count = match        
                     count = int(count) if count else 1
-                    products_dict[element] = products_dict.get(element, 0) + count * recipe.operator.meta['products_stoi'][idx]                                
+                    products_dict[element] = (
+                        products_dict.get(element, 0) 
+                        + count * recipe.operator.meta['products_stoi'][idx])                                
             if reactants_dict != products_dict:
                 return False       
         return True 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(operator_keys={'reactants_stoi',"products_stoi","ring_issue","enthalpy_correction","name"}) 
+        return interfaces.MetaKeyPacket(
+            operator_keys={
+                'reactants_stoi',
+                "products_stoi",
+                "ring_issue",
+                "enthalpy_correction",
+                "name"}) 
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
-class Cross_Reaction_Filter(interfaces.RecipeFilter):   # no rea1 + rea2 or pure helper rxns. rea1 + rea1 or rea1 + helper ok
+class Cross_Reaction_Filter(interfaces.RecipeFilter):   
+    # no rea1 + rea2 or pure helper rxns. rea1 + rea1 or rea1 + helper ok
     __slots__ = "coreactants"
     coreactants: collections.abc.Container[interfaces.MolIndex]
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
@@ -180,10 +213,15 @@ class Cross_Reaction_Filter(interfaces.RecipeFilter):   # no rea1 + rea2 or pure
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
-class Enol_filter_forward(metadata.ReactionFilterBase):   # if an enol is in reactants, only allow tautomerization rxn
+class Enol_filter_forward(metadata.ReactionFilterBase):   
+    # if an enol is in reactants, only allow tautomerization rxn
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:  
         for mol in recipe.reactants:
-            if mol.item.rdkitmol.HasSubstructMatch(Chem.MolFromSmarts('[C]=[C]-[OH]')) and recipe.operator.meta['name'] != "Keto-enol Tautomerization Reverse":
+            if (
+                    mol.item.rdkitmol.HasSubstructMatch(
+                        Chem.MolFromSmarts('[C]=[C]-[OH]')) 
+                    and (recipe.operator.meta['name'] != 
+                         "Keto-enol Tautomerization Reverse")):
                 return False
         return True 
     @property
@@ -192,10 +230,15 @@ class Enol_filter_forward(metadata.ReactionFilterBase):   # if an enol is in rea
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
-class Enol_filter_retro(metadata.ReactionFilterBase):   # if an enol is in reactants, only allow tautomerization rxn
+class Enol_filter_retro(metadata.ReactionFilterBase):  
+    # if an enol is in reactants, only allow tautomerization rxn
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:  
         for mol in recipe.products:
-            if mol.item.rdkitmol.HasSubstructMatch(Chem.MolFromSmarts('[C]=[C]-[OH]')) and recipe.operator.meta['name'] != "Keto-enol Tautomerization Reverse":
+            if (
+                    mol.item.rdkitmol.HasSubstructMatch(
+                        Chem.MolFromSmarts('[C]=[C]-[OH]')) 
+                    and (recipe.operator.meta['name'] != 
+                         "Keto-enol Tautomerization Reverse")):
                 return False
         return True 
     @property
@@ -204,13 +247,16 @@ class Enol_filter_retro(metadata.ReactionFilterBase):   # if an enol is in react
 
 @typing.final
 @dataclasses.dataclass(frozen=True)
-class Allowed_Elements_Filter(metadata.ReactionFilterBase):   # only allow reactions with specified elements in reactants. does not check hydrogen
+class Allowed_Elements_Filter(metadata.ReactionFilterBase):   
+    # only allow reactions with specified elements in reactants. 
+    # does not check hydrogen
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:  
         if recipe.operator.meta['allowed_elements'][0] == "All":                
                 return True
         for mol in recipe.reactants:
             for atom in mol.item.rdkitmol.GetAtoms():
-                if atom.GetSymbol() not in recipe.operator.meta['allowed_elements']:
+                if (atom.GetSymbol() 
+                    not in recipe.operator.meta['allowed_elements']):
                     return False                       
         return True 
     @property
@@ -228,8 +274,8 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
             return True
         for atom_number, max_atoms in self.max_atoms_dict.items():            
             for mol in recipe.products:
-                atom_query = rdqueries.AtomNumEqualsQueryAtom(atom_number)    
-                atom_matches = mol.item.rdkitmol.GetAtomsMatchingQuery(atom_query)    
+                atom_q = rdqueries.AtomNumEqualsQueryAtom(atom_number)    
+                atom_matches = mol.item.rdkitmol.GetAtomsMatchingQuery(atom_q)    
                 if len(atom_matches) > max_atoms:    
                     return False
         return True 
@@ -246,10 +292,13 @@ def generate_network(
         direction = "forward",
         molecule_thermo_calculator = None,    
         max_rxn_thermo_change = 15,
-        max_atoms = {"C": 20}
+        max_atoms = {"C": 20},
+        allow_multiple_reactants = "default", # forward allowed, retro no 
+        targets = None, # string or list, set, etc. 
         ):  
     
-
+    if not starters:
+        raise Exception("At least one starter is needed to generate a network")
     
     print(f"Job Name: {job_name}")
     print("Job Started On:", datetime.now())
@@ -306,27 +355,55 @@ def generate_network(
                                  }
                            )    
             
-       
+
     strat = engine.strat.cartesian(network)
-    
+
     periodic_table = Chem.GetPeriodicTable()
-        
+
     if max_atoms is None:
         max_atoms_dict_num = None
     else:
         max_atoms_dict_num = dict()
         for key in max_atoms:
-            max_atoms_dict_num[periodic_table.GetAtomicNumber(key)] = max_atoms[key]
-
-    
+            max_atoms_dict_num[
+                periodic_table.GetAtomicNumber(key)
+                ] = max_atoms[key]
+   
     if direction == "forward":
-        reaction_plan = Max_Atoms_Filter(max_atoms_dict_num) >> Ring_Issues_Filter() >> Enol_filter_forward() >> Check_balance_filter() >> Allowed_Elements_Filter() >> Chem_Rxn_dH_Calculator("dH", "forward", molecule_thermo_calculator) >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
+        reaction_plan = (
+            Max_Atoms_Filter(max_atoms_dict_num) 
+            >> Ring_Issues_Filter() 
+            >> Enol_filter_forward() 
+            >> Check_balance_filter() 
+            >> Allowed_Elements_Filter() 
+            >> Chem_Rxn_dH_Calculator(
+                "dH", 
+                "forward", 
+                molecule_thermo_calculator) 
+            >> Rxn_dH_Filter(max_rxn_thermo_change, "dH"))
         recipe_filter = None
     
     elif direction == "retro":
-        reaction_plan = Max_Atoms_Filter(max_atoms_dict_num) >> Ring_Issues_Filter() >> Retro_Not_Aromatic_Filter() >> Enol_filter_retro() >> Allowed_Elements_Filter() >> Check_balance_filter() >> Chem_Rxn_dH_Calculator("dH", "retro", molecule_thermo_calculator) >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
+        reaction_plan = (
+            Max_Atoms_Filter(max_atoms_dict_num) 
+            >> Ring_Issues_Filter() 
+            >> Retro_Not_Aromatic_Filter() 
+            >> Enol_filter_retro() 
+            >> Allowed_Elements_Filter() 
+            >> Check_balance_filter() 
+            >> Chem_Rxn_dH_Calculator(
+                "dH", 
+                "retro", 
+                molecule_thermo_calculator) 
+            >> Rxn_dH_Filter(max_rxn_thermo_change, "dH"))
         recipe_filter = Cross_Reaction_Filter(tuple(range(my_start_i)))
 
+    if allow_multiple_reactants != "default":
+        if allow_multiple_reactants is True:
+            recipe_filter = None
+        elif allow_multiple_reactants is False:
+            recipe_filter = Cross_Reaction_Filter(tuple(range(my_start_i)))
+        
     bundle_filter = engine.filter.bundle.coreactants(tuple(range(my_start_i)))
     
     ini_number = len(network.mols)
@@ -338,44 +415,32 @@ def generate_network(
                  save_unreactive = False
                  )
     
-    #end_number= 0
-    #target = engine.mol.rdkit(my_goal) 
-    close_match_list = []
-    #print("total molecule", len(network.mols))
-    #print("total rxn", len(network.rxns))
-    
-    #for mol in network.mols:        
-        #if network.reactivity[network.mols.i(mol.uid)] is True:
-            #end_number += 1
-            #if mol.uid == target.uid:
-                #print("target found")
-            #for smarts in my_goal_SMARTS:
-                #if mol.rdkitmol.HasSubstructMatch(Chem.MolFromSmarts(smarts)):
-                    #close_match_list.append(mol.uid)
-    if close_match_list:
-        print(len(close_match_list), "close matches")
-        for sm in close_match_list:
-            print(sm)
-       
-    print("number of generations:", gen)
-    print("number of operators:", len(smarts_list))
-    print("number of molecules before expantion:", ini_number)
-    print("number of molecules after expantion:", len(network.mols))
-    print("number of reactions:", len(network.rxns))
+    if targets is not None:
+        print("Checking for targets")
+        to_check = set()
+        if isinstance(targets, str):
+            to_check.add(Chem.MolToSmiles(Chem.MolFromSmiles(targets)))
+        else:
+            for i in targets:
+                to_check.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
+
+        for mol in network.mols:        
+            if network.reactivity[network.mols.i(mol.uid)] is True:
+                if mol.uid in to_check:
+                    print("Target found for", mol.uid)
+            
+    print("Number of generations:", gen)
+    print("Number of operators:", len(network.ops))
+    print("Number of molecules before expantion:", ini_number)
+    print("Number of molecules after expantion:", len(network.mols))
+    print("Number of reactions:", len(network.rxns))
     
     end_time = time.time()  
-           
     elapsed_time = (end_time - start_time)/60
-    #print()
-    print("time used:", "{:.2f}".format(elapsed_time), "minutes")         
+    print("Time used:", "{:.2f}".format(elapsed_time), "minutes")         
     
     network.save_to_file(f"{job_name}_saved_network")
-    
 
-    # network_loaded = engine.network_from_file(f"{job_name}_saved_network")    
-    # print("number of molecues in network_loaded", len(network_loaded.mols))
-    # print("number of reations in network_loaded", len(network_loaded.rxns))
-    
     return network
     
 
