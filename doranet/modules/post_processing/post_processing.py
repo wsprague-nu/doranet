@@ -2,49 +2,55 @@
 
 import collections.abc
 import copy
+import csv
 import dataclasses
 import io
 import json
 import math
+import re
 import textwrap
 import time
 import typing
 from collections import deque
 from collections.abc import Iterable
+from multiprocessing import Pool
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import networkx.exception as nxe
 import numpy as np
+import pandas as pd
 import rdkit.Chem.rdmolfiles
 import rdkit.Chem.rdmolops
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
+from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 import doranet as dn
 from doranet import interfaces, metadata
-
-try:
-    from pgthermo.properties import Hf
-except ImportError:
-    print("pgthermo not installed. All Hf will be 0")
-
-    def Hf(SMILES):
-        return 0
-
-
-import re
-from multiprocessing import Pool
-from pathlib import Path
-
-from rdkit.Chem.rdMolDescriptors import CalcMolFormula
-
 from doranet.modules.synthetic.Reaction_Smarts_Forward import op_smarts
 
-# post-processing for doranet network files
+bio_rules_path = (
+    Path(__file__).parent.parent / "enzymatic" / "JN3604IMT_rules.tsv"
+)
+cofactors_path = (
+    Path(__file__).parent.parent / "enzymatic" / "all_cofactors.tsv"
+)
+bio_rules = pd.read_csv(bio_rules_path, sep="\t")
+cofactors = pd.read_csv(cofactors_path, sep="\t")
+excluded_cofactors = (("CARBONYL_CoF", "AMINO_CoF"),)  # temporary
+bio_rxn_names = set()
+for i in bio_rules["Name"]:
+    bio_rxn_names.add(i)
+cofactors_set = set()
+for idx, i in enumerate(cofactors["SMILES"]):
+    if cofactors["#ID"][idx] not in excluded_cofactors:
+        cofactors_set.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
 
 reaxys_not_supported: Iterable[str] = (
+    # For best result reaxys query file shouldn't include these small molecules
     "O",
     "O=O",
     "[H][H]",
@@ -83,246 +89,324 @@ def clean_SMILES(smiles):
 
 
 def pretreat_networks(
-    total_generations,
-    starters,
-    helpers,
-    network_forward_name=False,
-    network_forward_obj=False,
-    network_retro_name=False,
-    network_retro_obj=False,
+    networks=None,
+    total_generations=1,
+    starters=None,
+    helpers=None,
     job_name="default_job_name",
-    remove_pure_helpers_rxns=True,
+    remove_pure_helpers_rxns=False,
     sanitize=True,
-    calculate_dH=True,
-    transform_enols_flag=True,
+    transform_enols_flag=False,
+    molecule_thermo_calculator=None,
 ):
     """
     Load pickaxe network files and unpack them into a json file.
 
-    Will remove rxn if it's between helpers
-    Will remove duplicates, remove unconnected rxns
+    Able to remove rxn if it's between helpers
+    Able to remove rxn if it cannot be reached from the starters
+    Will remove duplicates
 
     Parameters
     ----------
-                    network_forward_name: A string
-                    network_retro_name:  A string
+                    Place holder
 
     Returns
     -------
-                    Create a json file with reactions as strings
+                    Save a json file with reactions as strings
     """
+    if not starters:
+        raise Exception("At least one starter is needed")
+    if not networks:
+        raise Exception("At least one network is needed")
+
     engine = dn.create_engine()
-    print("Loading network files, it may take a while for large networks")
+    print(
+        "Loading network files, it may take a while if loading"
+        " large networks from file"
+    )
 
-    if network_forward_name:
-        print("loading network_forward file")
-        network_forward = engine.network_from_file(network_forward_name)
-        print(
-            "number of reations in network_forward", len(network_forward.rxns)
-        )
-    if network_forward_obj:
-        print("use network_forward from memory")
-        network_forward = network_forward_obj
-        print(
-            "number of reations in network_forward", len(network_forward.rxns)
-        )
+    network_objs = list()
 
-    if network_retro_name:
-        print("loading network_retro file")
-        network_retro = engine.network_from_file(network_retro_name)
-        print("number of reactions in network_retro:", len(network_retro.rxns))
-    if network_retro_obj:
-        print("use network_retro from memory")
-        network_retro = network_retro_obj
-        print("number of reactions in network_retro:", len(network_retro.rxns))
-
-    print("generating reaction strings")
-    whole_rxns_list = list()
-    H_dict = dict()  # save calculated Hf
-
-    def ngHCal(
-        _mol_num, network_name
-    ):  # calculate Hf of all moleclues in network
-        _smiles = network_name.mols[_mol_num].uid
-        if _smiles in H_dict:
-            return H_dict[_smiles]
+    for idx, n in enumerate(networks):
+        if isinstance(n, str):
+            print(f"Loading {n} from file")
+            new_net_obj = engine.network_from_file(n)
+            print(f"Number of reations in {n}:", len(new_net_obj.rxns))
         else:
-            _enthalpy_f = Hf(_smiles)
-            if _enthalpy_f is None:
-                print("Hf error", _smiles, _enthalpy_f)
-            H_dict[_smiles] = _enthalpy_f
-            return _enthalpy_f
+            print(f"Loading network {idx + 1} from memory")
+            new_net_obj = n
+            print(
+                f"Number of reations in network {idx + 1}:",
+                len(new_net_obj.rxns),
+            )
+        network_objs.append(new_net_obj)
 
-    def RxnHCal(
-        operatorNum, reas, pros, network_name, dirction, return_zero, rxn_type
-    ):  # calculate dH of all reactions in network and generate a string
-        if dirction == "f":
-            reactants_stoi = network_name.ops.meta(
-                operatorNum, keys=["reactants_stoi"]
-            )["reactants_stoi"]
-            products_stoi = network_name.ops.meta(
-                operatorNum, keys=["products_stoi"]
-            )["products_stoi"]
-        if dirction == "r":
-            reactants_stoi = network_name.ops.meta(
-                operatorNum, keys=["products_stoi"]
-            )["products_stoi"]
-            products_stoi = network_name.ops.meta(
-                operatorNum, keys=["reactants_stoi"]
-            )["reactants_stoi"]
-        Hcorr = network_name.ops.meta(
-            operatorNum, keys=["enthalpy_correction"]
-        )["enthalpy_correction"]
-        dH = 0.0
-        if rxn_type == "Enzymatic":
-            dH = -9999
-        elif rxn_type == "Catalytic" and not return_zero:
-            for idx, mol in enumerate(pros):
-                dH = dH + ngHCal(mol, network_name) * products_stoi[idx]
-            for idx, mol in enumerate(reas):
-                dH = dH - ngHCal(mol, network_name) * reactants_stoi[idx]
-            if Hcorr is not None:
-                dH = dH + Hcorr
-        dH = round(dH, 4)
-        return str(dH) + "$" + str(reactants_stoi) + "$" + str(products_stoi)
+    # if network_forward_name:
+    #     print("loading network_forward file")
+    #     network_forward = engine.network_from_file(network_forward_name)
+    #     print(
+    #        "number of reations in network_forward", len(network_forward.rxns)
+    #     )
+    # if network_forward_obj:
+    #     print("use network_forward from memory")
+    #     network_forward = network_forward_obj
+    #     print(
+    #        "number of reations in network_forward", len(network_forward.rxns)
+    #     )
 
-    if network_forward_name or network_forward_obj:
-        for rxn in network_forward.rxns:
+    # if network_retro_name:
+    #     print("loading network_retro file")
+    #     network_retro = engine.network_from_file(network_retro_name)
+    #    print("number of reactions in network_retro:", len(network_retro.rxns))
+    # if network_retro_obj:
+    #     print("use network_retro from memory")
+    #     network_retro = network_retro_obj
+    #    print("number of reactions in network_retro:", len(network_retro.rxns))
+
+    print("Networks loaded, now generating reaction strings")
+    whole_rxns_list = list()
+    # H_dict = dict()  # save calculated Hf
+
+    # def ngHCal(
+    #     _mol_num, network_name
+    # ):  # calculate Hf of all moleclues in network
+    #     _smiles = network_name.mols[_mol_num].uid
+    #     if _smiles in H_dict:
+    #         return H_dict[_smiles]
+    #     else:
+    #         _enthalpy_f = Hf(_smiles)
+    #         if _enthalpy_f is None:
+    #             print("Hf error", _smiles, _enthalpy_f)
+    #         H_dict[_smiles] = _enthalpy_f
+    #         return _enthalpy_f
+
+    # def RxnHCal(
+    #     operatorNum, reas, pros, network_name, dirction, return_zero, rxn_type
+    # ):  # calculate dH of all reactions in network and generate a string
+    # if dirction == "f":
+    #     reactants_stoi = network_name.ops.meta(
+    #         operatorNum, keys=["reactants_stoi"]
+    #     )["reactants_stoi"]
+    #     products_stoi = network_name.ops.meta(
+    #         operatorNum, keys=["products_stoi"]
+    #     )["products_stoi"]
+    # if dirction == "r":
+    #     reactants_stoi = network_name.ops.meta(
+    #         operatorNum, keys=["products_stoi"]
+    #     )["products_stoi"]
+    #     products_stoi = network_name.ops.meta(
+    #         operatorNum, keys=["reactants_stoi"]
+    #     )["reactants_stoi"]
+    # Hcorr = network_name.ops.meta(
+    #     operatorNum, keys=["enthalpy_correction"]
+    # )["enthalpy_correction"]
+    # dH = 0.0
+    # if rxn_type == "Enzymatic":
+    #     dH = -9999
+    # elif rxn_type == "Catalytic" and not return_zero:
+    #     for idx, mol in enumerate(pros):
+    #         dH = dH + ngHCal(mol, network_name) * products_stoi[idx]
+    #     for idx, mol in enumerate(reas):
+    #         dH = dH - ngHCal(mol, network_name) * reactants_stoi[idx]
+    #     if Hcorr is not None:
+    #         dH = dH + Hcorr
+    # dH = round(dH, 4)
+    # return str(dH) + "$" + str(reactants_stoi) + "$" + str(products_stoi)
+
+    # if network_forward_name or network_forward_obj:
+
+    has_bio_rxn_flag = False  # if true, should add cofactors to helpers
+    for n in network_objs:
+        for rxn in n.rxns:
             reactants = rxn.reactants
             products = rxn.products
             operator = rxn.operator
+            reaction = dn.interfaces.Reaction(operator, reactants, products)
+            reaction_i = n.rxns.i(reaction)
+            reaction_meta = n.rxns.meta(reaction_i)
+            thermo_value = reaction_meta["dH"]
+
+            reactants_stoi = n.ops.meta(operator, keys=["reactants_stoi"])[
+                "reactants_stoi"
+            ]
+            products_stoi = n.ops.meta(operator, keys=["products_stoi"])[
+                "products_stoi"
+            ]
+
+            rxn_type = n.ops.meta(operator, keys=["Reaction_type"])[
+                "Reaction_type"
+            ]
+
+            if has_bio_rxn_flag is False and rxn_type == "Enzymatic":
+                has_bio_rxn_flag = True
+
             if (
-                network_forward.ops.meta(operator, keys=["Reaction_type"])[
-                    "Reaction_type"
+                n.ops.meta(operator, keys=["Reaction_direction"])[
+                    "Reaction_direction"
                 ]
-                == "Enzymatic"
+                == "retro"
             ):
-                dH = RxnHCal(
-                    operator,
-                    reactants,
-                    products,
-                    network_forward,
-                    "f",
-                    False,
-                    "Enzymatic",
-                )
-            elif (
-                network_forward.ops.meta(operator, keys=["Reaction_type"])[
-                    "Reaction_type"
-                ]
-                == "Catalytic"
-            ):
-                if calculate_dH:
-                    dH = RxnHCal(
-                        operator,
-                        reactants,
-                        products,
-                        network_forward,
-                        "f",
-                        False,
-                        "Catalytic",
-                    )
-                else:
-                    dH = RxnHCal(
-                        operator,
-                        reactants,
-                        products,
-                        network_forward,
-                        "f",
-                        True,
-                        "Catalytic",
-                    )
+                correct_reas = products
+                correct_pros = reactants
+                correct_reactants_stoi = products_stoi
+                correct_products_stoi = reactants_stoi
+
+                reactants = correct_reas
+                products = correct_pros
+
+                reactants_stoi = correct_reactants_stoi
+                products_stoi = correct_products_stoi
+
+            # if (
+            #     network_forward.ops.meta(operator, keys=["Reaction_type"])[
+            #         "Reaction_type"
+            #     ]
+            #     == "Enzymatic"
+            # ):
+            #     dH = RxnHCal(
+            #         operator,
+            #         reactants,
+            #         products,
+            #         network_forward,
+            #         "f",
+            #         False,
+            #         "Enzymatic",
+            #     )
+            # elif (
+            #     network_forward.ops.meta(operator, keys=["Reaction_type"])[
+            #         "Reaction_type"
+            #     ]
+            #     == "Catalytic"
+            # ):
+            #     if calculate_thermo:
+            #         dH = RxnHCal(
+            #             operator,
+            #             reactants,
+            #             products,
+            #             network_forward,
+            #             "f",
+            #             False,
+            #             "Catalytic",
+            #         )
+            # else:
+            #     dH = RxnHCal(
+            #         operator,
+            #         reactants,
+            #         products,
+            #         network_forward,
+            #         "f",
+            #         True,
+            #         "Catalytic",
+            #     )
             rxn_string = str()
             for i in reactants:
-                rxn_string = rxn_string + network_forward.mols[i].uid + "."
+                rxn_string = rxn_string + n.mols[i].uid + "."
             rxn_string = rxn_string[:-1]
             rxn_string = (
                 rxn_string
                 + ">"
-                + network_forward.ops.meta(operator, keys=["name"])["name"]
+                + n.ops.meta(operator, keys=["name"])["name"]
                 + ">"
-                + str(dH)
+                + str(thermo_value)
+                + "$"
+                + str(reactants_stoi)
+                + "$"
+                + str(products_stoi)
+                + "$"
+                + rxn_type
                 + ">"
             )
             for i in products:
-                rxn_string = rxn_string + network_forward.mols[i].uid + "."
+                rxn_string = rxn_string + n.mols[i].uid + "."
             rxn_string = rxn_string[:-1]
             whole_rxns_list.append(rxn_string)
 
-    if network_retro_name or network_retro_obj:
-        for rxn in network_retro.rxns:
-            reactants = rxn.products
-            products = rxn.reactants
-            operator = rxn.operator
-            if (
-                network_retro.ops.meta(operator, keys=["Reaction_type"])[
-                    "Reaction_type"
-                ]
-                == "Enzymatic"
-            ):
-                dH = RxnHCal(
-                    operator,
-                    reactants,
-                    products,
-                    network_retro,
-                    "r",
-                    False,
-                    "Enzymatic",
-                )
-            elif (
-                network_retro.ops.meta(operator, keys=["Reaction_type"])[
-                    "Reaction_type"
-                ]
-                == "Catalytic"
-            ):
-                if calculate_dH:
-                    dH = RxnHCal(
-                        operator,
-                        reactants,
-                        products,
-                        network_retro,
-                        "r",
-                        False,
-                        "Catalytic",
-                    )
-                else:
-                    dH = RxnHCal(
-                        operator,
-                        reactants,
-                        products,
-                        network_retro,
-                        "r",
-                        True,
-                        "Catalytic",
-                    )
-            rxn_string = str()
-            for i in reactants:
-                rxn_string = rxn_string + network_retro.mols[i].uid + "."
-            rxn_string = rxn_string[:-1]
-            rxn_string = (
-                rxn_string
-                + ">"
-                + network_retro.ops.meta(operator, keys=["name"])["name"]
-                + ">"
-                + str(dH)
-                + ">"
-            )
-            for i in products:
-                rxn_string = rxn_string + network_retro.mols[i].uid + "."
-            rxn_string = rxn_string[:-1]
-            whole_rxns_list.append(rxn_string)
+    # if network_retro_name or network_retro_obj:
+    #     for rxn in network_retro.rxns:
+    #         reactants = rxn.products
+    #         products = rxn.reactants
+    #         operator = rxn.operator
+    #         if (
+    #             network_retro.ops.meta(operator, keys=["Reaction_type"])[
+    #                 "Reaction_type"
+    #             ]
+    #             == "Enzymatic"
+    #         ):
+    #             dH = RxnHCal(
+    #                 operator,
+    #                 reactants,
+    #                 products,
+    #                 network_retro,
+    #                 "r",
+    #                 False,
+    #                 "Enzymatic",
+    #             )
+    #         elif (
+    #             network_retro.ops.meta(operator, keys=["Reaction_type"])[
+    #                 "Reaction_type"
+    #             ]
+    #             == "Catalytic"
+    #         ):
+    #             if calculate_thermo:
+    #                 dH = RxnHCal(
+    #                     operator,
+    #                     reactants,
+    #                     products,
+    #                     network_retro,
+    #                     "r",
+    #                     False,
+    #                     "Catalytic",
+    #                 )
+    #             else:
+    #                 dH = RxnHCal(
+    #                     operator,
+    #                     reactants,
+    #                     products,
+    #                     network_retro,
+    #                     "r",
+    #                     True,
+    #                     "Catalytic",
+    #                 )
+    #         rxn_string = str()
+    #         for i in reactants:
+    #             rxn_string = rxn_string + network_retro.mols[i].uid + "."
+    #         rxn_string = rxn_string[:-1]
+    #         rxn_string = (
+    #             rxn_string
+    #             + ">"
+    #             + network_retro.ops.meta(operator, keys=["name"])["name"]
+    #             + ">"
+    #             + str(dH)
+    #             + ">"
+    #         )
+    #         for i in products:
+    #             rxn_string = rxn_string + network_retro.mols[i].uid + "."
+    #         rxn_string = rxn_string[:-1]
+    #         whole_rxns_list.append(rxn_string)
+
+    if helpers is None:
+        helpers = set()
+    helpers = set(helpers)
+    if has_bio_rxn_flag is True:
+        for i in cofactors["SMILES"]:
+            helpers.add(Chem.MolToSmiles(Chem.MolFromSmiles(i)))
 
     def transform_enols(input_rxn_string):
-        def smilesHfCal(smiles, return_Hf):
-            if return_Hf:
-                return Hf(smiles)
+        def smilesHfCal(smiles):
+            if molecule_thermo_calculator is not None:
+                return molecule_thermo_calculator(smiles)
             else:
                 return 0
 
         if input_rxn_string.split(">")[1] == "Keto-enol Tautomerization":
             return input_rxn_string
         to_return = ">".join(input_rxn_string.split(">")[:2]) + ">"
-        old_dH = float(input_rxn_string.split(">")[2].split("$")[0])
+
+        old_dH_str = input_rxn_string.split(">")[2].split("$")[0]
+        if old_dH_str == "No_Thermo":
+            old_dH = "No_Thermo"
+        else:
+            old_dH = float(input_rxn_string.split(">")[2].split("$")[0])
         stoi = "$" + "$".join(input_rxn_string.split(">")[2].split("$")[1:])
         pros = input_rxn_string.split(">")[3].split(".")
         patt_enol = rdkit.Chem.rdmolfiles.MolFromSmarts("[C]=[C]-[OH]")
@@ -342,22 +426,24 @@ def pretreat_networks(
                     products_sets[0][0]
                 )
                 if (
-                    smilesHfCal(new_smiles, calculate_dH) is not None
+                    smilesHfCal(new_smiles) is not None
                 ):  # new keto may not be supported by the enthalpy calculator
                     pros_string = pros_string + new_smiles + "."
-                    dH = (
-                        dH
-                        + smilesHfCal(new_smiles, calculate_dH)
-                        - smilesHfCal(pro, calculate_dH)
-                    )
+                    dH = dH + smilesHfCal(new_smiles) - smilesHfCal(pro)
                 else:
                     pros_string = pros_string + pro + "."
             else:
                 pros_string = pros_string + pro + "."
         pros_string = pros_string[:-1]
-        new_dH = old_dH + dH
-        new_dH = round(new_dH, 4)
+        if old_dH != "No_Thermo":
+            new_dH = old_dH + dH
+            new_dH = round(new_dH, 4)
+        else:
+            new_dH = old_dH
         return to_return + str(new_dH) + stoi + ">" + pros_string
+
+    if transform_enols_flag and molecule_thermo_calculator is None:
+        print("No thermo calculator used for enol tansform")
 
     if transform_enols_flag:
         new_whole_rxns_list = list()
@@ -366,9 +452,9 @@ def pretreat_networks(
         whole_rxns_list = new_whole_rxns_list
 
     data = set(whole_rxns_list)
-    print("reaction strings generation finished")
+    print("Reaction strings generation finished")
 
-    #### sanitization
+    # sanitization
     starters_set = set()
     for i in starters:
         starters_set.add(
@@ -415,9 +501,11 @@ def pretreat_networks(
         dH = i.split(">")[2].split("$")[0]
         rea_stoi = i.split(">")[2].split("$")[1]
         pro_stoi = i.split(">")[2].split("$")[2]
+        reac_type = i.split(">")[2].split("$")[3]
         pros = i.split(">")[3].split(".")
 
-        helpers_reacting_flag = True  # check if the rxn is just between helpers
+        helpers_reacting_flag = True
+        # check if the rxn is just between helpers
         for rea in reas:
             if rea not in helpers_set:
                 helpers_reacting_flag = False
@@ -434,9 +522,9 @@ def pretreat_networks(
         )
 
         if len(reas) != len(reas_sorted) or len(pros) != len(pros_sorted):
-            print("sorting error", i)
+            print("Sorting error", i)
 
-        midd = dH + "$" + str(rea_stoi) + "$" + str(pro_stoi)
+        midd = dH + "$" + str(rea_stoi) + "$" + str(pro_stoi) + "$" + reac_type
 
         my_string = str()
         left = str()
@@ -460,6 +548,7 @@ def pretreat_networks(
 
     # remove dead end reactions
     if sanitize:
+        print("Removing unconnected reactions")
         consumers_dict2 = dict()
         for rxn in my_list:
             reas = rxn.split(">")[0].split(".")
@@ -508,9 +597,10 @@ def pretreat_networks(
                 reduced_rxns.add(rxn)
 
         my_list = list(reduced_rxns)
-        print("unconnected reactions removed")
+        print("Unconnected reactions removed")
 
-    print("total number of reactions after pretreatment:", len(my_list))
+    print("Total number of reactions after pretreatment:", len(my_list))
+    print()
 
     with open(
         f"{job_name}_network_pretreated.json", "w", encoding="utf-8"
@@ -519,12 +609,12 @@ def pretreat_networks(
 
 
 def pathway_finder(
-    starters,
-    helpers,
-    target,
-    search_depth,
-    max_num_rxns,
-    min_rxn_atom_economy,
+    starters=None,
+    helpers=None,
+    target=None,
+    search_depth=1,
+    max_num_rxns=1,
+    min_rxn_atom_economy=0.3,
     job_name="default_job_name",
     consider_name_difference=True,
 ):
@@ -534,21 +624,30 @@ def pathway_finder(
     Parameters
     ----------
                     starters: a list of SMILES strings
-                    helpers: A dict
+                    helpers: A collection of SMILES
                     target: A SMILES string
-                    search_depth: A int
-                    max_num_rxns: A int
-                    min_rxn_atom_economy: A float
+                    search_depth: An int
+                    max_num_rxns: An int
+                    min_rxn_atom_economy: A float between 0-1
                     job_name: A string
 
     Returns
     -------
-                    Create a txt file with found pathways
-                    Create a txt file with all reactions in pathways, can be
-                      used as input file for reaxys batch query
+                    Save a txt file with found pathways
+                    Save a txt file with all reactions in pathways, can be
+                        used as input file for reaxys batch query
+                    Save a csv file with place holders, users can copy Reaxys
+                        result to it
 
     """
+    if not starters or not target:
+        raise Exception(
+            "At least one starter and one target are"
+            " needed to search for pathways"
+        )
+
     start_time = time.time()
+
     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
         rdkit.Chem.rdmolfiles.MolFromSmiles(target)
     )
@@ -557,8 +656,9 @@ def pathway_finder(
     min_atom_economy = min_rxn_atom_economy  # 0~1, apply to each rxn in path
     # min_atom_economy is not suitable if a rxn produces 2 products and both are
     # useful
-
-    mol_smiles = tuple(helpers.keys()) + tuple(starters)
+    if helpers is None:
+        helpers = tuple()
+    mol_smiles = tuple(helpers) + tuple(starters)
     temp_ms = list()
     for i in mol_smiles:  # clean up
         temp_ms.append(
@@ -574,16 +674,22 @@ def pathway_finder(
         data = json.load(f)
     starters_set = set(mol_smiles)
 
-    print("total number of reactions", len(data))
+    print(
+        "Pathway finder started, " "total number of reactions in network",
+        len(data),
+    )
 
     rxn_dict = (
         dict()
     )  # { rxn_idx: {name: xx   reas: []  pros: []  mid: dH$()$()   } }
-    # rxn_idx = 0
+
+    has_bio_rxn_flag = False
     for rxn_idx, rxn in enumerate(data):
         pros = rxn.split(">")[3].split(".")
         reas = rxn.split(">")[0].split(".")
         name = rxn.split(">")[1]
+        if has_bio_rxn_flag is False and name in bio_rxn_names:
+            has_bio_rxn_flag = True
         mid = rxn.split(">")[2]
         # mid = str(round(float(rxn.split(">")[2].split("$")[0]), 4)) +
         rxn_dict[rxn_idx] = {
@@ -592,7 +698,12 @@ def pathway_finder(
             "pros": pros,
             "mid": mid,
         }
-        # rxn_idx += 1
+
+    # if network contains bio rxn, add cofactors in helpers
+    if has_bio_rxn_flag:
+        starters_set.update(cofactors_set)
+        helpers = set(helpers)
+        helpers.update(cofactors_set)
 
     producers_dict = dict()
     producers_dict_len = dict()
@@ -609,6 +720,8 @@ def pathway_finder(
         pro_stoi = eval(rxn_dict[rxn_idx]["mid"].split("$")[2])
         products_weight = dict()  # {pro: weight}
         total_weight = 0
+        rxn_name = rxn_dict[rxn_idx]["name"]
+
         for _idx, rea in enumerate(reas):
             if rea not in consumers_dict:
                 consumers_dict[rea] = {rxn_idx: 0}
@@ -621,10 +734,13 @@ def pathway_finder(
             )
             if pro not in products_weight:
                 products_weight[pro] = to_add
-                total_weight += to_add
+                if rxn_name not in bio_rxn_names or pro not in cofactors_set:
+                    # for bio rxns, don't count cofactors in atom economy
+                    total_weight += to_add
             else:  # if a rxn produces multiple same products
                 products_weight[pro] += to_add
-                total_weight += to_add
+                if rxn_name not in bio_rxn_names or pro not in cofactors_set:
+                    total_weight += to_add
             if pro not in producers_dict:
                 producers_dict[pro] = {rxn_idx: 0}
             else:
@@ -659,8 +775,7 @@ def pathway_finder(
 
     # find min distance to starters
     expanded_nodes = copy.deepcopy(starters_set)
-    # set to the generation number during pickaxe expansion,
-    # could be more but not less
+
     expand_gen = generation
     i = 0
     while i < expand_gen:
@@ -695,9 +810,9 @@ def pathway_finder(
     gen_limit = generation
 
     keep_expanding_flag = True
-    print("searching for pathways.")
-    print("if it is taking too long, try adjusting pruning parameters")
-    print()
+    print("Searching for pathways.")
+    print("If it is taking too long, try adjusting pruning parameters")
+    # print()
     no_pathway = False
     while keep_expanding_flag is True:
         try:
@@ -771,7 +886,7 @@ def pathway_finder(
                 keep_expanding_flag = False
         except IndexError:
             no_pathway = True
-            print("no pathway found! try adjusting pruning parameters.")
+            print("No pathway found! Try adjusting pruning parameters.")
             break
 
     def index_to_path(_rxn_idx):
@@ -844,11 +959,15 @@ def pathway_finder(
         except nxe.NetworkXNoCycle:
             return False
 
-    print("pathway search finished, removing loops if there's any.")
+    print("Pathway search finished, removing loops if there's any.")
     end_time = time.time()
     elapsed_time = end_time - start_time
     print()
-    print("time used:", "{:.2f}".format(elapsed_time), "seconds")
+    print(
+        "Time used for pathway search:",
+        "{:.2f}".format(elapsed_time),
+        "seconds",
+    )
 
     # remove duplicates due to rxn name differences in forward
     # and retro reaction rules, remove pathways with cycles
@@ -958,16 +1077,17 @@ def pathway_finder(
             max_num = max(max_num, len(i["SMILES"]))
             for j in i["SMILES"]:
                 all_rxns.add(j)
-        print()
+        # print()
         print(new_ranking - 1, "pathways found!")
         print(len(all_rxns), "reactions found in all pathways")
-        print("min number of reactions in a pathway:", min_num)
-        print("max number of reactions in a pathway:", max_num)
-        print()
-        print("pruning parameters for this search:")
+        print("Min number of reactions in a pathway:", min_num)
+        print("Max number of reactions in a pathway:", max_num)
+        # print()
+        print("Pruning parameters for this search:")
         print("search_depth:", search_depth)
         print("max_num_rxns:", max_num_rxns)
         print("min_rxn_atom_economy:", min_rxn_atom_economy)
+        print()
 
         # generate reaxys batch query file   https://service.elsevier.com/app/answers/detail/a_id/26151/supporthub/reaxys/p/10958/#:~:text=Reaxys%20searches%20batch%20queries%20sequentially,individual%20query%20in%20the%20batch.
 
@@ -1055,22 +1175,118 @@ def pathway_finder(
                     for query in output_dict[key]:
                         f_result.write("SMILES='" + query + "'")
                         f_result.write("\n")
+        # Save a templet csv file, user can copy Reaxys query result over
+        rows = list()
+        for idx, _rxn in enumerate(rxn_set):
+            rows.append([idx + 1, "", 0])
+        with open(
+            f"{job_name}_reaxys_batch_result.csv",
+            "w",
+            newline="",
+            encoding="utf-8",
+        ) as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerows(rows)
+            # End of pathway finder
+
+
+# @typing.final
+# @dataclasses.dataclass(frozen=True, slots=True)
+# class EnthalpyCalculator(
+#     metadata.MolPropertyCalc[float]
+# ):  # Calculate Hf for molecules
+#     Enthalpy_key: collections.abc.Hashable
+
+#     @property
+#     def key(self) -> collections.abc.Hashable:
+#         return self.Enthalpy_key
+
+#     @property
+#     def meta_required(self) -> interfaces.MetaKeyPacket:
+#         return interfaces.MetaKeyPacket(molecule_keys={self.Enthalpy_key})
+
+#     @property
+#     def resolver(self) -> metadata.MetaDataResolverFunc[float]:
+#         return metadata.TrivialMetaDataResolverFunc
+
+#     def __call__(
+#         self,
+#         data: interfaces.DataPacketE[interfaces.MolDatBase],
+#         prev_value: typing.Optional[float] = None,
+#     ) -> typing.Optional[float]:
+#         if prev_value is not None:
+#             return prev_value
+#         item = data.item
+#         if data.meta is not None and self.Enthalpy_key in data.meta:
+#             return None
+#         if not isinstance(item, interfaces.MolDatRDKit):
+#             raise NotImplementedError(
+#                 f"Not been implemented for molecule type {type(item)}"
+#             )
+#         _enthalpy_f = Hf(item.uid)
+#         if _enthalpy_f is None:
+#             # print("None Enthalpy returned by molecule:", item.uid)
+#             # tell user which molecule is causing problems
+#             return float("nan")
+#         return _enthalpy_f
+
+
+# @typing.final
+# @dataclasses.dataclass(frozen=True)
+# class MaxEnthalpyFilter(metadata.ReactionFilterBase):
+#     __slots__ = ("max_H", "H_key")
+#     max_H: float
+#     H_key: collections.abc.Hashable
+
+#     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+#         dH = 0.0
+#         if recipe.operator.meta is None:
+#             return False
+#         for idx, mol in enumerate(recipe.products):
+#             if mol.meta is None or mol.meta[self.H_key] == float("nan"):
+#                 return False
+#             dH = (
+#                 dH
+#                 + mol.meta[self.H_key]
+#                 * recipe.operator.meta["products_stoi"][idx]
+#             )
+#         for idx, mol in enumerate(recipe.reactants):
+#             if mol.meta is None or mol.meta[self.H_key] == float("nan"):
+#                 return False
+#             dH = (
+#                 dH
+#                 - mol.meta[self.H_key]
+#                 * recipe.operator.meta["reactants_stoi"][idx]
+#             )
+#         if recipe.operator.meta["enthalpy_correction"] is not None:
+#             dH = dH + recipe.operator.meta["enthalpy_correction"]
+#         if dH / recipe.operator.meta["number_of_steps"] < self.max_H:
+#             return True
+#         return False
+
+#     @property
+#     def meta_required(self) -> interfaces.MetaKeyPacket:
+#         return interfaces.MetaKeyPacket(
+#             molecule_keys={self.H_key},
+#             operator_keys={
+#                 "reactants_stoi",
+#                 "products_stoi",
+#                 "enthalpy_correction",
+#                 "number_of_steps",
+#             },
+#         )
 
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
-class EnthalpyCalculator(
-    metadata.MolPropertyCalc[float]
-):  # Calculate Hf for molecules
-    Enthalpy_key: collections.abc.Hashable
+class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
+    dH_key: collections.abc.Hashable
+    direction: str
+    Mole_Hf: typing.Callable[[str], float]
 
     @property
     def key(self) -> collections.abc.Hashable:
-        return self.Enthalpy_key
-
-    @property
-    def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(molecule_keys={self.Enthalpy_key})
+        return self.dH_key
 
     @property
     def resolver(self) -> metadata.MetaDataResolverFunc[float]:
@@ -1078,70 +1294,70 @@ class EnthalpyCalculator(
 
     def __call__(
         self,
-        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        data: interfaces.ReactionExplicit,
         prev_value: typing.Optional[float] = None,
     ) -> typing.Optional[float]:
         if prev_value is not None:
             return prev_value
-        item = data.item
-        if data.meta is not None and self.Enthalpy_key in data.meta:
+        if data.reaction_meta is not None and self.dH_key in data.reaction_meta:
             return None
-        if not isinstance(item, interfaces.MolDatRDKit):
-            raise NotImplementedError(
-                f"Not been implemented for molecule type {type(item)}"
-            )
-        _enthalpy_f = Hf(item.uid)
-        if _enthalpy_f is None:
-            # print("None Enthalpy returned by molecule:", item.uid)
-            # tell user which molecule is causing problems
-            return float("nan")
-        return _enthalpy_f
-
-
-@typing.final
-@dataclasses.dataclass(frozen=True)
-class MaxEnthalpyFilter(metadata.ReactionFilterBase):
-    __slots__ = ("max_H", "H_key")
-    max_H: float
-    H_key: collections.abc.Hashable
-
-    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if self.Mole_Hf is None:
+            return "No_Thermo"
         dH = 0.0
-        if recipe.operator.meta is None:
-            return False
-        for idx, mol in enumerate(recipe.products):
-            if mol.meta is None or mol.meta[self.H_key] == float("nan"):
-                return False
-            dH = (
-                dH
-                + mol.meta[self.H_key]
-                * recipe.operator.meta["products_stoi"][idx]
-            )
-        for idx, mol in enumerate(recipe.reactants):
-            if mol.meta is None or mol.meta[self.H_key] == float("nan"):
-                return False
-            dH = (
-                dH
-                - mol.meta[self.H_key]
-                * recipe.operator.meta["reactants_stoi"][idx]
-            )
-        if recipe.operator.meta["enthalpy_correction"] is not None:
-            dH = dH + recipe.operator.meta["enthalpy_correction"]
-        if dH / recipe.operator.meta["number_of_steps"] < self.max_H:
-            return True
-        return False
+        for idx, mol in enumerate(data.products):
+            pro_Hf = self.Mole_Hf(mol.item.smiles)
+            if pro_Hf is None:
+                return float("nan")
+            dH = dH + pro_Hf * data.operator.meta["products_stoi"][idx]
+        for idx, mol in enumerate(data.reactants):
+            rea_Hf = self.Mole_Hf(mol.item.smiles)
+            if rea_Hf is None:
+                return float("nan")
+            dH = dH - rea_Hf * data.operator.meta["reactants_stoi"][idx]
+        if data.operator.meta["enthalpy_correction"] is not None:
+            dH = dH + data.operator.meta["enthalpy_correction"]
+        if self.direction == "forward":
+            dH = dH / data.operator.meta["number_of_steps"]
+        if self.direction == "retro":
+            dH = -dH / data.operator.meta["number_of_steps"]
+        return round(dH, 4)
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return interfaces.MetaKeyPacket(
-            molecule_keys={self.H_key},
             operator_keys={
                 "reactants_stoi",
                 "products_stoi",
                 "enthalpy_correction",
                 "number_of_steps",
-            },
+            }
         )
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True)
+class Rxn_dH_Filter(metadata.ReactionFilterBase):
+    __slots__ = ("max_dH", "dH_key")
+    max_dH: float
+    dH_key: collections.abc.Hashable
+
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        # if metadata not available, reject reaction
+        # (clearly something has gone wrong here)
+        if recipe.reaction_meta is None:
+            return False
+        dH = recipe.reaction_meta[self.dH_key]
+        if dH == "No_Thermo":
+            return True
+        if dH == float("nan"):
+            return False
+        if dH < self.max_dH:
+            return True
+        return False
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
 
 
 @typing.final
@@ -1218,7 +1434,12 @@ class No_helpers_reaction_Filter(metadata.ReactionFilterBase):  # mol.item.uid
         return False
 
 
-def Byproduct_index(path_idx, _input_list):
+def Byproduct_index(
+    path_idx, _input_list, molecule_thermo_calculator, max_rxn_thermo_change
+):
+    if not _input_list:
+        return (path_idx, 0)
+
     my_num_gens = 1
     mol_smiles = _input_list
     engine = dn.create_engine()
@@ -1262,9 +1483,15 @@ def Byproduct_index(path_idx, _input_list):
 
     strat = engine.strat.cartesian(network)
 
-    H_calc = EnthalpyCalculator("Enthalpy_f")
-    thermo_filter = MaxEnthalpyFilter(15, "Enthalpy_f")
-    reaction_plan = Ring_Issues_Filter() >> H_calc >> thermo_filter
+    # H_calc = EnthalpyCalculator("Enthalpy_f")
+    # thermo_filter = MaxEnthalpyFilter(15, "Enthalpy_f")
+    reaction_plan = (
+        Ring_Issues_Filter()
+        # >> H_calc
+        # >> thermo_filter
+        >> Chem_Rxn_dH_Calculator("dH", "forward", molecule_thermo_calculator)
+        >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
+    )
 
     strat.expand(
         num_iter=my_num_gens, reaction_plan=reaction_plan, save_unreactive=False
@@ -1277,8 +1504,15 @@ def Byproduct_index(path_idx, _input_list):
 
 
 def Inter_byproduct(
-    path_idx, _intermediate, _smiles_list
+    path_idx,
+    _intermediate,
+    _smiles_list,
+    molecule_thermo_calculator,
+    max_rxn_thermo_change,
 ):  # _intermediate included in _smiles_list
+    if _intermediate is None:
+        return (path_idx, _intermediate, 0)
+
     my_num_gens = 1
     mol_smiles = _smiles_list
     engine = dn.create_engine()
@@ -1322,13 +1556,15 @@ def Inter_byproduct(
 
     strat = engine.strat.cartesian(network)
 
-    H_calc = EnthalpyCalculator("Enthalpy_f")
-    thermo_filter = MaxEnthalpyFilter(15, "Enthalpy_f")
+    # H_calc = EnthalpyCalculator("Enthalpy_f")
+    # thermo_filter = MaxEnthalpyFilter(15, "Enthalpy_f")
     reaction_plan = (
         No_helpers_reaction_Filter(_intermediate)
         >> Ring_Issues_Filter()
-        >> H_calc
-        >> thermo_filter
+        # >> H_calc
+        # >> thermo_filter
+        >> Chem_Rxn_dH_Calculator("dH", "forward", molecule_thermo_calculator)
+        >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
     )
 
     strat.expand(
@@ -1345,19 +1581,40 @@ def Inter_byproduct(
 
 # pathway ranking
 def pathway_ranking(
-    starters,
-    helpers,
-    target,
-    weights,
-    num_process,
-    reaxys_result_name=False,
+    starters=None,
+    helpers=None,
+    target=None,
+    weights=None,
+    num_process=1,
+    reaxys_result_name=None,
     job_name="default_job_name",
-    cool_reactions=False,
+    cool_reactions=None,
+    molecule_thermo_calculator=None,  # for by-product calculator
+    max_rxn_thermo_change=15,
 ):
+    if not starters or not target:
+        raise Exception("Starters and target are" " needed to rank pathways")
+
     start_time = time.time()
     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
-        rdkit.Chem.rdmolfiles.MolFromSmiles(target)
+        rdkit.Chem.rdmolfiles.MolFromSmiles(target),
     )
+
+    if helpers is None:
+        helpers = tuple()
+
+    if weights is None:
+        weights = {
+            "reaction_thermo": 2,
+            "number_of_steps": 4,
+            "by_product_number": 2,
+            "atom_economy": 1,
+            "salt_score": 0,
+            "in_reaxys": 0,
+            "coolness": 0,
+        }
+    if reaxys_result_name is None:
+        reaxys_result_name = f"{job_name}_reaxys_batch_result.csv"
 
     just_starters = set()
     for i in starters:  # clean up
@@ -1367,7 +1624,7 @@ def pathway_ranking(
             )
         )
 
-    mol_smiles = tuple(helpers.keys()) + tuple(starters)
+    mol_smiles = tuple(helpers) + tuple(starters)
     temp_ms = []
     for i in mol_smiles:  # clean up
         temp_ms.append(
@@ -1377,7 +1634,7 @@ def pathway_ranking(
         )
     mol_smiles = temp_ms
 
-    helpers = tuple(helpers.keys())
+    helpers = tuple(helpers)
     temp_ms2 = []
     for i in helpers:  # clean up
         temp_ms2.append(
@@ -1467,37 +1724,58 @@ def pathway_ranking(
     )
 
     # Enthalpy ###############################
-    if weights["reaction_dH"] != 0:
-        print("reaction_dH ranking working")
+    # if 1 of the rxns in a path has has no thermo value, skip this rxn
+    # if a pathway has no thermo data it is ranked lowest
+    path_max_H_ori_value = -9999
+    if weights["reaction_thermo"] != 0:
+        print("Reaction thermodynamics ranking working")
         H_list = []  # store max H for each pathway
         for path in data:
+            # dH = "No_Thermo"
             path_max_H = -9999
             for rxn in path:
                 name = rxn.split(">")[1]
                 dH = rxn.split(">")[2].split("$")[0]
-                if "2-step" in name or "&" in name:
-                    dH = float(dH) / 2
-                path_max_H = max(path_max_H, float(dH))
-            H_list.append(path_max_H)
-        min_H = min(H_list)
-        max_H = max(H_list)
-        diff_H = -(max_H - min_H)
-        H_score_list = []
-        for i in H_list:
-            if diff_H != 0:
-                H_score_list.append((i - min_H) / diff_H + 1)
+                if dH != "No_Thermo":
+                    if "2-step" in name or "&" in name:
+                        dH = float(dH) / 2
+                    path_max_H = max(path_max_H, float(dH))
+            if path_max_H != path_max_H_ori_value:
+                H_list.append(path_max_H)
             else:
-                H_score_list.append((i - min_H) / 0.001 + 1)
-        print("reaction_dH ranking finished")
+                H_list.append("No_Thermo")
+
+        num_list = [item for item in H_list if isinstance(item, (int, float))]
+        if num_list:
+            min_H = min(num_list)
+            max_H = max(num_list)
+            diff_H = -(max_H - min_H)
+            H_score_list = []
+            for i in H_list:
+                if i != "No_Thermo":
+                    if diff_H != 0:
+                        H_score_list.append((i - min_H) / diff_H + 1)
+                    else:
+                        H_score_list.append((i - min_H) / 0.001 + 1)
+                else:
+                    H_score_list.append(0)
+        else:
+            H_score_list = [0] * len(data)
+        print("Reaction thermodynamics ranking finished")
     else:
         H_score_list = [0] * len(data)
 
-    # Atom economy #############################
+    # Atom economy ###############################
+    # for bio pathways ignore cofactors mol weight
+    # if a path has both chem and bio rxns, the economy result might be
+    # incorrect if a chem helper is also a bio cofactor
+
     eco_list = list()
     eco_score_list = list()
 
     def path_eco(
         _path,
+        has_bio,
     ):  # assuming no circular loops; if a middle rxn produces a starter
         # or intermediat consumed in upstream, it's considered recycled;
         _path = list(_path)
@@ -1630,21 +1908,34 @@ def pathway_ranking(
             return None
         by_product_weight = 0
         for i in right_dict:
-            by_product_weight += (
-                Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(i))
-                * right_dict[i]
-            )
+            if i in has_bio:
+                by_product_weight += 0
+            else:
+                by_product_weight += (
+                    Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(i))
+                    * right_dict[i]
+                )
+
         to_return = target_weight / (target_weight + by_product_weight)
         return to_return
 
     if weights["atom_economy"] != 0:
-        print("atom_economy ranking working")
+        print("Atom economy ranking working")
         none_eco = 0
         min_eco = 1
         max_eco = 0
         for idx, path in enumerate(data):
+            has_bio_rxn_flag = False
+            for rxn in path:
+                name = rxn.split(">")[1]
+                if name in bio_rxn_names:
+                    has_bio_rxn_flag = True
+
+            molwt_zero = set()  # if bio rxn skip cofactors not in helpers
+            if has_bio_rxn_flag:
+                molwt_zero = cofactors_set - starters
             try:
-                atom_eco = path_eco(path)
+                atom_eco = path_eco(path, molwt_zero)
             except KeyError:
                 atom_eco = 0
                 print("Atom economy calculation error for pathway", idx + 1)
@@ -1661,8 +1952,8 @@ def pathway_ranking(
             if i is None:
                 eco_list[idx] = min_eco
 
-        print("min_eco", min_eco)
-        print("max_eco", max_eco)
+        print("Min_eco", min_eco)
+        print("Max_eco", max_eco)
         # print("none_eco", none_eco)
         diff_eco = max_eco - min_eco
         for i in eco_list:
@@ -1670,15 +1961,15 @@ def pathway_ranking(
                 eco_score_list.append((i - min_eco) / diff_eco)
             else:
                 eco_score_list.append((i - min_eco) / 0.001)
-        print("atom_economy ranking finished")
+        print("Atom_economy ranking finished")
 
     else:
         eco_score_list = [0] * len(data)
         eco_list = [0] * len(data)
 
-    # Number of steps ################################
+    # Number of steps ###############################
     if weights["number_of_steps"] != 0:
-        print("number_of_steps ranking working")
+        print("Number of steps ranking working")
         step_list = []
         for path in data:
             step_list.append(len(path))
@@ -1691,13 +1982,16 @@ def pathway_ranking(
         step_score_list = []
         for i in step_list:
             step_score_list.append((i - min_step) / diff_steps + 1)
-        print("number_of_steps ranking finished")
+        print("Number of steps ranking finished")
     else:
         step_score_list = [0] * len(data)
 
-    # By-product ##############################
+    # By-product ###############################
+    # Only use for chem rxn for now, bio rxn are skipped
+
     if weights["by_product_number"] != 0:
-        print("by_product_number ranking working")
+        print("By product_number ranking working")
+        print("You can adjust multi-processing number to speed it up")
         by_pro_list = []
         intermediate_by_product_dict_list = []
 
@@ -1707,20 +2001,42 @@ def pathway_ranking(
         for idx, path in enumerate(data):
             mol_soup = set()  # for pathway_byproduct
             # mol_bypro_dict = dict()   # for intermediate by_product
+
+            # has_bio_rxn_flag = False
+            # for rxn in path:
+            #     name = rxn.split(">")[1]
+            #     if name in bio_rxn_names:
+            #         has_bio_rxn_flag = True
+            # to_remove = set() # remove cofactors not in starters
+            # if has_bio_rxn_flag:
+            #     to_remove = cofactors_set - starters
+
             for rxn in path:
-                products = rxn.split(">")[3].split(".")
-                reas = rxn.split(">")[0].split(".")
-                mol_soup.update(set(products), set(reas))
+                name = rxn.split(">")[1]
+                if name not in bio_rxn_names:
+                    products = rxn.split(">")[3].split(".")
+                    reas = rxn.split(">")[0].split(".")
+                    mol_soup.update(set(products), set(reas))
 
             soup_list.append((idx, mol_soup))
             # num_by_pro = Byproduct_index( list(mol_soup) )
             for inter_mol in mol_soup:
                 if inter_mol not in helpers or inter_mol in just_starters:
                     Inter_soup_list.append((idx, inter_mol, mol_soup))
+            if not mol_soup:
+                Inter_soup_list.append((idx, None, mol_soup))
 
         with Pool(processes=num_process) as pool:
             results = [
-                pool.apply_async(Byproduct_index, args=(work[0], work[1]))
+                pool.apply_async(
+                    Byproduct_index,
+                    args=(
+                        work[0],
+                        work[1],
+                        molecule_thermo_calculator,
+                        max_rxn_thermo_change,
+                    ),
+                )
                 for work in soup_list
             ]  # workers pool
             by_pro_list_tuples = [
@@ -1730,7 +2046,14 @@ def pathway_ranking(
         with Pool(processes=num_process) as pool:
             results = [
                 pool.apply_async(
-                    Inter_byproduct, args=(work[0], work[1], work[2])
+                    Inter_byproduct,
+                    args=(
+                        work[0],
+                        work[1],
+                        work[2],
+                        molecule_thermo_calculator,
+                        max_rxn_thermo_change,
+                    ),
                 )
                 for work in Inter_soup_list
             ]  # workers pool
@@ -1767,7 +2090,7 @@ def pathway_ranking(
                 by_pro_score_list.append((i - min_by_pro) / diff_by_pro + 1)
             else:
                 by_pro_score_list.append((i - min_by_pro) / 0.001 + 1)
-        print("by_product_number ranking finished")
+        print("By product_number ranking finished")
 
     else:
         by_pro_score_list = [0] * len(data)
@@ -1786,7 +2109,7 @@ def pathway_ranking(
 
             intermediate_by_product_dict_list.append(mol_bypro_dict)
 
-    # if produce salt #################################
+    # if produce salt ###############################
     salt_name_list = {
         "Hydrosulfide Anion Substitution with Alkyl Halides",
         "Hydrosulfide Anion Substitution with Alkyl Halides, Intramolecular",
@@ -1802,7 +2125,7 @@ def pathway_ranking(
     }
 
     if weights["salt_score"] != 0:
-        print("salt_score ranking working")
+        print("Salt_score ranking working")
         salt_rxn_num_list = []
         for path in data:
             salt_rxn_num = 0
@@ -1821,13 +2144,13 @@ def pathway_ranking(
         salt_score_list = []
         for i in salt_rxn_num_list:
             salt_score_list.append((i - min_salt) / diff_salt + 1)
-        print("salt_score ranking finished")
+        print("Salt_score ranking finished")
     else:
         salt_score_list = [0] * len(data)
 
-    # coolness ############################
+    # coolness ###############################
     if cool_reactions and weights["coolness"] != 0:
-        print("coolness ranking working")
+        print("Coolness ranking working")
         cool_rxn_num_list = []
         for path in data:
             cool_rxn_num = 0
@@ -1846,13 +2169,13 @@ def pathway_ranking(
         cool_score_list = []
         for i in cool_rxn_num_list:
             cool_score_list.append((i - min_cool) / diff_cool)
-        print("coolness ranking finished")
+        print("Coolness ranking finished")
     else:
         cool_score_list = [0] * len(data)
 
-    # reaxys score #############################
+    # reaxys score ###############################
     if weights["in_reaxys"] != 0:
-        print("in_reaxys ranking working")
+        print("In reaxys ranking working")
         # load 2 files
         reaxys_batch = np.genfromtxt(
             f"{job_name}_reaxys_batch_query.txt",
@@ -1938,7 +2261,7 @@ def pathway_ranking(
         reaxys_score_list = []
         for i in reaxys_percent_list:
             reaxys_score_list.append((i - min_reaxys) / diff_reaxys)
-        print("in_reaxys ranking finished")
+        print("In reaxys ranking finished")
 
     else:
         reaxys_score_list = [0] * len(data)
@@ -1948,7 +2271,7 @@ def pathway_ranking(
 
     #                dH  steps  by-pro   eco       salt      reaxys
     # weight =    [     0.0,  0.4  ,   0.2    ,0.1  ,   0.2 ,    0.3  ]
-    weight.append(weights["reaction_dH"])
+    weight.append(weights["reaction_thermo"])
     weight.append(weights["number_of_steps"])
     weight.append(weights["by_product_number"])
     weight.append(weights["atom_economy"])
@@ -2125,7 +2448,11 @@ def pathway_ranking(
     end_time = time.time()
     elapsed_time = end_time - start_time  # /60
     print()
-    print("time used:", "{:.2f}".format(elapsed_time), "seconds")
+    print(
+        "Time used for pathway ranking:",
+        "{:.2f}".format(elapsed_time),
+        "seconds",
+    )
 
 
 # pathway visualization
@@ -2135,6 +2462,7 @@ def create_page(
     reaxys_result_set,
     _my_start,
     _helpers,
+    _bio_cof_not_in_helpers,
     _reaxys_rxn_color,
     _normal_rxn_color,
 ):
@@ -2201,8 +2529,6 @@ def create_page(
             new_rxn = new_rxn[:-1]
         return new_rxn
 
-    help_dict = _helpers
-
     salt_name_set = {
         "Hydrosulfide Anion Substitution with Alkyl Halides",
         "Hydrosulfide Anion Substitution with Alkyl Halides, Intramolecular",
@@ -2230,6 +2556,13 @@ def create_page(
     rxn_list = pathway_dict["SMILES"]  # list of rxns in pathway
     name_list = pathway_dict["name"]
 
+    has_bio_rxn_flag = not set(name_list).isdisjoint(bio_rxn_names)
+
+    help_dict = _helpers
+
+    if has_bio_rxn_flag:
+        help_dict.update(_bio_cof_not_in_helpers)
+
     for idx, _i in enumerate(name_list):
         name_list[idx] = textwrap.fill(
             name_list[idx], 25
@@ -2249,7 +2582,10 @@ def create_page(
     split_list = pathway_dict["enthalpy"]
     dH_list = list()
     for _idx, i in enumerate(split_list):
-        dH_list.append(str("%.1f" % float(i)) + " kcal/mol")
+        if i != "No_Thermo":
+            dH_list.append(str("%.1f" % float(i)) + " kcal/mol")
+        else:
+            dH_list.append("")
 
     for idx, _i in enumerate(dH_list):
         if "2-step" in name_list[idx] or "&" in name_list[idx]:
@@ -2316,7 +2652,7 @@ def create_page(
                                 )
                             )
                         ),
-                        str(inter_py_pro[rea]),
+                        str(inter_py_pro.get(rea, "")),
                     ),
                 )
                 G.add_edge(rea, rxn_node, arror_margin=10)
@@ -2334,7 +2670,7 @@ def create_page(
                                         )
                                     )
                                 ),
-                                str(inter_py_pro[pro]),
+                                str(inter_py_pro.get(pro, "")),
                             ),
                         )
                         G.add_edge(rxn_node, pro, arror_margin=120)
@@ -2367,7 +2703,7 @@ def create_page(
                                     )
                                 )
                             ),
-                            str(inter_py_pro[i]),
+                            str(inter_py_pro.get(i, "")),
                         ),
                     )
                     G2.add_edge(
@@ -2468,10 +2804,10 @@ def create_page(
 
 
 def pathway_visualization(
-    starters,
-    helpers,
-    num_process,
-    reaxys_result_name=False,
+    starters=None,
+    helpers=None,
+    num_process=1,
+    reaxys_result_name="default",
     job_name="default_job_name",
     exclude_smiles=None,
     reaxys_rxn_color="blue",
@@ -2479,9 +2815,21 @@ def pathway_visualization(
 ):
     from PyPDF2 import PdfFileMerger, PdfFileReader
 
+    start_time = time.time()
+
     if exclude_smiles is None:
         exclude_smiles = []
-    start_time = time.time()
+    if not starters:
+        raise Exception("Starters " " needed for visualization")
+    if helpers is None:
+        helpers = dict()
+    else:
+        helpers_dict = dict()
+        for i in helpers:
+            helpers_dict[Chem.MolToSmiles(Chem.MolFromSmiles(i))] = (
+                CalcMolFormula(Chem.MolFromSmiles(i))
+            )
+        helpers = helpers_dict
 
     my_start = set()
     for i in starters:
@@ -2491,7 +2839,21 @@ def pathway_visualization(
             )
         )
 
-    if reaxys_result_name is not False:
+    cofactors_dict = dict()  # add to helpers for bio pathways
+    for idx, x in enumerate(cofactors["SMILES"]):
+        if (
+            Chem.MolToSmiles(Chem.MolFromSmiles(x)) not in helpers
+            and Chem.MolToSmiles(Chem.MolFromSmiles(x)) not in my_start
+            and cofactors["#ID"][idx] not in excluded_cofactors
+        ):
+            cofactors_dict[Chem.MolToSmiles(Chem.MolFromSmiles(x))] = cofactors[
+                "Name"
+            ][idx]
+
+    if reaxys_result_name == "default":
+        reaxys_result_name = f"{job_name}_reaxys_batch_result.csv"
+
+    if reaxys_result_name:
         reaxys_batch = np.genfromtxt(
             f"{job_name}_reaxys_batch_query.txt",
             comments="?",
@@ -2528,7 +2890,7 @@ def pathway_visualization(
             clean_list.append(i.strip())
 
     pathways_list = list()
-    # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[],Nmaes:[],dH:[]}]
+    # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[],Names:[],dH:[]}]
 
     pathway_marker = list()
     pathway_num = 1
@@ -2605,7 +2967,8 @@ def pathway_visualization(
                 )
             ] = helpers[key]
 
-    print("Working on creating pages...")
+    print("Working on creating pages")
+    print("You can adjust multi-processing number to speed up PDF generation")
     with Pool(processes=num_process) as pool:
         results = [
             pool.apply_async(
@@ -2616,6 +2979,7 @@ def pathway_visualization(
                     reaxys_set,
                     my_start,
                     help_dict,
+                    cofactors_dict,
                     reaxys_rxn_color,
                     normal_rxn_color,
                 ),
@@ -2639,4 +3003,98 @@ def pathway_visualization(
     end_time = time.time()
     elapsed_time = (end_time - start_time) / 60
     print()
-    print("time used:", "{:.2f}".format(elapsed_time), "minutes")
+    print(
+        "Time used for pathway visualization:",
+        "{:.2f}".format(elapsed_time),
+        "minutes",
+    )
+
+
+def one_step(
+    networks=None,
+    total_generations=1,
+    starters=None,
+    helpers=None,
+    target=None,
+    job_name="default_job_name",
+    search_depth="default",
+    max_num_rxns="default",
+    min_rxn_atom_economy=0.3,
+    weights=None,
+    num_process=1,
+    cool_reactions=None,
+    remove_pure_helpers_rxns=False,
+    sanitize=True,
+    transform_enols_flag=False,
+    molecule_thermo_calculator=None,
+    max_rxn_thermo_change=15,
+    consider_name_difference=True,
+    reaxys_result_name=None,
+    exclude_smiles=None,
+    reaxys_rxn_color="blue",
+    normal_rxn_color="black",
+):
+    pretreat_networks(
+        networks=networks,
+        total_generations=total_generations,
+        starters=starters,
+        helpers=helpers,
+        job_name=job_name,
+        remove_pure_helpers_rxns=remove_pure_helpers_rxns,
+        sanitize=sanitize,
+        transform_enols_flag=transform_enols_flag,
+        molecule_thermo_calculator=molecule_thermo_calculator,
+    )
+
+    if search_depth == "default":
+        search_depth = total_generations
+    if max_num_rxns == "default":
+        max_num_rxns = total_generations
+
+    pathway_finder(
+        starters=starters,
+        helpers=helpers,
+        target=target,
+        search_depth=search_depth,
+        max_num_rxns=max_num_rxns,
+        min_rxn_atom_economy=min_rxn_atom_economy,
+        job_name=job_name,
+        consider_name_difference=consider_name_difference,
+    )
+
+    if weights is None:
+        weights = {
+            "reaction_thermo": 2,
+            "number_of_steps": 4,
+            "by_product_number": 2,
+            "atom_economy": 1,
+            "salt_score": 0,
+            "in_reaxys": 0,
+            "coolness": 0,
+        }
+    if reaxys_result_name is None:
+        reaxys_result_name = f"{job_name}_reaxys_batch_result.csv"
+
+    pathway_ranking(
+        starters=starters,
+        helpers=helpers,
+        target=target,
+        weights=weights,
+        num_process=num_process,
+        reaxys_result_name=reaxys_result_name,
+        job_name=job_name,
+        cool_reactions=cool_reactions,
+        molecule_thermo_calculator=molecule_thermo_calculator,
+        max_rxn_thermo_change=max_rxn_thermo_change,
+    )
+
+    pathway_visualization(
+        starters=starters,
+        helpers=helpers,
+        num_process=num_process,
+        reaxys_result_name=reaxys_result_name,
+        job_name=job_name,
+        exclude_smiles=exclude_smiles,
+        reaxys_rxn_color=reaxys_rxn_color,
+        normal_rxn_color=normal_rxn_color,
+    )
