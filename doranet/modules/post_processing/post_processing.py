@@ -144,79 +144,8 @@ def pretreat_networks(
             )
         network_objs.append(new_net_obj)
 
-    # if network_forward_name:
-    #     print("loading network_forward file")
-    #     network_forward = engine.network_from_file(network_forward_name)
-    #     print(
-    #        "number of reations in network_forward", len(network_forward.rxns)
-    #     )
-    # if network_forward_obj:
-    #     print("use network_forward from memory")
-    #     network_forward = network_forward_obj
-    #     print(
-    #        "number of reations in network_forward", len(network_forward.rxns)
-    #     )
-
-    # if network_retro_name:
-    #     print("loading network_retro file")
-    #     network_retro = engine.network_from_file(network_retro_name)
-    #    print("number of reactions in network_retro:", len(network_retro.rxns))
-    # if network_retro_obj:
-    #     print("use network_retro from memory")
-    #     network_retro = network_retro_obj
-    #    print("number of reactions in network_retro:", len(network_retro.rxns))
-
     print("Networks loaded, now generating reaction strings")
     whole_rxns_list = list()
-    # H_dict = dict()  # save calculated Hf
-
-    # def ngHCal(
-    #     _mol_num, network_name
-    # ):  # calculate Hf of all moleclues in network
-    #     _smiles = network_name.mols[_mol_num].uid
-    #     if _smiles in H_dict:
-    #         return H_dict[_smiles]
-    #     else:
-    #         _enthalpy_f = Hf(_smiles)
-    #         if _enthalpy_f is None:
-    #             print("Hf error", _smiles, _enthalpy_f)
-    #         H_dict[_smiles] = _enthalpy_f
-    #         return _enthalpy_f
-
-    # def RxnHCal(
-    #     operatorNum, reas, pros, network_name, dirction, return_zero, rxn_type
-    # ):  # calculate dH of all reactions in network and generate a string
-    # if dirction == "f":
-    #     reactants_stoi = network_name.ops.meta(
-    #         operatorNum, keys=["reactants_stoi"]
-    #     )["reactants_stoi"]
-    #     products_stoi = network_name.ops.meta(
-    #         operatorNum, keys=["products_stoi"]
-    #     )["products_stoi"]
-    # if dirction == "r":
-    #     reactants_stoi = network_name.ops.meta(
-    #         operatorNum, keys=["products_stoi"]
-    #     )["products_stoi"]
-    #     products_stoi = network_name.ops.meta(
-    #         operatorNum, keys=["reactants_stoi"]
-    #     )["reactants_stoi"]
-    # Hcorr = network_name.ops.meta(
-    #     operatorNum, keys=["enthalpy_correction"]
-    # )["enthalpy_correction"]
-    # dH = 0.0
-    # if rxn_type == "Enzymatic":
-    #     dH = -9999
-    # elif rxn_type == "Catalytic" and not return_zero:
-    #     for idx, mol in enumerate(pros):
-    #         dH = dH + ngHCal(mol, network_name) * products_stoi[idx]
-    #     for idx, mol in enumerate(reas):
-    #         dH = dH - ngHCal(mol, network_name) * reactants_stoi[idx]
-    #     if Hcorr is not None:
-    #         dH = dH + Hcorr
-    # dH = round(dH, 4)
-    # return str(dH) + "$" + str(reactants_stoi) + "$" + str(products_stoi)
-
-    # if network_forward_name or network_forward_obj:
 
     has_bio_rxn_flag = False  # if true, should add cofactors to helpers
     for n in network_objs:
@@ -260,47 +189,6 @@ def pretreat_networks(
                 reactants_stoi = correct_reactants_stoi
                 products_stoi = correct_products_stoi
 
-            # if (
-            #     network_forward.ops.meta(operator, keys=["Reaction_type"])[
-            #         "Reaction_type"
-            #     ]
-            #     == "Enzymatic"
-            # ):
-            #     dH = RxnHCal(
-            #         operator,
-            #         reactants,
-            #         products,
-            #         network_forward,
-            #         "f",
-            #         False,
-            #         "Enzymatic",
-            #     )
-            # elif (
-            #     network_forward.ops.meta(operator, keys=["Reaction_type"])[
-            #         "Reaction_type"
-            #     ]
-            #     == "Catalytic"
-            # ):
-            #     if calculate_thermo:
-            #         dH = RxnHCal(
-            #             operator,
-            #             reactants,
-            #             products,
-            #             network_forward,
-            #             "f",
-            #             False,
-            #             "Catalytic",
-            #         )
-            # else:
-            #     dH = RxnHCal(
-            #         operator,
-            #         reactants,
-            #         products,
-            #         network_forward,
-            #         "f",
-            #         True,
-            #         "Catalytic",
-            #     )
             rxn_string = str()
             for i in reactants:
                 rxn_string = rxn_string + n.mols[i].uid + "."
@@ -323,69 +211,6 @@ def pretreat_networks(
                 rxn_string = rxn_string + n.mols[i].uid + "."
             rxn_string = rxn_string[:-1]
             whole_rxns_list.append(rxn_string)
-
-    # if network_retro_name or network_retro_obj:
-    #     for rxn in network_retro.rxns:
-    #         reactants = rxn.products
-    #         products = rxn.reactants
-    #         operator = rxn.operator
-    #         if (
-    #             network_retro.ops.meta(operator, keys=["Reaction_type"])[
-    #                 "Reaction_type"
-    #             ]
-    #             == "Enzymatic"
-    #         ):
-    #             dH = RxnHCal(
-    #                 operator,
-    #                 reactants,
-    #                 products,
-    #                 network_retro,
-    #                 "r",
-    #                 False,
-    #                 "Enzymatic",
-    #             )
-    #         elif (
-    #             network_retro.ops.meta(operator, keys=["Reaction_type"])[
-    #                 "Reaction_type"
-    #             ]
-    #             == "Catalytic"
-    #         ):
-    #             if calculate_thermo:
-    #                 dH = RxnHCal(
-    #                     operator,
-    #                     reactants,
-    #                     products,
-    #                     network_retro,
-    #                     "r",
-    #                     False,
-    #                     "Catalytic",
-    #                 )
-    #             else:
-    #                 dH = RxnHCal(
-    #                     operator,
-    #                     reactants,
-    #                     products,
-    #                     network_retro,
-    #                     "r",
-    #                     True,
-    #                     "Catalytic",
-    #                 )
-    #         rxn_string = str()
-    #         for i in reactants:
-    #             rxn_string = rxn_string + network_retro.mols[i].uid + "."
-    #         rxn_string = rxn_string[:-1]
-    #         rxn_string = (
-    #             rxn_string
-    #             + ">"
-    #             + network_retro.ops.meta(operator, keys=["name"])["name"]
-    #             + ">"
-    #             + str(dH)
-    #             + ">"
-    #         )
-    #         for i in products:
-    #             rxn_string = rxn_string + network_retro.mols[i].uid + "."
-    #         rxn_string = rxn_string[:-1]
-    #         whole_rxns_list.append(rxn_string)
 
     if helpers is None:
         helpers = set()
@@ -1192,92 +1017,6 @@ def pathway_finder(
             csvwriter.writerows(rows)
             # End of pathway finder
 
-
-# @typing.final
-# @dataclasses.dataclass(frozen=True, slots=True)
-# class EnthalpyCalculator(
-#     metadata.MolPropertyCalc[float]
-# ):  # Calculate Hf for molecules
-#     Enthalpy_key: collections.abc.Hashable
-
-#     @property
-#     def key(self) -> collections.abc.Hashable:
-#         return self.Enthalpy_key
-
-#     @property
-#     def meta_required(self) -> interfaces.MetaKeyPacket:
-#         return interfaces.MetaKeyPacket(molecule_keys={self.Enthalpy_key})
-
-#     @property
-#     def resolver(self) -> metadata.MetaDataResolverFunc[float]:
-#         return metadata.TrivialMetaDataResolverFunc
-
-#     def __call__(
-#         self,
-#         data: interfaces.DataPacketE[interfaces.MolDatBase],
-#         prev_value: typing.Optional[float] = None,
-#     ) -> typing.Optional[float]:
-#         if prev_value is not None:
-#             return prev_value
-#         item = data.item
-#         if data.meta is not None and self.Enthalpy_key in data.meta:
-#             return None
-#         if not isinstance(item, interfaces.MolDatRDKit):
-#             raise NotImplementedError(
-#                 f"Not been implemented for molecule type {type(item)}"
-#             )
-#         _enthalpy_f = Hf(item.uid)
-#         if _enthalpy_f is None:
-#             # print("None Enthalpy returned by molecule:", item.uid)
-#             # tell user which molecule is causing problems
-#             return float("nan")
-#         return _enthalpy_f
-
-
-# @typing.final
-# @dataclasses.dataclass(frozen=True)
-# class MaxEnthalpyFilter(metadata.ReactionFilterBase):
-#     __slots__ = ("max_H", "H_key")
-#     max_H: float
-#     H_key: collections.abc.Hashable
-
-#     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
-#         dH = 0.0
-#         if recipe.operator.meta is None:
-#             return False
-#         for idx, mol in enumerate(recipe.products):
-#             if mol.meta is None or mol.meta[self.H_key] == float("nan"):
-#                 return False
-#             dH = (
-#                 dH
-#                 + mol.meta[self.H_key]
-#                 * recipe.operator.meta["products_stoi"][idx]
-#             )
-#         for idx, mol in enumerate(recipe.reactants):
-#             if mol.meta is None or mol.meta[self.H_key] == float("nan"):
-#                 return False
-#             dH = (
-#                 dH
-#                 - mol.meta[self.H_key]
-#                 * recipe.operator.meta["reactants_stoi"][idx]
-#             )
-#         if recipe.operator.meta["enthalpy_correction"] is not None:
-#             dH = dH + recipe.operator.meta["enthalpy_correction"]
-#         if dH / recipe.operator.meta["number_of_steps"] < self.max_H:
-#             return True
-#         return False
-
-#     @property
-#     def meta_required(self) -> interfaces.MetaKeyPacket:
-#         return interfaces.MetaKeyPacket(
-#             molecule_keys={self.H_key},
-#             operator_keys={
-#                 "reactants_stoi",
-#                 "products_stoi",
-#                 "enthalpy_correction",
-#                 "number_of_steps",
-#             },
-#         )
 
 
 @typing.final
