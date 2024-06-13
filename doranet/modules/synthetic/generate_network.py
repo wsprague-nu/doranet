@@ -318,11 +318,15 @@ class Enol_filter_forward(metadata.ReactionFilterBase):
                     f"""Calculator only implemented for molecule type \
                         MolDatRDKit, not {type(mol.item)}"""
                 )
-            if mol.item.rdkitmol.HasSubstructMatch(
-                Chem.MolFromSmarts("[C]=[C]-[OH]")
-            ) and (
-                recipe.operator.meta["name"]
-                != "Keto-enol Tautomerization Reverse"
+            if (
+                mol.item.rdkitmol.HasSubstructMatch(
+                    Chem.MolFromSmarts("[C]=[C]-[OH]")
+                )
+                and recipe.operator.meta is not None
+                and (
+                    recipe.operator.meta["name"]
+                    != "Keto-enol Tautomerization Reverse"
+                )
             ):
                 return False
         return True
@@ -343,11 +347,15 @@ class Enol_filter_retro(metadata.ReactionFilterBase):
                     f"""Filter only implemented for molecule type \
                         MolDatRDKit, not {type(mol.item)}"""
                 )
-            if mol.item.rdkitmol.HasSubstructMatch(
-                Chem.MolFromSmarts("[C]=[C]-[OH]")
-            ) and (
-                recipe.operator.meta["name"]
-                != "Keto-enol Tautomerization Reverse"
+            if (
+                mol.item.rdkitmol.HasSubstructMatch(
+                    Chem.MolFromSmarts("[C]=[C]-[OH]")
+                )
+                and recipe.operator.meta is not None
+                and (
+                    recipe.operator.meta["name"]
+                    != "Keto-enol Tautomerization Reverse"
+                )
             ):
                 return False
         return True
@@ -363,7 +371,10 @@ class Allowed_Elements_Filter(metadata.ReactionFilterBase):
     # only allow reactions with specified elements in reactants.
     # does not check hydrogen
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
-        if recipe.operator.meta["allowed_elements"][0] == "All":
+        if (
+            recipe.operator.meta is None
+            or recipe.operator.meta["allowed_elements"][0] == "All"
+        ):
             return True
         for mol in recipe.reactants:
             if not isinstance(mol.item, interfaces.MolDatRDKit):
