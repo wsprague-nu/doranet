@@ -122,15 +122,21 @@ class Reaction_Type_Filter(interfaces.RecipeFilter):
         if not self.Allow_multi_reactants:
             reas = set()
             for mol in recipe.reactants:
+                if mol.meta is None:
+                    raise RuntimeError("No molecule metadata found!")
                 SMILES = mol.meta["SMILES"]
                 if clean_SMILES(SMILES) not in cofactors_clean:
                     reas.add(clean_SMILES(SMILES))
             if len(reas) != 1:
                 # only allow A + cofactor or A + A
                 return False
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
         reas_type = recipe.operator.meta["Reactants"].split(";")
         for idx, mol in enumerate(recipe.reactants):
             # check if reactant type is correct
+            if mol.meta is None:
+                raise RuntimeError("No molecule metadata found!")
             SMILES = mol.meta["SMILES"]
             if (
                 reas_type[idx] == "Any"
