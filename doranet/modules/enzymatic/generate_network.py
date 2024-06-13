@@ -201,8 +201,8 @@ class Check_balance_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if True:
             charge_diff = 0
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, int | float] = dict()
+            products_dict: dict[str, int | float] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for mol in recipe.reactants:
                 if not isinstance(mol.item, interfaces.MolDatRDKit):
