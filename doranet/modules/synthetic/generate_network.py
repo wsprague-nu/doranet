@@ -149,7 +149,7 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                         f"""Calculator only implemented for molecule type \
                             MolDatRDKit, not {type(mol.item)}"""
                     )
-                if "." in mol.item.uid:
+                if "." in mol.item.smiles:
                     # if there're fragments in a mol, indicates invalid rxn
                     return False
                 smiles = CalcMolFormula(mol.item.rdkitmol)
