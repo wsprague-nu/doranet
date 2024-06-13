@@ -267,8 +267,18 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
         reas = list()
         pros = list()
         for mol in data.reactants:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             reas.append(mol.item.smiles)
         for mol in data.products:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             pros.append(mol.item.smiles)
         dH = self.rxn_dH({"reactants": reas, "products": pros})
         if dH is None:
