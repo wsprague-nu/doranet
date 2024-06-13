@@ -118,6 +118,9 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
 @dataclasses.dataclass(frozen=True)
 class Ring_Issues_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
+
         if (
             recipe.operator.meta["ring_issue"] is True
             and recipe.operator.meta["enthalpy_correction"] is None
@@ -126,6 +129,11 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
             products_dict = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
@@ -136,6 +144,11 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                         + count * recipe.operator.meta["reactants_stoi"][idx]
                     )
             for idx, mol in enumerate(recipe.products):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 if "." in mol.item.uid:
                     # if there're fragments in a mol, indicates invalid rxn
                     return False
