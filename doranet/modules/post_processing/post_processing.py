@@ -1018,7 +1018,6 @@ def pathway_finder(
             # End of pathway finder
 
 
-
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
 class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
@@ -1479,8 +1478,8 @@ def pathway_ranking(
                 name = rxn.split(">")[1]
                 dH = rxn.split(">")[2].split("$")[0]
                 if dH != "No_Thermo":
-                    if "2-step" in name or "&" in name:
-                        dH = float(dH) / 2
+                    # if "2-step" in name or "&" in name:
+                    #     dH = float(dH) / 2
                     path_max_H = max(path_max_H, float(dH))
             if path_max_H != path_max_H_ori_value:
                 H_list.append(path_max_H)
@@ -2081,9 +2080,9 @@ def pathway_ranking(
         dH_list = list()
         for rxn in _path:
             dH = rxn.split(">")[2].split("$")[0]
-            name = rxn.split(">")[1]
-            if "2-step" in name or "&" in name:
-                dH = float(dH) / 2
+            # name = rxn.split(">")[1]
+            # if "2-step" in name or "&" in name:
+            #     dH = float(dH) / 2
 
             rxn_str = rxn.split(">")[0] + ">>" + rxn.split(">")[3]
             clean_path.append(rxn_str)
