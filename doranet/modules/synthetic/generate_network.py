@@ -222,11 +222,12 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
 class Check_balance_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if (
-            recipe.operator.meta["enthalpy_correction"] is None
+            recipe.operator.meta is not None
+            and recipe.operator.meta["enthalpy_correction"] is None
             and recipe.operator.meta["ring_issue"] is False
         ):
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, float | int] = dict()
+            products_dict: dict[str, float | int] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
                 smiles = CalcMolFormula(mol.item.rdkitmol)
