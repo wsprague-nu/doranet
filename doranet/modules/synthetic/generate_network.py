@@ -125,8 +125,8 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
             recipe.operator.meta["ring_issue"] is True
             and recipe.operator.meta["enthalpy_correction"] is None
         ):
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, float | int] = dict()
+            products_dict: dict[str, float | int] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
                 if not isinstance(mol.item, interfaces.MolDatRDKit):
