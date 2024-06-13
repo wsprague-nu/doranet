@@ -163,8 +163,15 @@ class Product_Filter(metadata.ReactionFilterBase):
     # used for bio rxns, check if product type is correct.
     # Filter out radicals and fragments
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
         pros_type = recipe.operator.meta["Products"].split(";")
         for idx, mol in enumerate(recipe.products):
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Filter only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             if (
                 pros_type[idx] != "Any"
                 and clean_SMILES(mol.item.smiles)
@@ -198,6 +205,11 @@ class Check_balance_filter(metadata.ReactionFilterBase):
             products_dict = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for mol in recipe.reactants:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 charge_diff += GetFormalCharge(mol.item.rdkitmol)
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
@@ -208,6 +220,11 @@ class Check_balance_filter(metadata.ReactionFilterBase):
                         reactants_dict.get(element, 0) + count
                     )
             for mol in recipe.products:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 charge_diff -= GetFormalCharge(mol.item.rdkitmol)
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
