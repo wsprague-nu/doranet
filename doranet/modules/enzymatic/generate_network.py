@@ -273,7 +273,10 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
         dH = self.rxn_dH({"reactants": reas, "products": pros})
         if dH is None:
             return float("nan")
-        if data.operator.meta["enthalpy_correction"] is not None:
+        if (
+            data.operator.meta is not None
+            and data.operator.meta["enthalpy_correction"] is not None
+        ):
             dH = dH + data.operator.meta["enthalpy_correction"]
         # if self.direction == "forward":
         #     dH = dH
