@@ -5,6 +5,7 @@ import dataclasses
 import re
 import time
 import typing
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -263,7 +264,7 @@ class Check_balance_filter(metadata.ReactionFilterBase):
 class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
     dH_key: collections.abc.Hashable
     direction: str
-    rxn_dH: typing.Callable[[str], float]
+    rxn_dH: typing.Callable[[dict[str, Sequence[str]]], float]
 
     # rxn_dH: user function for dH of reaction
     # input: {reactants:(SMILES,), products:(SMILES,)} output: float
