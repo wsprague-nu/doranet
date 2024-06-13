@@ -109,6 +109,11 @@ class SMILESCalculator(metadata.MolPropertyCalc[float]):
         item = data.item
         if data.meta is not None and self.smiles_key in data.meta:
             return None
+        if not isinstance(item, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"""Calculator only implemented for molecule type \
+                    MolDatRDKit, not {type(item)}"""
+            )
         return item.smiles
 
 
