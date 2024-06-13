@@ -330,6 +330,11 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
             return True
         for atom_number, max_atoms in self.max_atoms_dict.items():
             for mol in recipe.products:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 rdkit_mol = mol.item.rdkitmol
                 Chem.rdmolops.RemoveStereochemistry(rdkit_mol)
                 if Chem.MolToSmiles(rdkit_mol) not in self.cofactors:
