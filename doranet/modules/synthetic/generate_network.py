@@ -183,6 +183,10 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         rea_aro_ring_num = 0
         pro_aro_ring_num = 0
+
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
+
         if recipe.operator.meta["Retro_Not_Aromatic"] is True:
             for idx, mol in enumerate(recipe.reactants):
                 rea_aro_ring_num += (
