@@ -44,12 +44,26 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
         if self.Mole_Hf is None:
             return "No_Thermo"
         dH = 0.0
+
+        if data.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
+
         for idx, mol in enumerate(data.products):
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             pro_Hf = self.Mole_Hf(mol.item.smiles)
             if pro_Hf is None:
                 return float("nan")
             dH = dH + pro_Hf * data.operator.meta["products_stoi"][idx]
         for idx, mol in enumerate(data.reactants):
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             rea_Hf = self.Mole_Hf(mol.item.smiles)
             if rea_Hf is None:
                 return float("nan")
@@ -104,14 +118,22 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
 @dataclasses.dataclass(frozen=True)
 class Ring_Issues_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
+
         if (
             recipe.operator.meta["ring_issue"] is True
             and recipe.operator.meta["enthalpy_correction"] is None
         ):
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, float | int] = dict()
+            products_dict: dict[str, float | int] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
@@ -122,7 +144,12 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                         + count * recipe.operator.meta["reactants_stoi"][idx]
                     )
             for idx, mol in enumerate(recipe.products):
-                if "." in mol.item.uid:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
+                if "." in mol.item.smiles:
                     # if there're fragments in a mol, indicates invalid rxn
                     return False
                 smiles = CalcMolFormula(mol.item.rdkitmol)
@@ -156,8 +183,17 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         rea_aro_ring_num = 0
         pro_aro_ring_num = 0
+
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
+
         if recipe.operator.meta["Retro_Not_Aromatic"] is True:
             for idx, mol in enumerate(recipe.reactants):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Filter only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 rea_aro_ring_num += (
                     Chem.rdMolDescriptors.CalcNumAromaticRings(
                         mol.item.rdkitmol
@@ -165,6 +201,11 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
                     * recipe.operator.meta["reactants_stoi"][idx]
                 )
             for idx, mol in enumerate(recipe.products):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Filter only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 pro_aro_ring_num += (
                     Chem.rdMolDescriptors.CalcNumAromaticRings(
                         mol.item.rdkitmol
@@ -191,13 +232,19 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
 class Check_balance_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if (
-            recipe.operator.meta["enthalpy_correction"] is None
+            recipe.operator.meta is not None
+            and recipe.operator.meta["enthalpy_correction"] is None
             and recipe.operator.meta["ring_issue"] is False
         ):
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, float | int] = dict()
+            products_dict: dict[str, float | int] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Filter only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
@@ -208,6 +255,11 @@ class Check_balance_filter(metadata.ReactionFilterBase):
                         + count * recipe.operator.meta["reactants_stoi"][idx]
                     )
             for idx, mol in enumerate(recipe.products):
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Filter only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
                 for match in matches:
@@ -261,11 +313,20 @@ class Enol_filter_forward(metadata.ReactionFilterBase):
     # if an enol is in reactants, only allow tautomerization rxn
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         for mol in recipe.reactants:
-            if mol.item.rdkitmol.HasSubstructMatch(
-                Chem.MolFromSmarts("[C]=[C]-[OH]")
-            ) and (
-                recipe.operator.meta["name"]
-                != "Keto-enol Tautomerization Reverse"
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
+            if (
+                mol.item.rdkitmol.HasSubstructMatch(
+                    Chem.MolFromSmarts("[C]=[C]-[OH]")
+                )
+                and recipe.operator.meta is not None
+                and (
+                    recipe.operator.meta["name"]
+                    != "Keto-enol Tautomerization Reverse"
+                )
             ):
                 return False
         return True
@@ -281,11 +342,20 @@ class Enol_filter_retro(metadata.ReactionFilterBase):
     # if an enol is in reactants, only allow tautomerization rxn
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         for mol in recipe.products:
-            if mol.item.rdkitmol.HasSubstructMatch(
-                Chem.MolFromSmarts("[C]=[C]-[OH]")
-            ) and (
-                recipe.operator.meta["name"]
-                != "Keto-enol Tautomerization Reverse"
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Filter only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
+            if (
+                mol.item.rdkitmol.HasSubstructMatch(
+                    Chem.MolFromSmarts("[C]=[C]-[OH]")
+                )
+                and recipe.operator.meta is not None
+                and (
+                    recipe.operator.meta["name"]
+                    != "Keto-enol Tautomerization Reverse"
+                )
             ):
                 return False
         return True
@@ -301,9 +371,17 @@ class Allowed_Elements_Filter(metadata.ReactionFilterBase):
     # only allow reactions with specified elements in reactants.
     # does not check hydrogen
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
-        if recipe.operator.meta["allowed_elements"][0] == "All":
+        if (
+            recipe.operator.meta is None
+            or recipe.operator.meta["allowed_elements"][0] == "All"
+        ):
             return True
         for mol in recipe.reactants:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Filter only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             for atom in mol.item.rdkitmol.GetAtoms():
                 if (
                     atom.GetSymbol()
@@ -329,6 +407,11 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
             return True
         for atom_number, max_atoms in self.max_atoms_dict.items():
             for mol in recipe.products:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Filter only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 atom_q = rdqueries.AtomNumEqualsQueryAtom(atom_number)
                 atom_matches = mol.item.rdkitmol.GetAtomsMatchingQuery(atom_q)
                 if len(atom_matches) > max_atoms:
