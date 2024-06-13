@@ -44,12 +44,26 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
         if self.Mole_Hf is None:
             return "No_Thermo"
         dH = 0.0
+
+        if data.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
+
         for idx, mol in enumerate(data.products):
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             pro_Hf = self.Mole_Hf(mol.item.smiles)
             if pro_Hf is None:
                 return float("nan")
             dH = dH + pro_Hf * data.operator.meta["products_stoi"][idx]
         for idx, mol in enumerate(data.reactants):
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             rea_Hf = self.Mole_Hf(mol.item.smiles)
             if rea_Hf is None:
                 return float("nan")
