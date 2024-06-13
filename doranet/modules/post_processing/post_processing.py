@@ -40,7 +40,10 @@ cofactors_path = (
 )
 bio_rules = pd.read_csv(bio_rules_path, sep="\t")
 cofactors = pd.read_csv(cofactors_path, sep="\t")
-excluded_cofactors = (("CARBONYL_CoF", "AMINO_CoF"),)  # temporary
+excluded_cofactors = (
+    "CARBONYL_CoF",
+    "AMINO_CoF",
+)  # temporary
 bio_rxn_names = set()
 for i in bio_rules["Name"]:
     bio_rxn_names.add(i)

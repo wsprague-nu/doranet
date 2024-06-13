@@ -66,6 +66,8 @@ cofactors_path = Path(__file__).parent / "all_cofactors.tsv"
 bio_rules = pd.read_csv(bio_rules_path, sep="\t")
 cofactors = pd.read_csv(cofactors_path, sep="\t")
 
+excluded_cofactors = ("CARBONYL_CoF", "AMINO_CoF")  # temporary
+
 cofactors_dict = dict()  # {"NAD_Cof": SMILES,}
 cofactors_set = set()  # { SMILES,}
 for idx, x in enumerate(cofactors["SMILES"]):
@@ -77,8 +79,9 @@ for idx, x in enumerate(cofactors["SMILES"]):
 cofactors_clean_dict = dict()
 cofactors_clean = set()
 for idx, x in enumerate(cofactors["SMILES"]):
-    cofactors_clean_dict[cofactors["#ID"][idx]] = clean_SMILES(x)
-    cofactors_clean.add(clean_SMILES(x))
+    if cofactors["#ID"][idx] not in excluded_cofactors:
+        cofactors_clean_dict[cofactors["#ID"][idx]] = clean_SMILES(x)
+        cofactors_clean.add(clean_SMILES(x))
 
 
 @typing.final
@@ -165,6 +168,12 @@ class Product_Filter(metadata.ReactionFilterBase):
                 != cofactors_clean_dict[pros_type[idx]]
             ):
                 return False
+            if (
+                pros_type[idx] == "Any"
+                and clean_SMILES(mol.item.smiles) in cofactors_clean
+            ):
+                return False
+
             if (
                 Descriptors.NumRadicalElectrons(
                     Chem.MolFromSmiles(mol.item.smiles)
@@ -350,7 +359,6 @@ def generate_network(
     max_atoms=None,  # {"C": 20}
     allow_multiple_reactants=False,
     targets=None,  # string or list, set, etc.
-    excluded_cofactors=("CARBONYL_CoF", "AMINO_CoF"),
 ):
     if not starters:
         raise Exception("At least one starter is needed to generate a network")
