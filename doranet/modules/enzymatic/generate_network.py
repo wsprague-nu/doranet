@@ -83,7 +83,7 @@ for idx, x in enumerate(cofactors["SMILES"]):
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
-class SMILESCalculator(metadata.MolPropertyCalc[float]):
+class SMILESCalculator(metadata.MolPropertyCalc[str]):
     # Calculate SMILES for molecules and save in network
     smiles_key: collections.abc.Hashable
 
@@ -96,14 +96,14 @@ class SMILESCalculator(metadata.MolPropertyCalc[float]):
         return interfaces.MetaKeyPacket(molecule_keys={self.smiles_key})
 
     @property
-    def resolver(self) -> metadata.MetaDataResolverFunc[float]:
+    def resolver(self) -> metadata.MetaDataResolverFunc[str]:
         return metadata.TrivialMetaDataResolverFunc
 
     def __call__(
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
-        prev_value: typing.Optional[float] = None,
-    ) -> typing.Optional[float]:
+        prev_value: typing.Optional[str] = None,
+    ) -> typing.Optional[str]:
         if prev_value is not None:
             return prev_value
         item = data.item
