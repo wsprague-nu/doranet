@@ -22,11 +22,12 @@ license = {file = "LICENSE"}
 dependencies = [
     "ipython",
     "matplotlib",
-    "networkx",
+    "networkx[extras]",
     "numpy",
     "pandas",
     "pillow",
     "pyarrow",
+    "pypdf",
     "rdkit<=2023.9.5",
     "scipy",
 ]
@@ -66,7 +67,6 @@ module = [
     "pandas.*",
     "pgthermo.*",
     "PIL.*",
-    "PyPDF2.*",
     "rdkit.*",
 ]
 ignore_missing_imports = true

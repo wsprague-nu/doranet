@@ -2566,7 +2566,7 @@ def pathway_visualization(
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
 ):
-    from PyPDF2 import PdfFileMerger, PdfFileReader
+    from pypdf import PdfFileMerger, PdfFileReader
 
     start_time = time.time()
 
