@@ -22,7 +22,7 @@ license = {file = "LICENSE"}
 dependencies = [
     "ipython",
     "matplotlib",
-    "networkx[extras]",
+    "networkx[extra]",
     "numpy",
     "pandas",
     "pillow",
