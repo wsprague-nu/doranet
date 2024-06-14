@@ -22,7 +22,7 @@ license = {file = "LICENSE"}
 dependencies = [
     "ipython",
     "matplotlib",
-    "networkx[extra]",
+    "networkx",
     "numpy",
     "pandas",
     "pillow",
@@ -39,6 +39,9 @@ doc = [
     "sphinx",
     "sphinxcontrib-mermaid",
     "sphinx-rtd-theme",
+]
+draw = [
+    "pygraphviz",
 ]
 lint = [
     "mypy",
