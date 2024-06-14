@@ -55,7 +55,7 @@ test = [
     "pytest",
 ]
 dev = [
-    "doranet[doc,lint,profile,test]",
+    ".[doc,lint,profile,test]",
     "hatch",
 ]
 
