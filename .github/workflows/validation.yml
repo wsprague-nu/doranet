@@ -35,6 +35,10 @@ jobs:
           pip install .[lint]
           ruff check --output-format=github doranet
           ruff format --diff doranet
+      - name: Type check with Mypy
+        run: |
+          pip install .[lint]
+          mypy --no-install-types doranet
       - name: Test doranet with pytest
         run: |
           pip install .[test]

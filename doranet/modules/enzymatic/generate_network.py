@@ -5,6 +5,7 @@ import dataclasses
 import re
 import time
 import typing
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -66,6 +67,8 @@ cofactors_path = Path(__file__).parent / "all_cofactors.tsv"
 bio_rules = pd.read_csv(bio_rules_path, sep="\t")
 cofactors = pd.read_csv(cofactors_path, sep="\t")
 
+excluded_cofactors = ("CARBONYL_CoF", "AMINO_CoF")  # temporary
+
 cofactors_dict = dict()  # {"NAD_Cof": SMILES,}
 cofactors_set = set()  # { SMILES,}
 for idx, x in enumerate(cofactors["SMILES"]):
@@ -77,13 +80,14 @@ for idx, x in enumerate(cofactors["SMILES"]):
 cofactors_clean_dict = dict()
 cofactors_clean = set()
 for idx, x in enumerate(cofactors["SMILES"]):
-    cofactors_clean_dict[cofactors["#ID"][idx]] = clean_SMILES(x)
-    cofactors_clean.add(clean_SMILES(x))
+    if cofactors["#ID"][idx] not in excluded_cofactors:
+        cofactors_clean_dict[cofactors["#ID"][idx]] = clean_SMILES(x)
+        cofactors_clean.add(clean_SMILES(x))
 
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
-class SMILESCalculator(metadata.MolPropertyCalc[float]):
+class SMILESCalculator(metadata.MolPropertyCalc[str]):
     # Calculate SMILES for molecules and save in network
     smiles_key: collections.abc.Hashable
 
@@ -96,19 +100,24 @@ class SMILESCalculator(metadata.MolPropertyCalc[float]):
         return interfaces.MetaKeyPacket(molecule_keys={self.smiles_key})
 
     @property
-    def resolver(self) -> metadata.MetaDataResolverFunc[float]:
+    def resolver(self) -> metadata.MetaDataResolverFunc[str]:
         return metadata.TrivialMetaDataResolverFunc
 
     def __call__(
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
-        prev_value: typing.Optional[float] = None,
-    ) -> typing.Optional[float]:
+        prev_value: typing.Optional[str] = None,
+    ) -> typing.Optional[str]:
         if prev_value is not None:
             return prev_value
         item = data.item
         if data.meta is not None and self.smiles_key in data.meta:
             return None
+        if not isinstance(item, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"""Calculator only implemented for molecule type \
+                    MolDatRDKit, not {type(item)}"""
+            )
         return item.smiles
 
 
@@ -122,15 +131,21 @@ class Reaction_Type_Filter(interfaces.RecipeFilter):
         if not self.Allow_multi_reactants:
             reas = set()
             for mol in recipe.reactants:
+                if mol.meta is None:
+                    raise RuntimeError("No molecule metadata found!")
                 SMILES = mol.meta["SMILES"]
                 if clean_SMILES(SMILES) not in cofactors_clean:
                     reas.add(clean_SMILES(SMILES))
             if len(reas) != 1:
                 # only allow A + cofactor or A + A
                 return False
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
         reas_type = recipe.operator.meta["Reactants"].split(";")
         for idx, mol in enumerate(recipe.reactants):
             # check if reactant type is correct
+            if mol.meta is None:
+                raise RuntimeError("No molecule metadata found!")
             SMILES = mol.meta["SMILES"]
             if (
                 reas_type[idx] == "Any"
@@ -157,14 +172,27 @@ class Product_Filter(metadata.ReactionFilterBase):
     # used for bio rxns, check if product type is correct.
     # Filter out radicals and fragments
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if recipe.operator.meta is None:
+            raise RuntimeError("No operator metadata found!")
         pros_type = recipe.operator.meta["Products"].split(";")
         for idx, mol in enumerate(recipe.products):
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Filter only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             if (
                 pros_type[idx] != "Any"
                 and clean_SMILES(mol.item.smiles)
                 != cofactors_clean_dict[pros_type[idx]]
             ):
                 return False
+            if (
+                pros_type[idx] == "Any"
+                and clean_SMILES(mol.item.smiles) in cofactors_clean
+            ):
+                return False
+
             if (
                 Descriptors.NumRadicalElectrons(
                     Chem.MolFromSmiles(mol.item.smiles)
@@ -188,10 +216,15 @@ class Check_balance_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if True:
             charge_diff = 0
-            reactants_dict = dict()
-            products_dict = dict()
+            reactants_dict: dict[str, int | float] = dict()
+            products_dict: dict[str, int | float] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for mol in recipe.reactants:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 charge_diff += GetFormalCharge(mol.item.rdkitmol)
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
@@ -202,6 +235,11 @@ class Check_balance_filter(metadata.ReactionFilterBase):
                         reactants_dict.get(element, 0) + count
                     )
             for mol in recipe.products:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 charge_diff -= GetFormalCharge(mol.item.rdkitmol)
                 smiles = CalcMolFormula(mol.item.rdkitmol)
                 matches = re.findall(pattern, smiles)
@@ -235,7 +273,7 @@ class Check_balance_filter(metadata.ReactionFilterBase):
 class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
     dH_key: collections.abc.Hashable
     direction: str
-    rxn_dH: typing.Callable[[str], float]
+    rxn_dH: typing.Callable[[dict[str, Sequence[str]]], float]
 
     # rxn_dH: user function for dH of reaction
     # input: {reactants:(SMILES,), products:(SMILES,)} output: float
@@ -261,13 +299,26 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
         reas = list()
         pros = list()
         for mol in data.reactants:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             reas.append(mol.item.smiles)
         for mol in data.products:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Calculator only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
             pros.append(mol.item.smiles)
         dH = self.rxn_dH({"reactants": reas, "products": pros})
         if dH is None:
             return float("nan")
-        if data.operator.meta["enthalpy_correction"] is not None:
+        if (
+            data.operator.meta is not None
+            and data.operator.meta["enthalpy_correction"] is not None
+        ):
             dH = dH + data.operator.meta["enthalpy_correction"]
         # if self.direction == "forward":
         #     dH = dH
@@ -324,6 +375,11 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
             return True
         for atom_number, max_atoms in self.max_atoms_dict.items():
             for mol in recipe.products:
+                if not isinstance(mol.item, interfaces.MolDatRDKit):
+                    raise NotImplementedError(
+                        f"""Calculator only implemented for molecule type \
+                            MolDatRDKit, not {type(mol.item)}"""
+                    )
                 rdkit_mol = mol.item.rdkitmol
                 Chem.rdmolops.RemoveStereochemistry(rdkit_mol)
                 if Chem.MolToSmiles(rdkit_mol) not in self.cofactors:
@@ -350,13 +406,13 @@ def generate_network(
     max_atoms=None,  # {"C": 20}
     allow_multiple_reactants=False,
     targets=None,  # string or list, set, etc.
-    excluded_cofactors=("CARBONYL_CoF", "AMINO_CoF"),
 ):
     if not starters:
         raise Exception("At least one starter is needed to generate a network")
 
-    print(f"Job Name: {job_name}")
-    print("Job Started On:", datetime.now())
+    print(f"Job name: {job_name}")
+    print(f"Job type: enzymatic network expansion {direction}")
+    print("Job started on:", datetime.now())
     start_time = time.time()
 
     engine = dn.create_engine()
@@ -484,8 +540,13 @@ def generate_network(
 
     end_time = time.time()
     elapsed_time = (end_time - start_time) / 60
-    print("time used:", "{:.2f}".format(elapsed_time), "minutes")
+    print(
+        "Time used for network generation:",
+        "{:.2f}".format(elapsed_time),
+        "minutes",
+    )
+    print()
 
-    network.save_to_file(f"{job_name}_saved_network")
+    network.save_to_file(f"{job_name}__{direction}_saved_network")
 
     return network

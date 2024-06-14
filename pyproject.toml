@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = 'doranet'
-version = '0.5.1a1'
+version = '0.5.2a1'
 authors = [
     { name='William Sprague', email='wsprague@u.northwestern.edu' },
     { name='Quan Zhang', email='quanzhang@northwestern.edu' },
@@ -27,7 +27,7 @@ dependencies = [
     "pandas",
     "pillow",
     "pyarrow",
-    "rdkit",
+    "rdkit<=2023.9.5",
     "scipy",
 ]
 
@@ -61,12 +61,13 @@ Issues = "https://github.com/wsprague-nu/doranet/issues"
 
 [[tool.mypy.overrides]]
 module = [
-    "rdkit.*",
-    "PIL.*",
     "IPython.*",
     "networkx.*",
+    "pandas.*",
     "pgthermo.*",
+    "PIL.*",
     "PyPDF2.*",
+    "rdkit.*",
 ]
 ignore_missing_imports = true
 
