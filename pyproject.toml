@@ -27,7 +27,7 @@ dependencies = [
     "pandas",
     "pillow",
     "pyarrow",
-    "rdkit",
+    "rdkit<=2023.9.5",
     "scipy",
 ]
 
@@ -68,7 +68,6 @@ module = [
     "PIL.*",
     "PyPDF2.*",
     "rdkit.*",
-    "rdkit-stubs.*",
 ]
 ignore_missing_imports = true
 
