@@ -68,6 +68,7 @@ module = [
     "PIL.*",
     "PyPDF2.*",
     "rdkit.*",
+    "rdkit-stubs.*",
 ]
 ignore_missing_imports = true
 
