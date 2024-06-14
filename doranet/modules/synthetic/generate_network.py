@@ -438,8 +438,9 @@ def generate_network(
     if not starters:
         raise Exception("At least one starter is needed to generate a network")
 
-    print(f"Job Name: {job_name}")
-    print("Job Started On:", datetime.now())
+    print(f"Job name: {job_name}")
+    print(f"Job type: synthetic network expansion {direction}")
+    print("Job started on:", datetime.now())
     print()
     start_time = time.time()
 
@@ -583,8 +584,13 @@ def generate_network(
 
     end_time = time.time()
     elapsed_time = (end_time - start_time) / 60
-    print("Time used:", "{:.2f}".format(elapsed_time), "minutes")
+    print(
+        "Time used for network generation:",
+        "{:.2f}".format(elapsed_time),
+        "minutes",
+    )
+    print()
 
-    network.save_to_file(f"{job_name}_saved_network")
+    network.save_to_file(f"{job_name}_{direction}_saved_network")
 
     return network
