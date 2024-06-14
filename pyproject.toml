@@ -60,7 +60,12 @@ dev = [
 Homepage = "https://github.com/wsprague-nu/doranet"
 Issues = "https://github.com/wsprague-nu/doranet/issues"
 
+[tool.mypy]
+no_implicit_reexport = true
+warn_unused_configs = true
+
 [[tool.mypy.overrides]]
+ignore_missing_imports = true
 module = [
     "IPython.*",
     "networkx.*",
@@ -69,7 +74,6 @@ module = [
     "PIL.*",
     "rdkit.*",
 ]
-ignore_missing_imports = true
 
 [tool.ruff]
 extend-include = ["*.ipynb"]
