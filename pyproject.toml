@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = 'doranet'
-version = '0.5.2a1'
+version = '0.5.2a3'
 authors = [
     { name='William Sprague', email='wsprague@u.northwestern.edu' },
     { name='Quan Zhang', email='quanzhang@northwestern.edu' },
@@ -27,6 +27,7 @@ dependencies = [
     "pandas",
     "pillow",
     "pyarrow",
+    "pypdf",
     "rdkit<=2023.9.5",
     "scipy",
 ]
@@ -38,6 +39,9 @@ doc = [
     "sphinx",
     "sphinxcontrib-mermaid",
     "sphinx-rtd-theme",
+]
+draw = [
+    "pygraphviz",
 ]
 lint = [
     "mypy",
@@ -59,17 +63,20 @@ dev = [
 Homepage = "https://github.com/wsprague-nu/doranet"
 Issues = "https://github.com/wsprague-nu/doranet/issues"
 
+[tool.mypy]
+no_implicit_reexport = true
+warn_unused_configs = true
+
 [[tool.mypy.overrides]]
+ignore_missing_imports = true
 module = [
     "IPython.*",
     "networkx.*",
     "pandas.*",
     "pgthermo.*",
     "PIL.*",
-    "PyPDF2.*",
     "rdkit.*",
 ]
-ignore_missing_imports = true
 
 [tool.ruff]
 extend-include = ["*.ipynb"]

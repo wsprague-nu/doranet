@@ -24,6 +24,7 @@ import pandas as pd
 import rdkit.Chem.rdmolfiles
 import rdkit.Chem.rdmolops
 from PIL import Image, ImageChops, ImageDraw, ImageFont
+from pypdf import PdfMerger, PdfReader
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
@@ -2566,8 +2567,6 @@ def pathway_visualization(
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
 ):
-    from PyPDF2 import PdfFileMerger, PdfFileReader
-
     start_time = time.time()
 
     if exclude_smiles is None:
@@ -2743,9 +2742,9 @@ def pathway_visualization(
 
     print("Finished pages, writing to pdf")
     pages.sort()  # [(page_number, object)]
-    merger = PdfFileMerger()
+    merger = PdfMerger()
     for page in pages:
-        merger.append(PdfFileReader(page[1]))
+        merger.append(PdfReader(page[1]))
 
     filename_part2 = ""
     if exclude_smiles:
