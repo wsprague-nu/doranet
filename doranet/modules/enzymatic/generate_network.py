@@ -396,6 +396,29 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
         return interfaces.MetaKeyPacket()
 
 
+def get_smiles_from_file(file_name):
+    def is_valid_smiles(smiles_string):
+        try:
+            mol = Chem.MolFromSmiles(smiles_string)
+            return mol is not None
+        except ValueError:
+            return False
+
+    if not isinstance(file_name, str):
+        return file_name
+    if is_valid_smiles(file_name):
+        return [file_name]
+    with open(
+        file_name  # , encoding="utf-8"
+    ) as f:
+        lines = f.readlines()
+    clean_list = list()
+    for i in lines:
+        if i != "\n":
+            clean_list.append(i.strip())
+    return clean_list
+
+
 def generate_network(
     job_name="default_job",
     starters=False,
@@ -409,6 +432,9 @@ def generate_network(
 ):
     if not starters:
         raise Exception("At least one starter is needed to generate a network")
+
+    starters = get_smiles_from_file(starters)
+    targets = get_smiles_from_file(targets)
 
     print(f"Job name: {job_name}")
     print(f"Job type: enzymatic network expansion {direction}")
