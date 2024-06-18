@@ -2648,34 +2648,6 @@ def pathway_visualization(
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
 ):
-    def custom_layout(graph):
-        # topological sort of the graph
-        topological_order = list(nx.topological_sort(graph))
-        # layer dict
-        layers = {node: 0 for node in graph.nodes()}
-        for node in topological_order:
-            for successor in graph.successors(node):
-                layers[successor] = max(layers[successor], layers[node] + 1)
-            for predecessor in graph.predecessors(node):
-                layers[predecessor] = max(layers[predecessor], layers[node] - 1)
-        # assign layers to nodes as attributes
-        nx.set_node_attributes(graph, layers, "layer")
-        # multipartite layout
-        pos = nx.multipartite_layout(graph, subset_key="layer")
-        # adjust positions for top-to-bottom layout
-        for node, (x, y) in pos.items():
-            pos[node] = (y, -x)
-        # adjust x position
-        for node in topological_order:
-            predecessors = list(graph.predecessors(node))
-            if (
-                len(predecessors) == 1
-                and len(list(graph.successors(predecessors[0]))) == 1
-            ):
-                predecessor = predecessors[0]
-                pos[node] = (pos[predecessor][0], pos[node][1])
-        return pos
-
     start_time = time.time()
     print(f"Job name: {job_name}")
     print("Job type: pathway visualization")
