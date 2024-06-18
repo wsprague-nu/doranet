@@ -4,15 +4,18 @@ import collections.abc
 import copy
 import csv
 import dataclasses
+import importlib.util
 import io
 import json
 import math
 import re
+import subprocess
 import textwrap
 import time
 import typing
 from collections import deque
 from collections.abc import Iterable
+from datetime import datetime
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -85,6 +88,29 @@ for i in reaxys_not_supported:  # clean up
 reaxys_not_supported = set(temp_ms)
 
 
+def get_smiles_from_file(file_name):
+    def is_valid_smiles(smiles_string):
+        try:
+            mol = Chem.MolFromSmiles(smiles_string)
+            return mol is not None
+        except ValueError:
+            return False
+
+    if not isinstance(file_name, str):
+        return file_name
+    if is_valid_smiles(file_name):
+        return [file_name]
+    with open(
+        file_name  # , encoding="utf-8"
+    ) as f:
+        lines = f.readlines()
+    clean_list = list()
+    for i in lines:
+        if i != "\n":
+            clean_list.append(i.strip())
+    return clean_list
+
+
 def clean_SMILES(smiles):
     mol = rdkit.Chem.rdmolfiles.MolFromSmiles(smiles)
     rdkit.Chem.rdmolops.RemoveStereochemistry(mol)
@@ -123,9 +149,18 @@ def pretreat_networks(
     if not networks:
         raise Exception("At least one network is needed")
 
+    starters = get_smiles_from_file(starters)
+    helpers = get_smiles_from_file(helpers)
+
     engine = dn.create_engine()
+
+    print(f"Job name: {job_name}")
+    print("Job type: post-processing pretreat networks")
+    print("Job started on:", datetime.now())
+    start_time = time.time()
+
     print(
-        "Loading network files, it may take a while if loading"
+        "Loading networks, it may take a while if loading"
         " large networks from file"
     )
 
@@ -429,6 +464,14 @@ def pretreat_networks(
         print("Unconnected reactions removed")
 
     print("Total number of reactions after pretreatment:", len(my_list))
+    end_time = time.time()
+    elapsed_time = (end_time - start_time) / 60
+    print(
+        "Time used for network pretreatment:",
+        "{:.2f}".format(elapsed_time),
+        "minutes",
+    )
+
     print()
 
     with open(
@@ -452,9 +495,9 @@ def pathway_finder(
 
     Parameters
     ----------
-                    starters: a list of SMILES strings
-                    helpers: A collection of SMILES
-                    target: A SMILES string
+                    starters: SMILES, collection of SMILES, or a file name
+                    helpers: SMILES, collection of SMILES, or a file name
+                    target: SMILES, collection of SMILES, or a file name
                     search_depth: An int
                     max_num_rxns: An int
                     min_rxn_atom_economy: A float between 0-1
@@ -475,11 +518,24 @@ def pathway_finder(
             " needed to search for pathways"
         )
 
+    starters = get_smiles_from_file(starters)
+    helpers = get_smiles_from_file(helpers)
+    target = get_smiles_from_file(target)
+
+    print(f"Job name: {job_name}")
+    print("Job type: pathway search")
+    print("Job started on:", datetime.now())
     start_time = time.time()
 
+    # if isinstance(target, str):
+    #     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
+    #         rdkit.Chem.rdmolfiles.MolFromSmiles(target)
+    #     )
+    # else:
     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
-        rdkit.Chem.rdmolfiles.MolFromSmiles(target)
+        rdkit.Chem.rdmolfiles.MolFromSmiles(list(target)[0])
     )
+
     generation = search_depth  # number of generations to backtrack
     pathway_max_length = max_num_rxns  # max number of rxns allowed in a pathway
     min_atom_economy = min_rxn_atom_economy  # 0~1, apply to each rxn in path
@@ -742,14 +798,12 @@ def pathway_finder(
     for i in list(work_list):
         path = i[2:]
         path = list(set(path))
-        # path.sort()
         path_str = []
         for j in path:
             path_str.append(index_to_path(j))
         path_str.sort()
         if path_str not in to_save:
             to_save.append(path_str)
-            # to_save_index.append(path)
 
     def get_rxn_smiles(_rxn_idx):
         result_string = str()
@@ -766,7 +820,6 @@ def pathway_finder(
         _pathway, _starters, _helpers
     ):  # return bool, if there're cycles in the pathway
         G = nx.DiGraph()
-        # rxn_node = 0
         for rxn_node, rxn in enumerate(
             _pathway["SMILES"]
         ):  # add nodes and edges to graph
@@ -781,7 +834,6 @@ def pathway_finder(
                         if pro not in _helpers and pro not in _starters:
                             G.add_node(pro)
                             G.add_edge(rxn_node, pro)
-            # rxn_node += 1
         try:
             nx.find_cycle(G, orientation="original")
             return True
@@ -790,12 +842,12 @@ def pathway_finder(
 
     print("Pathway search finished, removing loops if there's any.")
     end_time = time.time()
-    elapsed_time = end_time - start_time
-    print()
+    elapsed_time = (end_time - start_time) / 60
+    # print()
     print(
         "Time used for pathway search:",
         "{:.2f}".format(elapsed_time),
-        "seconds",
+        "minutes",
     )
 
     # remove duplicates due to rxn name differences in forward
@@ -906,17 +958,15 @@ def pathway_finder(
             max_num = max(max_num, len(i["SMILES"]))
             for j in i["SMILES"]:
                 all_rxns.add(j)
-        # print()
+
         print(new_ranking - 1, "pathways found!")
         print(len(all_rxns), "reactions found in all pathways")
         print("Min number of reactions in a pathway:", min_num)
         print("Max number of reactions in a pathway:", max_num)
-        # print()
         print("Pruning parameters for this search:")
         print("search_depth:", search_depth)
         print("max_num_rxns:", max_num_rxns)
         print("min_rxn_atom_economy:", min_rxn_atom_economy)
-        print()
 
         # generate reaxys batch query file   https://service.elsevier.com/app/answers/detail/a_id/26151/supporthub/reaxys/p/10958/#:~:text=Reaxys%20searches%20batch%20queries%20sequentially,individual%20query%20in%20the%20batch.
 
@@ -965,7 +1015,6 @@ def pathway_finder(
         rxn_set = list(rxn_set)
         rxn_set.sort()
 
-        # if len(rxn_set) < max_rxns_per_batch:
         if True:
             with open(
                 f"{job_name}_reaxys_batch_query.txt", "w", encoding="utf-8"
@@ -976,10 +1025,8 @@ def pathway_finder(
                         f_result.write("SMILES='" + rxn + "'")
                         f_result.write("\n")
 
-        # else:
         if len(rxn_set) > max_rxns_per_batch:
             num_files = math.ceil(len(rxn_set) / max_rxns_per_batch)
-            # print(num_files, "files generated")
 
             filenames = [
                 f"{job_name}_reaxys_batch_query_part_" + str(i)
@@ -1017,6 +1064,8 @@ def pathway_finder(
             csvwriter = csv.writer(csvfile)
             csvwriter.writerows(rows)
             # End of pathway finder
+
+    print()
 
 
 @typing.final
@@ -1349,9 +1398,22 @@ def pathway_ranking(
     if not starters or not target:
         raise Exception("Starters and target are" " needed to rank pathways")
 
+    print(f"Job name: {job_name}")
+    print("Job type: pathway ranking")
+    print("Job started on:", datetime.now())
     start_time = time.time()
+
+    starters = get_smiles_from_file(starters)
+    helpers = get_smiles_from_file(helpers)
+    target = get_smiles_from_file(target)
+
+    # if isinstance(target, str):
+    #     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
+    #         rdkit.Chem.rdmolfiles.MolFromSmiles(target),
+    #     )
+    # else:
     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
-        rdkit.Chem.rdmolfiles.MolFromSmiles(target),
+        rdkit.Chem.rdmolfiles.MolFromSmiles(list(target)[0]),
     )
 
     if helpers is None:
@@ -1411,7 +1473,6 @@ def pathway_ranking(
     pathways_list = list()
     # [{final_score:,eco:,pathy_by:,inter_by:{},SMILES:[], Nmaes:[],dH:[]}]
     pathway_marker = list()
-    # pathway_num = 1
     for idx, i in enumerate(clean_list):
         if "pathway number" in i:
             pathway_marker.append(idx)
@@ -1754,16 +1815,6 @@ def pathway_ranking(
 
         for idx, path in enumerate(data):
             mol_soup = set()  # for pathway_byproduct
-            # mol_bypro_dict = dict()   # for intermediate by_product
-
-            # has_bio_rxn_flag = False
-            # for rxn in path:
-            #     name = rxn.split(">")[1]
-            #     if name in bio_rxn_names:
-            #         has_bio_rxn_flag = True
-            # to_remove = set() # remove cofactors not in starters
-            # if has_bio_rxn_flag:
-            #     to_remove = cofactors_set - starters
 
             for rxn in path:
                 name = rxn.split(">")[1]
@@ -1773,7 +1824,7 @@ def pathway_ranking(
                     mol_soup.update(set(products), set(reas))
 
             soup_list.append((idx, mol_soup))
-            # num_by_pro = Byproduct_index( list(mol_soup) )
+
             for inter_mol in mol_soup:
                 if inter_mol not in helpers or inter_mol in just_starters:
                     Inter_soup_list.append((idx, inter_mol, mol_soup))
@@ -1835,7 +1886,6 @@ def pathway_ranking(
         min_by_pro = min(by_pro_list)
         max_by_pro = max(by_pro_list)
         diff_by_pro = -(max_by_pro - min_by_pro)
-        # diff_by_pro = 1
 
         by_pro_score_list = []
 
@@ -2093,9 +2143,6 @@ def pathway_ranking(
         dH_list = list()
         for rxn in _path:
             dH = rxn.split(">")[2].split("$")[0]
-            # name = rxn.split(">")[1]
-            # if "2-step" in name or "&" in name:
-            #     dH = float(dH) / 2
 
             rxn_str = rxn.split(">")[0] + ">>" + rxn.split(">")[3]
             clean_path.append(rxn_str)
@@ -2104,6 +2151,8 @@ def pathway_ranking(
         clean_path = clean_path + names + dH_list
         return clean_path
 
+    print("Pathway ranking finished. Pathway scores:")
+    print()
     k = 0
     with open(
         f"{job_name}_ranked_pathways.txt", "w", encoding="utf-8"
@@ -2200,13 +2249,14 @@ def pathway_ranking(
                 f_result.write("\n")
 
     end_time = time.time()
-    elapsed_time = end_time - start_time  # /60
-    print()
+    elapsed_time = (end_time - start_time) / 60
+    # print()
     print(
         "Time used for pathway ranking:",
         "{:.2f}".format(elapsed_time),
-        "seconds",
+        "minutes",
     )
+    print()
 
 
 # pathway visualization
@@ -2219,8 +2269,37 @@ def create_page(
     _bio_cof_not_in_helpers,
     _reaxys_rxn_color,
     _normal_rxn_color,
+    use_custom_layout,
 ):
     font_path = Path(__file__).parent / "OpenSans-Regular.ttf"
+
+    def custom_layout(graph):
+        # topological sort of the graph
+        topological_order = list(nx.topological_sort(graph))
+        # layer dict
+        layers = {node: 0 for node in graph.nodes()}
+        for node in topological_order:
+            for successor in graph.successors(node):
+                layers[successor] = max(layers[successor], layers[node] + 1)
+            for predecessor in graph.predecessors(node):
+                layers[predecessor] = max(layers[predecessor], layers[node] - 1)
+        # assign layers to nodes as attributes
+        nx.set_node_attributes(graph, layers, "layer")
+        # multipartite layout
+        pos = nx.multipartite_layout(graph, subset_key="layer")
+        # adjust positions for top-to-bottom layout
+        for node, (x, y) in pos.items():
+            pos[node] = (y, -x)
+        # adjust x position
+        for node in topological_order:
+            predecessors = list(graph.predecessors(node))
+            if (
+                len(predecessors) == 1
+                and len(list(graph.successors(predecessors[0]))) == 1
+            ):
+                predecessor = predecessors[0]
+                pos[node] = (pos[predecessor][0], pos[node][1])
+        return pos
 
     def trim(im):  # trim white space around image
         bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
@@ -2470,8 +2549,10 @@ def create_page(
 
             if my_start_being_produced is False:
                 G2.remove_node(i)
-
-    pos = nx.nx_agraph.graphviz_layout(G2, prog="dot")
+    if not use_custom_layout:
+        pos = nx.nx_agraph.graphviz_layout(G2, prog="dot")
+    else:
+        pos = custom_layout(G2)
 
     edge_color_list = []  # for coloring edges,
     # black if not in reaxys, green if in reaxys
@@ -2568,11 +2649,41 @@ def pathway_visualization(
     normal_rxn_color="black",
 ):
     start_time = time.time()
+    print(f"Job name: {job_name}")
+    print("Job type: pathway visualization")
+    print("Job started on:", datetime.now())
+
+    use_custom_layout = False
+    # check for pygraphviz and Graphviz
+    package_spec = importlib.util.find_spec("pygraphviz")
+    if package_spec is None:
+        print("pygraphviz is NOT installed.")
+        use_custom_layout = True
+
+    try:
+        # attempt to run the 'dot' command, which is part of Graphviz
+        subprocess.run(
+            ["dot", "-V"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        print("Graphviz is NOT installed.")
+        use_custom_layout = True
+
+    if use_custom_layout:
+        print("A custom node layout will be used for pathway visualization")
+
+    starters = get_smiles_from_file(starters)
+    helpers = get_smiles_from_file(helpers)
+    exclude_smiles = get_smiles_from_file(exclude_smiles)
 
     if exclude_smiles is None:
         exclude_smiles = []
     if not starters:
-        raise Exception("Starters " " needed for visualization")
+        raise Exception("Starters needed for pathway visualization")
     if helpers is None:
         helpers = dict()
     else:
@@ -2734,13 +2845,14 @@ def pathway_visualization(
                     cofactors_dict,
                     reaxys_rxn_color,
                     normal_rxn_color,
+                    use_custom_layout,
                 ),
             )
             for work in work_list
         ]  # workers pool
         pages = [r.get() for r in results]
 
-    print("Finished pages, writing to pdf")
+    print("Finished with pages, writing to pdf")
     pages.sort()  # [(page_number, object)]
     merger = PdfMerger()
     for page in pages:
@@ -2754,12 +2866,22 @@ def pathway_visualization(
 
     end_time = time.time()
     elapsed_time = (end_time - start_time) / 60
-    print()
+    # print()
     print(
         "Time used for pathway visualization:",
         "{:.2f}".format(elapsed_time),
         "minutes",
     )
+    print()
+    if use_custom_layout:
+        print("A custom node layout was used for pathway visualization")
+        print(
+            "For a better layout, please install pygraphviz and Graphviz"
+            " with the following command:"
+        )
+        print("conda install conda-forge::pygraphviz")
+        print("which should install both packages together")
+        print()
 
 
 def one_step(
