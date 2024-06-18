@@ -4,10 +4,12 @@ import collections.abc
 import copy
 import csv
 import dataclasses
+import importlib.util
 import io
 import json
 import math
 import re
+import subprocess
 import textwrap
 import time
 import typing
@@ -2247,7 +2249,7 @@ def pathway_ranking(
                 f_result.write("\n")
 
     end_time = time.time()
-    elapsed_time = end_time - start_time / 60
+    elapsed_time = (end_time - start_time) / 60
     # print()
     print(
         "Time used for pathway ranking:",
@@ -2267,8 +2269,37 @@ def create_page(
     _bio_cof_not_in_helpers,
     _reaxys_rxn_color,
     _normal_rxn_color,
+    use_custom_layout,
 ):
     font_path = Path(__file__).parent / "OpenSans-Regular.ttf"
+
+    def custom_layout(graph):
+        # topological sort of the graph
+        topological_order = list(nx.topological_sort(graph))
+        # layer dict
+        layers = {node: 0 for node in graph.nodes()}
+        for node in topological_order:
+            for successor in graph.successors(node):
+                layers[successor] = max(layers[successor], layers[node] + 1)
+            for predecessor in graph.predecessors(node):
+                layers[predecessor] = max(layers[predecessor], layers[node] - 1)
+        # assign layers to nodes as attributes
+        nx.set_node_attributes(graph, layers, "layer")
+        # multipartite layout
+        pos = nx.multipartite_layout(graph, subset_key="layer")
+        # adjust positions for top-to-bottom layout
+        for node, (x, y) in pos.items():
+            pos[node] = (y, -x)
+        # adjust x position
+        for node in topological_order:
+            predecessors = list(graph.predecessors(node))
+            if (
+                len(predecessors) == 1
+                and len(list(graph.successors(predecessors[0]))) == 1
+            ):
+                predecessor = predecessors[0]
+                pos[node] = (pos[predecessor][0], pos[node][1])
+        return pos
 
     def trim(im):  # trim white space around image
         bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
@@ -2518,8 +2549,10 @@ def create_page(
 
             if my_start_being_produced is False:
                 G2.remove_node(i)
-
-    pos = nx.nx_agraph.graphviz_layout(G2, prog="dot")
+    if not use_custom_layout:
+        pos = nx.nx_agraph.graphviz_layout(G2, prog="dot")
+    else:
+        pos = custom_layout(G2)
 
     edge_color_list = []  # for coloring edges,
     # black if not in reaxys, green if in reaxys
@@ -2615,10 +2648,61 @@ def pathway_visualization(
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
 ):
+    def custom_layout(graph):
+        # topological sort of the graph
+        topological_order = list(nx.topological_sort(graph))
+        # layer dict
+        layers = {node: 0 for node in graph.nodes()}
+        for node in topological_order:
+            for successor in graph.successors(node):
+                layers[successor] = max(layers[successor], layers[node] + 1)
+            for predecessor in graph.predecessors(node):
+                layers[predecessor] = max(layers[predecessor], layers[node] - 1)
+        # assign layers to nodes as attributes
+        nx.set_node_attributes(graph, layers, "layer")
+        # multipartite layout
+        pos = nx.multipartite_layout(graph, subset_key="layer")
+        # adjust positions for top-to-bottom layout
+        for node, (x, y) in pos.items():
+            pos[node] = (y, -x)
+        # adjust x position
+        for node in topological_order:
+            predecessors = list(graph.predecessors(node))
+            if (
+                len(predecessors) == 1
+                and len(list(graph.successors(predecessors[0]))) == 1
+            ):
+                predecessor = predecessors[0]
+                pos[node] = (pos[predecessor][0], pos[node][1])
+        return pos
+
     start_time = time.time()
     print(f"Job name: {job_name}")
     print("Job type: pathway visualization")
     print("Job started on:", datetime.now())
+
+    use_custom_layout = False
+    # check for pygraphviz and Graphviz
+    package_spec = importlib.util.find_spec("pygraphviz")
+    if package_spec is None:
+        print("pygraphviz is NOT installed.")
+        use_custom_layout = True
+
+    try:
+        # attempt to run the 'dot' command, which is part of Graphviz
+        subprocess.run(
+            ["dot", "-V"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        print("Graphviz is NOT installed.")
+        use_custom_layout = True
+
+    if use_custom_layout:
+        print("A custom node layout will be used for pathway visualization")
 
     starters = get_smiles_from_file(starters)
     helpers = get_smiles_from_file(helpers)
@@ -2789,6 +2873,7 @@ def pathway_visualization(
                     cofactors_dict,
                     reaxys_rxn_color,
                     normal_rxn_color,
+                    use_custom_layout,
                 ),
             )
             for work in work_list
@@ -2815,6 +2900,16 @@ def pathway_visualization(
         "{:.2f}".format(elapsed_time),
         "minutes",
     )
+    print()
+    if use_custom_layout:
+        print("A custom node layout was used for pathway visualization")
+        print(
+            "For a better layout, please install pygraphviz and Graphviz"
+            " with the following command:"
+        )
+        print("conda install conda-forge::pygraphviz")
+        print("which should install both packages together")
+        print()
 
 
 def one_step(
