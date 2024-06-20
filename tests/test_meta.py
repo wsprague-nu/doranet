@@ -9,6 +9,7 @@ def test_meta_update():
     network.add_op(engine.op.rdkit("[C:1]#[C:2]>>[*:1]-[*:2]"))
     network.add_op(engine.op.rdkit("[C:1]=[C:2]>>[*:1]-[*:2]"))
     network.add_op(engine.op.rdkit("[C:1]-[C:2]>>[*:1].[*:2]"))
+    network.add_op(engine.op.rdkit("[C:1]-[C:2]>>[*:1]=[*:2]"))
 
     strat = engine.strat.cartesian(network)
 
