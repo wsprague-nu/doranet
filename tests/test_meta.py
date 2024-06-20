@@ -1,3 +1,5 @@
+"""Test metadata updates."""
+
 import doranet as dn
 
 
