@@ -23,7 +23,7 @@ dependencies = [
     "ipython",
     "matplotlib",
     "networkx",
-    "numpy<2",
+    "numpy",
     "pandas",
     "pillow",
     "pyarrow",
