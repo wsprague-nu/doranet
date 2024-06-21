@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = 'doranet'
-version = '0.5.3a1'
+version = '0.5.3a2'
 authors = [
     { name='William Sprague', email='wsprague@u.northwestern.edu' },
     { name='Quan Zhang', email='quanzhang@northwestern.edu' },
@@ -95,6 +95,7 @@ ignore = ["D101","D102","D103","D105","PLR0911","PLR0912","PLR0913","PLR0915"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/modules/synthetic/{Reaction_Smarts_Forward.py,Reaction_Smarts_Retro.py}" = ["E501"]
+"**.ipynb" = ["E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

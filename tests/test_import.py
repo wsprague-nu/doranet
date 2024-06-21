@@ -1,3 +1,5 @@
+"""Test importing the module."""
+
 import doranet as dn
 
 
