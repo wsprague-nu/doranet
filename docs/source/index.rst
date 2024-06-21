@@ -6,8 +6,8 @@
 Welcome to DORAnet's documentation!
 ===================================
 DORAnet (Designing Optimal Reaction Avenues Network Enumeration Tool) is a
-rework of both [minedatabase](https://pypi.org/project/minedatabase/) and
-[NetGen](https://github.com/BroadbeltLab/NetGen). It is intended to streamline
+rework of both `minedatabase <https://pypi.org/project/minedatabase/>`_ and
+`NetGen <https://github.com/BroadbeltLab/NetGen>`_. It is intended to streamline
 and extend the implementation of chemical reaction network generation for
 research purposes.
 
