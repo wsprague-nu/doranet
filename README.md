@@ -100,15 +100,17 @@ You will need to the `pip` package manager to install DORAnet, either in a virtu
 
 ## Usage
 
-As DORAnet is intended as to be an extensible, polymorphic network generation software, effective users should understand the basic architecture of the system. While each class has its own documentation, a bird's eye view of how the program is organized should assist in development of new code and strategies with minimal overhead.
+There are tutorials available for the core code [here](./docs/source/tutorials/1-introduction.md).
+
+<!-- As DORAnet is intended as to be an extensible, polymorphic network generation software, effective users should understand the basic architecture of the system. While each class has its own documentation, a bird's eye view of how the program is organized should assist in development of new code and strategies with minimal overhead.
 
 There are three design properties which informed the abstraction of network generation into an object oriented architecture:
 
 - Compatibility
 - Efficiency
-- Extensibility
+- Extensibility -->
 
--future elaboration on these properties here-
+<!-- -future elaboration on these properties here-
 
 The network has its start in the Engine object, provided by create_engine. This object is provided the relevant configuration options for the network expansion, such as the number of available cores (parallelism not yet available), speed/memory tradeoffs required, type of expansion strategy etc., and in exchange provides the relevant objects which meet those criteria. The Engine is the only object which requires knowledge of the entire class hierarchy since it provides them through several straightforward interfaces.
 
@@ -122,7 +124,7 @@ The DataUnit is the generic abstract class defining an atomic unit of data. Impl
 
 The Strategy puts all these components together to generate a network. The only Strategy which has a full implementation is the CartesianStrategy. This strategy attempts to combine every operator with every combination of compatible molecules to expand the network. A number of "generations" can be specified, which represent the number of times the Cartesian product is performed, with the network expanding every time. A reaction-level filter, implemented by the user, can filter out new reactions based on particular criteria in order to restrict the growth of the network. A holistic filter, which filters out molecules based on an entire new generation, is recommended to be implemented separately by the end user, but this may change.
 
-Work in progress. Check out example_notebook.ipynb in jupyter for examples. Be sure to first install Jupyter using "conda install jupyter" while your environment is activated.
+Work in progress. Check out example_notebook.ipynb in jupyter for examples. Be sure to first install Jupyter using "conda install jupyter" while your environment is activated. -->
 
 <!--
 This is an example of how pickaxe-generic may be used to obtain the heat of formation of an arbitrary molecule (for which the Benson groups exist in primary_groups).
