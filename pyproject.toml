@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = 'doranet'
-version = '0.5.3a3'
+version = '0.5.3a4'
 authors = [
     { name='William Sprague', email='wsprague@u.northwestern.edu' },
     { name='Quan Zhang', email='quanzhang@northwestern.edu' },
