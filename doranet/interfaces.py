@@ -2439,7 +2439,7 @@ class ChemNetwork(abc.ABC):
         ext : str (default: '.pgnet')
             File extension.
         """
-        filepath = path + filename + ext
+        filepath = os.path.join(path, filename + ext)
         temp_filepath = os.path.join(path, "." + filename + ext + ".tmp")
         compress_level = 6
         if minimal:

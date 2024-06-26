@@ -3,6 +3,7 @@
 import base64
 import dataclasses
 import gzip
+import os
 import pickle
 import typing
 import xml.dom.minidom
@@ -244,7 +245,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         path: str = "./",
         ext: str = ".pgnet",
     ) -> interfaces.ChemNetwork:
-        filepath = path + filename + ext
+        filepath = os.path.join(path, filename + ext)
         with gzip.open(filepath, "r") as fin:
             md = xml.dom.minidom
             data = md.parse(fin).documentElement
