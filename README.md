@@ -83,16 +83,18 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-You will need to the `pip` package manager to install DORAnet, either in a virtual environment (recommended) or in your system installation.  Virtual environments can be generated using [venv](https://docs.python.org/3/library/venv.html), [Anaconda](https://www.anaconda.com/), or a package manager of your choice.
+You will need to the `pip` package manager to install DORAnet, either in a virtual environment (recommended) or in your system installation. Virtual environments can be generated using [venv](https://docs.python.org/3/library/venv.html), [Anaconda](https://www.anaconda.com/), or a package manager of your choice.
 
 ### Installation
 
-1. Activate a virtual environment in a terminal (CMD/bash/etc.) using the methods provided in their documentation.  Make sure that `python` and `pip` are installed.
+1. Activate a virtual environment in a terminal (CMD/bash/etc.) using the methods provided in their documentation. Make sure that `python` and `pip` are installed.
 2. Install DORAnet using `pip`.
-  ```sh
-  pip install doranet
-  ```
-3. The program is now installed!  If this is your first time, please proceed to the [Tutorial](./doc/source/tutorials/1-introduction.md)  When running a Python program requiring doranet, make sure you first open your terminal and activate the relevant environment using the command from Step 2.
+
+```sh
+pip install doranet
+```
+
+3. The program is now installed! If this is your first time, please proceed to the [Tutorial](https://github.com/wsprague-nu/doranet/blob/main/doc/source/tutorials/1-introduction.md).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -100,7 +102,7 @@ You will need to the `pip` package manager to install DORAnet, either in a virtu
 
 ## Usage
 
-There are tutorials available for the core code [here](./docs/source/tutorials/1-introduction.md).
+There are tutorials available for the core code [here](https://github.com/wsprague-nu/doranet/blob/main/doc/source/tutorials/1-introduction.md).
 
 <!-- As DORAnet is intended as to be an extensible, polymorphic network generation software, effective users should understand the basic architecture of the system. While each class has its own documentation, a bird's eye view of how the program is organized should assist in development of new code and strategies with minimal overhead.
 
