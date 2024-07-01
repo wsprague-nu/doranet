@@ -1154,9 +1154,7 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
             return True
         if dH == float("nan"):
             return False
-        if dH < self.max_dH:
-            return True
-        return False
+        return dH < self.max_dH
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -2082,7 +2080,7 @@ def pathway_ranking(
     weight.append(weights["salt_score"])
     weight.append(weights["in_reaxys"])
     weight.append(weights["coolness"])
-    #
+
     final_score = list()
 
     for i in range(len(data)):
@@ -2424,7 +2422,7 @@ def create_page(
         if "2-step" in name_list[idx] or "&" in name_list[idx]:
             dH_list[idx] = dH_list[idx] + " ×2"
 
-    for idx, _i in enumerate(name_list):  # add dH to name
+    for idx in range(len(name_list)):  # add dH to name
         if name_list[idx].replace("\n", " ") in salt_name_set:
             name_list[idx] = name_list[idx] + "(salt)"
         name_list[idx] = name_list[idx] + "\n" + dH_list[idx]

@@ -1001,13 +1001,11 @@ class Recipe:
             If other is a Recipe, return equality of attributes between it and
             self.  If other is not a Recipe, return False.
         """
-        if (
+        return (
             isinstance(other, Recipe)
             and self.operator == other.operator
             and self.reactants == other.reactants
-        ):
-            return True
-        return False
+        )
 
     def __lt__(self, other: "Recipe") -> bool:
         """
