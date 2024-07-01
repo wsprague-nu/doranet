@@ -105,9 +105,7 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
             return True
         if dH == float("nan"):
             return False
-        if dH < self.max_dH:
-            return True
-        return False
+        return dH < self.max_dH
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
