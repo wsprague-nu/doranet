@@ -2080,7 +2080,7 @@ def pathway_ranking(
     weight.append(weights["salt_score"])
     weight.append(weights["in_reaxys"])
     weight.append(weights["coolness"])
-    #
+
     final_score = list()
 
     for i in range(len(data)):
