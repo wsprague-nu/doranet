@@ -102,7 +102,7 @@ pip install doranet
 
 ## Usage
 
-There are tutorials available for the core code [here](https://github.com/wsprague-nu/doranet/blob/main/doc/source/tutorials/1-introduction.md).
+There are tutorials available for the core code [here](https://github.com/wsprague-nu/doranet/blob/main/docs/source/tutorials/1-introduction.md).
 
 <!-- As DORAnet is intended as to be an extensible, polymorphic network generation software, effective users should understand the basic architecture of the system. While each class has its own documentation, a bird's eye view of how the program is organized should assist in development of new code and strategies with minimal overhead.
 
