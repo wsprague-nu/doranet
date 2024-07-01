@@ -296,9 +296,7 @@ class Cross_Reaction_Filter(interfaces.RecipeFilter):
         for mol in recipe.reactants:
             if mol.i not in self.coreactants:
                 reactant_set.add(mol.i)
-        if len(set(reactant_set)) != 1:
-            return False
-        return True
+        return len(set(reactant_set)) == 1
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
