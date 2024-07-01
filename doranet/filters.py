@@ -239,14 +239,12 @@ class GenerationFilter(metadata.ReactionFilterBase):
     gen_key: collections.abc.Hashable
 
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
-        if all(
+        return all(
             mol.meta is not None
             and self.gen_key in mol.meta
             and mol.meta[self.gen_key] + 1 < self.max_gens
             for mol in recipe.reactants
-        ):
-            return True
-        return False
+        )
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
