@@ -1119,7 +1119,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
             mc_update = metadata.MetaUpdateResolver({}, {}, {})
 
         if heap_size is not None and beam_size is not None:
-            ValueError(
+            raise ValueError(
                 f"""Heap size ({heap_size}) must be greater than beam size
                     ({beam_size})"""
             )
