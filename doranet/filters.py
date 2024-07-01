@@ -132,9 +132,7 @@ class MolFilterMetaExist(interfaces.MolFilter):
         op: typing.Optional[interfaces.DataPacket[interfaces.OpDatBase]],
         arg_num: typing.Optional[int],
     ) -> bool:
-        if mol.meta is None or self.key not in mol.meta:
-            return False
-        return True
+        return not (mol.meta is None or self.key not in mol.meta)
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -225,9 +223,7 @@ class CoreactantFilter(interfaces.RecipeFilter):
     coreactants: collections.abc.Container[interfaces.MolIndex]
 
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
-        if all(mol.i in self.coreactants for mol in recipe.reactants):
-            return False
-        return True
+        return not all(mol.i in self.coreactants for mol in recipe.reactants)
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -243,14 +239,12 @@ class GenerationFilter(metadata.ReactionFilterBase):
     gen_key: collections.abc.Hashable
 
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
-        if all(
+        return all(
             mol.meta is not None
             and self.gen_key in mol.meta
             and mol.meta[self.gen_key] + 1 < self.max_gens
             for mol in recipe.reactants
-        ):
-            return True
-        return False
+        )
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -291,9 +285,7 @@ class ReactionFilterMaxAtoms(metadata.ReactionFilterBase):
 def ReplaceNewValue(
     key: collections.abc.Hashable, old_value: typing.Any, new_value: typing.Any
 ) -> bool:
-    if old_value != new_value:
-        return True
-    return False
+    return old_value != new_value
 
 
 class ReplaceBlacklist:

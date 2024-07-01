@@ -797,13 +797,11 @@ class RecipePriorityItem:
         return self.rank < other.rank
 
     def __eq__(self, other: object) -> bool:
-        if (
+        return (
             isinstance(other, RecipePriorityItem)
             and self.rank == other.rank
             and self.recipe == other.recipe
-        ):
-            return True
-        return False
+        )
 
 
 def execute_recipe_ranking(
@@ -1121,7 +1119,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
             mc_update = metadata.MetaUpdateResolver({}, {}, {})
 
         if heap_size is not None and beam_size is not None:
-            ValueError(
+            raise ValueError(
                 f"""Heap size ({heap_size}) must be greater than beam size
                     ({beam_size})"""
             )

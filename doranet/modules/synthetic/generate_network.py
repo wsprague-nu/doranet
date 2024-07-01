@@ -105,9 +105,7 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
             return True
         if dH == float("nan"):
             return False
-        if dH < self.max_dH:
-            return True
-        return False
+        return dH < self.max_dH
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
@@ -298,9 +296,7 @@ class Cross_Reaction_Filter(interfaces.RecipeFilter):
         for mol in recipe.reactants:
             if mol.i not in self.coreactants:
                 reactant_set.add(mol.i)
-        if len(set(reactant_set)) != 1:
-            return False
-        return True
+        return len(set(reactant_set)) == 1
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
