@@ -132,9 +132,7 @@ class MolFilterMetaExist(interfaces.MolFilter):
         op: typing.Optional[interfaces.DataPacket[interfaces.OpDatBase]],
         arg_num: typing.Optional[int],
     ) -> bool:
-        if mol.meta is None or self.key not in mol.meta:
-            return False
-        return True
+        return not (mol.meta is None or self.key not in mol.meta)
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
