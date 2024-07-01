@@ -223,9 +223,7 @@ class CoreactantFilter(interfaces.RecipeFilter):
     coreactants: collections.abc.Container[interfaces.MolIndex]
 
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
-        if all(mol.i in self.coreactants for mol in recipe.reactants):
-            return False
-        return True
+        return not all(mol.i in self.coreactants for mol in recipe.reactants)
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
