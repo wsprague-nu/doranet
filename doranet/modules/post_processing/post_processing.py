@@ -2422,7 +2422,7 @@ def create_page(
         if "2-step" in name_list[idx] or "&" in name_list[idx]:
             dH_list[idx] = dH_list[idx] + " ×2"
 
-    for idx, _i in enumerate(name_list):  # add dH to name
+    for idx in range(len(name_list)):  # add dH to name
         if name_list[idx].replace("\n", " ") in salt_name_set:
             name_list[idx] = name_list[idx] + "(salt)"
         name_list[idx] = name_list[idx] + "\n" + dH_list[idx]
