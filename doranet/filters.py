@@ -285,9 +285,7 @@ class ReactionFilterMaxAtoms(metadata.ReactionFilterBase):
 def ReplaceNewValue(
     key: collections.abc.Hashable, old_value: typing.Any, new_value: typing.Any
 ) -> bool:
-    if old_value != new_value:
-        return True
-    return False
+    return old_value != new_value
 
 
 class ReplaceBlacklist:
