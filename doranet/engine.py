@@ -225,6 +225,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         return interfaces.MetaCalcTypes(
             metacalc.GenerationCalculator,
             metacalc.MassWasteCalculator,
+            metacalc.MolFormulaCalculator,
             metacalc.MolWeightCalculator,
         )
 

@@ -4,6 +4,7 @@ import collections.abc
 import dataclasses
 import typing
 
+import numpy
 import rdkit.Chem.rdMolDescriptors
 
 from doranet import interfaces, metadata
@@ -147,4 +148,53 @@ class MolWeightCalculator(metadata.MolPropertyCalc[int]):
                 f"""MolWeightCalculator has not been implemented for molecule
                     type {type(item)}"""
             )
+        return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)
+
+
+_NUM_ELEMENTS = 118
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class MolFormulaCalculator(
+    metadata.MolPropertyCalc[
+        numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
+    ]
+):
+    formula_key: collections.abc.Hashable
+
+    @property
+    def key(self) -> collections.abc.Hashable:
+        return self.formula_key
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
+
+    @property
+    def resolver(
+        self,
+    ) -> metadata.MetaDataResolverFunc[
+        numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
+    ]:
+        return metadata.TrivialMetaDataResolverFunc
+
+    def __call__(
+        self,
+        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        prev_value: typing.Optional[
+            numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
+        ] = None,
+    ) -> typing.Optional[numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]]:
+        if prev_value is not None:
+            return prev_value
+        item = data.item
+        if not isinstance(item, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"""MolFormulaCalculator has not been implemented for molecule
+                    type {type(item)}"""
+            )
+        elements_array = numpy.zeros((_NUM_ELEMENTS,), dtype=numpy.uintp)
+        for atom in item.rdkitmol.GetAtoms():
+            elements_array[atom.GetAtomicNum()]
         return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)
