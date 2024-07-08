@@ -4,7 +4,6 @@ import collections.abc
 import dataclasses
 import typing
 
-import numpy
 import rdkit.Chem.rdMolDescriptors
 
 from doranet import interfaces, metadata
@@ -151,15 +150,10 @@ class MolWeightCalculator(metadata.MolPropertyCalc[int]):
         return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)
 
 
-_NUM_ELEMENTS = 118
-
-
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
 class MolFormulaCalculator(
-    metadata.MolPropertyCalc[
-        numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
-    ]
+    metadata.MolPropertyCalc[interfaces.MolecularFormula]
 ):
     formula_key: collections.abc.Hashable
 
@@ -174,18 +168,14 @@ class MolFormulaCalculator(
     @property
     def resolver(
         self,
-    ) -> metadata.MetaDataResolverFunc[
-        numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
-    ]:
+    ) -> metadata.MetaDataResolverFunc[interfaces.MolecularFormula]:
         return metadata.TrivialMetaDataResolverFunc
 
     def __call__(
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
-        prev_value: typing.Optional[
-            numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
-        ] = None,
-    ) -> typing.Optional[numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]]:
+        prev_value: typing.Optional[interfaces.MolecularFormula] = None,
+    ) -> typing.Optional[interfaces.MolecularFormula]:
         if prev_value is not None:
             return prev_value
         item = data.item
@@ -194,7 +184,10 @@ class MolFormulaCalculator(
                 f"""MolFormulaCalculator has not been implemented for molecule
                     type {type(item)}"""
             )
-        elements_array = numpy.zeros((_NUM_ELEMENTS,), dtype=numpy.uintp)
+        elements_array = interfaces.MolecularFormula.new()
         for atom in item.rdkitmol.GetAtoms():
-            elements_array[atom.GetAtomicNum()]
-        return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)
+            element = atom.GetAtomicNum()
+            elements_array[element] += 1
+            num_hydrogens = atom.GetNumImplicitHs()
+            elements_array[0] += num_hydrogens
+        return elements_array

@@ -16,6 +16,7 @@ import shutil
 import typing
 import xml.etree.ElementTree
 
+import numpy
 import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
@@ -2887,3 +2888,28 @@ class PathwayRanked(typing.Generic[T]):
 class MetaStruct(typing.Generic[T]):
     data: T
     meta: collections.abc.Mapping
+
+
+_NUM_ELEMENTS = 118
+
+
+@dataclasses.dataclass(slots=True)
+class MolecularFormula:
+    _internalarray: numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]]
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, MolecularFormula) and numpy.array_equal(
+            self._internalarray, other._internalarray
+        )
+
+    @classmethod
+    def new(cls) -> "MolecularFormula":
+        return MolecularFormula(
+            numpy.zeros((_NUM_ELEMENTS,), dtype=numpy.uintp)
+        )
+
+    def __getitem__(self, i: int) -> int:
+        return int(self._internalarray[i])
+
+    def __setitem__(self, i: int, value: int) -> None:
+        self._internalarray[i] = value
