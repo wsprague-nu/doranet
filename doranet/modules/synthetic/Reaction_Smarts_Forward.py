@@ -534,6 +534,13 @@ op_smarts = (
         (1, 1),
         (1, 1),
     ),
+    # Haloarenes Hydrolysis, Displacement
+    OperatorSmarts(
+        "Haloarenes Hydrolysis, Displacement",
+        "[c;+0H:1][c;+0:2][F,Cl,Br,I;+0:3].[O+0H2:4]>>[*:4][*:1][*:2].[*:3]",
+        (1, 1),
+        (1, 1),
+    ),
     # Wurtz Reaction, Coupling of Halides with Gilman Reagent
     #        # may need enthalpy correction
     OperatorSmarts(
