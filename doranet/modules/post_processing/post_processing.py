@@ -1459,9 +1459,14 @@ def pathway_ranking(
     helpers = temp_ms2
 
     ## read pathway txt file
-    with open(f"{job_name}_pathways.txt", encoding="utf-8") as f:
-        # with open(f'{job_name}_pathways.txt', encoding = 'cp1252') as f:
-        lines = f.readlines()
+    try:
+        with open(f"{job_name}_pathways.txt", encoding="utf-8") as f:
+            # with open(f'{job_name}_pathways.txt', encoding = 'cp1252') as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print("Pathway file not found, exiting pathway ranking")
+        print()
+        return 0
 
     clean_list = list()
     for i in lines:
@@ -1986,6 +1991,7 @@ def pathway_ranking(
             delimiter=",",
             skip_header=0,
         )
+        reaxys_batch = np.atleast_1d(reaxys_batch)
         reaxys_result = np.genfromtxt(
             reaxys_result_name,
             comments="?",
@@ -1994,6 +2000,7 @@ def pathway_ranking(
             skip_header=0,
             usecols=(2),
         )
+        reaxys_result = np.atleast_1d(reaxys_result)
         rxn_list = list()  # rxns, used as keys. value is number of hits
         for i in reaxys_batch:
             rxn_list.append(i[8:-1])
@@ -2651,6 +2658,14 @@ def pathway_visualization(
     print("Job type: pathway visualization")
     print("Job started on:", datetime.now())
 
+    try:
+        with open(f"{job_name}_ranked_pathways.txt", encoding="utf-8") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print("Ranked pathway file not found, exiting pathway visualization")
+        print()
+        return 0
+
     use_custom_layout = False
     # check for pygraphviz and Graphviz
     package_spec = importlib.util.find_spec("pygraphviz")
@@ -2722,6 +2737,7 @@ def pathway_visualization(
             delimiter=",",
             skip_header=0,
         )
+        reaxys_batch = np.atleast_1d(reaxys_batch)
         reaxys_result = np.genfromtxt(
             reaxys_result_name,
             comments="?",
@@ -2730,6 +2746,7 @@ def pathway_visualization(
             skip_header=0,
             usecols=(2),
         )
+        reaxys_result = np.atleast_1d(reaxys_result)
         rxn_list = list()  # rxns, used as keys. value is number of hits
         for i in reaxys_batch:
             rxn_list.append(i[8:-1])
@@ -2742,8 +2759,8 @@ def pathway_visualization(
 
     reaxys_set = set(in_reaxys)
 
-    with open(f"{job_name}_ranked_pathways.txt", encoding="utf-8") as f:
-        lines = f.readlines()
+    # with open(f"{job_name}_ranked_pathways.txt", encoding="utf-8") as f:
+    #     lines = f.readlines()
 
     clean_list = list()
     for i in lines:
