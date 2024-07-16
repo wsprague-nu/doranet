@@ -148,3 +148,46 @@ class MolWeightCalculator(metadata.MolPropertyCalc[int]):
                     type {type(item)}"""
             )
         return rdkit.Chem.rdMolDescriptors.CalcExactMolWt(item.rdkitmol)
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True)
+class MolFormulaCalculator(
+    metadata.MolPropertyCalc[interfaces.MolecularFormula]
+):
+    formula_key: collections.abc.Hashable
+
+    @property
+    def key(self) -> collections.abc.Hashable:
+        return self.formula_key
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket()
+
+    @property
+    def resolver(
+        self,
+    ) -> metadata.MetaDataResolverFunc[interfaces.MolecularFormula]:
+        return metadata.TrivialMetaDataResolverFunc
+
+    def __call__(
+        self,
+        data: interfaces.DataPacketE[interfaces.MolDatBase],
+        prev_value: typing.Optional[interfaces.MolecularFormula] = None,
+    ) -> typing.Optional[interfaces.MolecularFormula]:
+        if prev_value is not None:
+            return prev_value
+        item = data.item
+        if not isinstance(item, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"""MolFormulaCalculator has not been implemented for molecule
+                    type {type(item)}"""
+            )
+        elements_array = interfaces.MolecularFormula.new()
+        for atom in item.rdkitmol.GetAtoms():
+            element = atom.GetAtomicNum()
+            elements_array[element] += 1
+            num_hydrogens = atom.GetNumImplicitHs()
+            elements_array[0] += num_hydrogens
+        return elements_array
