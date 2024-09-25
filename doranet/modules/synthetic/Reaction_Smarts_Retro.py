@@ -1370,6 +1370,15 @@ op_retro_smarts = (
         kekulize_flag=True,
     ),
     # Ester Hydrogenation
+    # Ketenes #############################################
+    OperatorSmarts(
+        "[2+2] Cycloaddition",
+        "[C+0:1]1[C+0:2](=[O+0:3])[O,N;+0:5][C!$(*(-O)-O)+0:4]1>>[*:1]=[*:2]=[*:3].[*:4]=[*:5]",
+        (1,),
+        (1, 1),
+        ring_issue=True,
+        Retro_Not_Aromatic=True,
+    ),
     # Benzene and Derivatives #############################################
     # Benzene Hydrogenation
     OperatorSmarts(

@@ -1651,7 +1651,7 @@ def pathway_ranking(
             for (
                 i
             ) in left_dict:  # find idx for a intermediate molecule to produce
-                if i not in starters:
+                if i not in starters | set(has_bio):
                     popkey = i
                     break
             # num_mol = left_dict.pop(popkey)
@@ -1700,7 +1700,7 @@ def pathway_ranking(
 
             key_list = list()
             for key in left_dict:  # balance left and right dict
-                if key not in starters and key in right_dict:
+                if key not in starters | set(has_bio) and key in right_dict:
                     key_list.append(key)
             for key in key_list:
                 if left_dict[key] == right_dict[key]:
@@ -1717,7 +1717,8 @@ def pathway_ranking(
 
             done_flag = True
             for key in left_dict:
-                if key not in starters:  # check if left only contain starters
+                if key not in starters | set(has_bio):
+                    # check if left only contain starters
                     done_flag = False
             if done_flag is True or timecount == timeout:
                 repeat_flag = False
@@ -1772,7 +1773,7 @@ def pathway_ranking(
 
         print("Min_eco", min_eco)
         print("Max_eco", max_eco)
-        # print("none_eco", none_eco)
+        print("None_eco", none_eco)
         diff_eco = max_eco - min_eco
         for i in eco_list:
             if diff_eco != 0:
