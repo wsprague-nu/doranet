@@ -27,7 +27,7 @@ import pandas as pd
 import rdkit.Chem.rdmolfiles
 import rdkit.Chem.rdmolops
 from PIL import Image, ImageChops, ImageDraw, ImageFont
-from pypdf import PdfMerger, PdfReader
+from pypdf import PdfReader, PdfWriter
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
@@ -2870,7 +2870,7 @@ def pathway_visualization(
 
     print("Finished with pages, writing to pdf")
     pages.sort()  # [(page_number, object)]
-    merger = PdfMerger()
+    merger = PdfWriter()
     for page in pages:
         merger.append(PdfReader(page[1]))
 
