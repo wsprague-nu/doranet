@@ -2188,6 +2188,20 @@ op_smarts = (
         (1, 2),
         (1,),
     ),
+    # Amines Dehydrogenation to Nitriles    doi/10.1021/jacs.4c00493
+    OperatorSmarts(
+        "Amines Dehydrogenation to Nitriles",
+        "[C+0;H2,H3:1]-[N+0H2:2]>>[*:1]#[*:2].[H][H]",
+        (1,),
+        (1, 2),
+    ),
+    # Amines Oxidative Dehydrogenation to Nitriles
+    OperatorSmarts(
+        "Amines Oxidative Dehydrogenation to Nitriles",
+        "[C+0;H2,H3:1]-[N+0H2:2].[O+0:3]=[O+0]>>[*:1]#[*:2].[*:3]",
+        (1, 1),
+        (1, 2),
+    ),
     # Nitrile Hydrogenation to Aldehydes
     OperatorSmarts(
         "Nitrile Hydrogenation to Aldehydes",
