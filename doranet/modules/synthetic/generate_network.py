@@ -488,7 +488,10 @@ def generate_network(
     for smarts in smarts_list:
         if smarts.kekulize_flag is False:
             network.add_op(
-                engine.op.rdkit(smarts.smarts),
+                engine.op.rdkit(
+                    smarts.smarts,
+                    drop_errors=True,
+                ),
                 meta={
                     "name": smarts.name,
                     "reactants_stoi": smarts.reactants_stoi,
@@ -508,6 +511,7 @@ def generate_network(
                 engine.op.rdkit(
                     smarts.smarts,
                     kekulize=True,
+                    drop_errors=True,
                 ),
                 meta={
                     "name": smarts.name,

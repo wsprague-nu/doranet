@@ -1310,6 +1310,13 @@ op_smarts = (
         kekulize_flag=True,
     ),
     # Ester Hydrogenation
+    # Ketenes #############################################
+    OperatorSmarts(
+        "[2+2] Cycloaddition",
+        "[C+0:1]=[C+0:2]=[O+0:3].[C!$(*(=O)=O)!$(*-O)+0:4]=[O,N;+0:5]>>[*:1]1[*:2](=[*:3])[*:5][*:4]1",
+        (1, 1),
+        (1,),
+    ),
     # Benzene and Derivatives #############################################
     # Benzene Hydrogenation
     OperatorSmarts(
@@ -2180,6 +2187,20 @@ op_smarts = (
         "[C+0:1]#[N+0:2].[H][H]>>[*:1][*:2]",
         (1, 2),
         (1,),
+    ),
+    # Amines Dehydrogenation to Nitriles    doi/10.1021/jacs.4c00493
+    OperatorSmarts(
+        "Amines Dehydrogenation to Nitriles",
+        "[C+0;H2,H3:1]-[N+0H2:2]>>[*:1]#[*:2].[H][H]",
+        (1,),
+        (1, 2),
+    ),
+    # Amines Oxidative Dehydrogenation to Nitriles
+    OperatorSmarts(
+        "Amines Oxidative Dehydrogenation to Nitriles",
+        "[C+0;H2,H3:1]-[N+0H2:2].[O+0:3]=[O+0]>>[*:1]#[*:2].[*:3]",
+        (1, 1),
+        (1, 2),
     ),
     # Nitrile Hydrogenation to Aldehydes
     OperatorSmarts(
