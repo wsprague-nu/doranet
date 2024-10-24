@@ -2292,6 +2292,20 @@ op_retro_smarts = (
         (1,),
         (1, 2),
     ),
+    # Amines Dehydrogenation to Nitriles
+    OperatorSmarts(
+        "Amines Dehydrogenation to Nitriles",
+        "[C+0:1]#[N+0:2].[H][H]>>[*:1][*:2]",
+        (1, 2),
+        (1,),
+    ),
+    # Amines Oxidative Dehydrogenation to Nitriles
+    OperatorSmarts(
+        "Amines Oxidative Dehydrogenation to Nitriles",
+        "[C+0:1]#[N+0:2].[O+0H2:3]>>[*:1][*:2].[*:3]=[O]",
+        (1, 2),
+        (1, 1),
+    ),
     # Nitrile Hydrogenation to Aldehydes
     OperatorSmarts(
         "Nitrile Hydrogenation to Aldehydes",
