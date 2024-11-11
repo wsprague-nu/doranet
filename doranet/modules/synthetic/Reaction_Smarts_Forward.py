@@ -726,6 +726,25 @@ op_smarts = (
         (1, 1),
         (1,),
     ),
+    # Enolate Alkylation
+    # From James Gerken: it doesn't really form HX as a product but rather MX
+    # and the protonated form of whatever base was used to deprotonate alpha to the carbonyl.
+    # Estimated difference in DMSO pKa between RC(=O)C-H and H-Br, should be about -33 kcal/mol
+    OperatorSmarts(
+        "Enolate Alkylation",
+        "[C+0:2](=[O+0:3])[C+0!H0:4].[CX4;+0:5][F,Cl,Br,I;+0:6]>>[*:2](=[*:3])[*:4][*:5].[*:6]",
+        (1, 1),
+        (1, 1),
+        enthalpy_correction=-33,
+    ),
+    OperatorSmarts(
+        "Enolate Alkylation, Intramolecular",
+        "([C+0:2](=[O+0:3])[C+0!H0:4].[CX4;+0:5][F,Cl,Br,I;+0:6])>>[*:2](=[*:3])[*:4][*:5].[*:6]",
+        (1,),
+        (1, 1),
+        enthalpy_correction=-33,
+        ring_issue=True,
+    ),
     # Alcohols #############################################################
     # Glycol Cleavage by Oxidation
     OperatorSmarts(
@@ -1132,6 +1151,26 @@ op_smarts = (
         "[CX4+0;H2,H3:1][O+0H:2].[CX4+0!H0:3][CX3+0H:4]=[O+0:5]>>[*:1][*:2][*:4]=[*:3].[*:5]",
         (1, 1),
         (1, 1),
+    ),
+    OperatorSmarts(
+        "Synthesis of Enol Ethers from Aldehyde and Alcohol, Intramolecular",
+        "([CX4+0;H2,H3:1][O+0H:2].[CX4+0!H0:3][CX3+0H:4]=[O+0:5])>>[*:1][*:2][*:4]=[*:3].[*:5]",
+        (1,),
+        (1, 1),
+    ),
+    # Pinacol Coupling
+    OperatorSmarts(
+        "Pinacol Coupling",
+        "[C+0X3;!$(*-O):2](=[O+0:3]).[C+0X3;!$(*-O):6](=[O+0:7]).[H][H]>>[*:2](-[*:3])-[*:6]-[*:7]",
+        (1, 1, 1),
+        (1,),
+    ),
+    OperatorSmarts(
+        "Pinacol Coupling, Intramolecular",
+        "([C+0X3;!$(*-O):2](=[O+0:3]).[C+0X3;!$(*-O):6](=[O+0:7])).[H][H]>>[*:2](-[*:3])-[*:6]-[*:7]",
+        (1, 1),
+        (1,),
+        ring_issue=True,
     ),
     # Carboxylic Acids ####################################################
     # Carboxylic Acids Decarboxylation

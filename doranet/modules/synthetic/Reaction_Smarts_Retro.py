@@ -748,6 +748,24 @@ op_retro_smarts = (
         (1,),
         (1, 1),
     ),
+    # Enolate Alkylation
+    # From James Gerken: it doesn't really form HX as a product but rather MX
+    # and the protonated form of whatever base was used to deprotonate alpha to the carbonyl.
+    # Estimated difference in DMSO pKa between RC(=O)C-H and H-Br, should be about -33 kcal/mol
+    OperatorSmarts(
+        "Enolate Alkylation",
+        "[C+0:2](=[O+0:3])[C+0:4]!@[CX4;+0:5].[F,Cl,Br,I;+0H:6]>>[*:2](=[*:3])[*:4].[*:5][*:6]",
+        (1, 1),
+        (1, 1),
+        enthalpy_correction=-33,
+    ),
+    OperatorSmarts(
+        "Enolate Alkylation, Intramolecular",
+        "[C+0:2](=[O+0:3])[C+0:4]@[CX4;+0:5].[F,Cl,Br,I;+0H:6]>>([*:2](=[*:3])[*:4].[*:5][*:6])",
+        (1, 1),
+        (1,),
+        enthalpy_correction=-33,
+    ),
     # Alcohols #############################################################
     # Glycol Cleavage by Oxidation
     OperatorSmarts(
@@ -1178,6 +1196,25 @@ op_retro_smarts = (
         "Synthesis of Enol Ethers from Aldehyde and Alcohol",
         "[CX4+0;H2,H3:1][O+0:2]-!@[C+0H:4]=[CX3+0:3].[O+0H2:5]>>[*:1][*:2].[*:3][*:4]=[*:5]",
         (1, 1),
+        (1, 1),
+    ),
+    OperatorSmarts(
+        "Synthesis of Enol Ethers from Aldehyde and Alcohol, Intramolecular",
+        "[CX4+0;H2,H3:1][O+0:2]-@[C+0H:4]=[CX3+0:3].[O+0H2:5]>>([*:1][*:2].[*:3][*:4]=[*:5])",
+        (1, 1),
+        (1,),
+    ),
+    # Pinacol Coupling
+    OperatorSmarts(
+        "Pinacol Coupling",
+        "[C+0X4;!$(*(-O)-O):2](-[O+0H:3])-!@[C+0X4;!$(*(-O)-O):6]-[O+0H:7]>>[*:2](=[*:3]).[*:6](=[*:7]).[H][H]",
+        (1,),
+        (1, 1, 1),
+    ),
+    OperatorSmarts(
+        "Pinacol Coupling, Intramolecular",
+        "[C+0X4;!$(*(-O)-O):2](-[O+0H:3])-@[C+0X4;!$(*(-O)-O):6]-[O+0H:7]>>([*:2](=[*:3]).[*:6](=[*:7])).[H][H]",
+        (1,),
         (1, 1),
     ),
     # Carboxylic Acids ####################################################
