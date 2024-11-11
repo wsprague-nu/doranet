@@ -68,12 +68,13 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
             if rea_Hf is None:
                 return float("nan")
             dH = dH - rea_Hf * data.operator.meta["reactants_stoi"][idx]
-        if data.operator.meta["enthalpy_correction"] is not None:
-            dH = dH + data.operator.meta["enthalpy_correction"]
+        correction = data.operator.meta["enthalpy_correction"]
+        if correction is None:
+            correction = 0
         if self.direction == "forward":
-            dH = dH / data.operator.meta["number_of_steps"]
+            dH = (dH + correction) / data.operator.meta["number_of_steps"]
         if self.direction == "retro":
-            dH = -dH / data.operator.meta["number_of_steps"]
+            dH = (-dH + correction) / data.operator.meta["number_of_steps"]
         return round(dH, 4)
 
     @property
