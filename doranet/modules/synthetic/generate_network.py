@@ -8,7 +8,7 @@ import typing
 from datetime import datetime
 
 from rdkit import Chem
-from rdkit.Chem import rdqueries
+from rdkit.Chem import rdqueries, rdRascalMCES
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 import doranet as dn
@@ -420,6 +420,348 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
         return interfaces.MetaKeyPacket()
 
 
+@typing.final
+@dataclasses.dataclass(frozen=True)
+class Regioselectivity_filter(metadata.ReactionFilterBase):
+    __slots__ = ("regio_user", "direction")
+    regio_user: typing.Optional[typing.Collection]
+    direction: str
+
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if self.regio_user is None:  # if user doesn't use it
+            return True
+        regio_rxn_tup = recipe.operator.meta["regioselectivity"]
+        if regio_rxn_tup is None:  # if rxn doesn't have it
+            return True
+        Markovnikov, Anti_Markovnikov, Baeyer_Villiger, Zaitsev, Hofmann = (
+            False,
+            False,
+            False,
+            False,
+            False,
+        )
+        if regio_rxn_tup[0] in self.regio_user:
+            if regio_rxn_tup[0] == "Markovnikov":
+                Markovnikov = True
+            elif regio_rxn_tup[0] == "Anti-Markovnikov":
+                Anti_Markovnikov = True
+            elif regio_rxn_tup[0] == "Baeyer-Villiger":
+                Baeyer_Villiger = True
+            elif regio_rxn_tup[0] == "Zaitsev":
+                Zaitsev = True
+            elif regio_rxn_tup[0] == "Hofmann":
+                Hofmann = True
+        else:
+            return True
+        main_rea = recipe.reactants[regio_rxn_tup[1]].item
+        if not isinstance(main_rea, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"""Filter only implemented for molecule type \
+                    MolDatRDKit, not {type(main_rea)}"""
+            )
+        main_pro = recipe.products[regio_rxn_tup[2]].item
+        if not isinstance(main_pro, interfaces.MolDatRDKit):
+            raise NotImplementedError(
+                f"""Filter only implemented for molecule type \
+                    MolDatRDKit, not {type(main_pro)}"""
+            )
+        reactant = main_rea.rdkitmol
+        product = main_pro.rdkitmol
+        if self.direction == "retro":
+            reactant, product = product, reactant
+        if Zaitsev or Hofmann:
+            reactant, product = product, reactant
+        mol1 = reactant  # reactant
+        num_atoms1 = mol1.GetNumAtoms()
+        # add Hs so terminal double bonds like C=CC, and
+        # small mols like CC=CC can be properly matched
+        mol1 = Chem.AddHs(mol1)
+        mol2 = product
+        num_atoms2 = mol2.GetNumAtoms()
+        mol2 = Chem.AddHs(mol2)
+        # rdRascalMCES opts
+        opts = rdRascalMCES.RascalOptions()
+        opts.similarityThreshold = 0  # so it works for small mols
+        opts.maxBondMatchPairs = 3000  # default 1k.
+        opts.ringMatchesRingOnly = True
+        # Find MCES
+        results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+        try:
+            res = results[0]
+        except IndexError:
+            return True  # if molecule too big to match, let it pass
+        matching_bonds = res.bondMatches()
+        matching_atoms = res.atomMatches()
+        mol1_all_bond_indices = [bond.GetIdx() for bond in mol1.GetBonds()]
+        mol1_matching_bonds = {t[0] for t in matching_bonds}
+        mol1_rxn_bond_index_list = [
+            item
+            for item in mol1_all_bond_indices
+            if item not in mol1_matching_bonds
+        ]
+        if len(mol1_rxn_bond_index_list) != 1:
+            raise ValueError(
+                "Number of transformed bonds in the reactant is not 1"
+            )
+        mol1_rxn_bond_index = mol1_rxn_bond_index_list[0]
+        mol1_rxn_bond_obj = mol1.GetBondWithIdx(mol1_rxn_bond_index)
+        mol1_atom1_idx = mol1_rxn_bond_obj.GetBeginAtomIdx()
+        mol1_atom1 = mol1_rxn_bond_obj.GetBeginAtom()
+        mol1_atom2_idx = mol1_rxn_bond_obj.GetEndAtomIdx()
+        mol1_atom2 = mol1_rxn_bond_obj.GetEndAtom()
+
+        def find_ketone_carbon(mol, atom1, atom2, index1, index2):
+            oxygen_atom_num = 8
+            CO_atom = []
+            for neighbor in atom1.GetNeighbors():
+                # Check if neighbor is Oxygen
+                if neighbor.GetAtomicNum() == oxygen_atom_num:
+                    bond = mol.GetBondBetweenAtoms(index1, neighbor.GetIdx())
+                    if bond.GetBondType() == Chem.rdchem.BondType.DOUBLE:
+                        CO_atom.append((atom1, index2))
+            for neighbor in atom2.GetNeighbors():
+                # Check if neighbor is Oxygen
+                if neighbor.GetAtomicNum() == oxygen_atom_num:
+                    bond = mol.GetBondBetweenAtoms(index2, neighbor.GetIdx())
+                    if bond.GetBondType() == Chem.rdchem.BondType.DOUBLE:
+                        CO_atom.append((atom2, index1))
+            if len(CO_atom) == 1:
+                return CO_atom[0]
+            diketones_case = 2
+            return len(CO_atom) == diketones_case
+            # elif len(CO_atom) == 2: # 1,2-diketones
+            #     return True
+            # else:    # if no ketone carbon is found
+            #     return False
+
+        if Markovnikov or Anti_Markovnikov:
+            if num_atoms2 - num_atoms1 == 1:
+                mol1_atom1_non_h_neighbors = [
+                    nbr.GetIdx()
+                    for nbr in mol1_atom1.GetNeighbors()
+                    if nbr.GetAtomicNum() != 1
+                ]
+                num_mol1_atom1_non_h_neighbors = len(mol1_atom1_non_h_neighbors)
+                mol1_atom2_non_h_neighbors = [
+                    nbr.GetIdx()
+                    for nbr in mol1_atom2.GetNeighbors()
+                    if nbr.GetAtomicNum() != 1
+                ]
+                num_mol1_atom2_non_h_neighbors = len(mol1_atom2_non_h_neighbors)
+
+                mol2_atom1_idx = next(
+                    second
+                    for first, second in matching_atoms
+                    if first == mol1_atom1_idx
+                )
+                mol2_atom2_idx = next(
+                    second
+                    for first, second in matching_atoms
+                    if first == mol1_atom2_idx
+                )
+                mol2_atom1 = mol2.GetAtomWithIdx(mol2_atom1_idx)
+                mol2_atom2 = mol2.GetAtomWithIdx(mol2_atom2_idx)
+                mol2_atom1_non_h_neighbors = [
+                    nbr.GetIdx()
+                    for nbr in mol2_atom1.GetNeighbors()
+                    if nbr.GetAtomicNum() != 1
+                ]
+                num_mol2_atom1_non_h_neighbors = len(mol2_atom1_non_h_neighbors)
+                mol2_atom2_non_h_neighbors = [
+                    nbr.GetIdx()
+                    for nbr in mol2_atom2.GetNeighbors()
+                    if nbr.GetAtomicNum() != 1
+                ]
+                num_mol2_atom2_non_h_neighbors = len(mol2_atom2_non_h_neighbors)
+                if (
+                    num_mol1_atom1_non_h_neighbors
+                    == num_mol1_atom2_non_h_neighbors
+                ):
+                    return True
+                mo1_more_sub = (
+                    "atom1"
+                    if num_mol1_atom1_non_h_neighbors
+                    > num_mol1_atom2_non_h_neighbors
+                    else "atom2"
+                )
+                # check which atom in mol2 gets new group
+                if (
+                    num_mol2_atom1_non_h_neighbors
+                    > num_mol1_atom1_non_h_neighbors
+                ):
+                    atom_increased = "atom1"
+                elif (
+                    num_mol2_atom2_non_h_neighbors
+                    > num_mol1_atom2_non_h_neighbors
+                ):
+                    atom_increased = "atom2"
+                else:
+                    raise ValueError(
+                        "Something wrong with the addition reaction"
+                    )
+                if Markovnikov:
+                    return mo1_more_sub == atom_increased
+                if Anti_Markovnikov:
+                    return mo1_more_sub != atom_increased
+            elif num_atoms2 - num_atoms1 > 1:  # addition of alcohols
+                return True
+            else:
+                raise ValueError("Something wrong with the addition reaction")
+
+        elif Baeyer_Villiger:
+            carbon_atom_num = 6
+            oxygen_atom_num = 8
+            mol1_ketone = find_ketone_carbon(
+                mol1, mol1_atom1, mol1_atom2, mol1_atom1_idx, mol1_atom2_idx
+            )
+            if type(mol1_ketone) is tuple:
+                mol1_CO_C = mol1_ketone[0]
+                mol1_rebond_C_idx = mol1_ketone[1]
+                two_neighbors = list()
+                for neighbor in mol1_CO_C.GetNeighbors():
+                    # 2 neighboring C atoms
+                    if neighbor.GetAtomicNum() == carbon_atom_num:
+                        two_neighbors.append(neighbor)
+                # redefine mol1, mol2 as the 2 neighboring atoms of C=O
+                mol1_atom1, mol1_atom2 = two_neighbors
+                mol1_atom1_idx = mol1_atom1.GetIdx()
+                mol1_atom2_idx = mol1_atom2.GetIdx()
+                mol1_unchanged_C_idx = (
+                    mol1_atom1_idx
+                    if mol1_atom2_idx == mol1_rebond_C_idx
+                    else mol1_atom2_idx
+                )
+                # check if unchanged is a C=O group, if so let it pass
+                mol1_unchanged_C = mol1.GetAtomWithIdx(mol1_unchanged_C_idx)
+                for neighbor in mol1_unchanged_C.GetNeighbors():
+                    # Check if neighbor is O
+                    if neighbor.GetAtomicNum() == oxygen_atom_num:
+                        bond = mol1.GetBondBetweenAtoms(
+                            mol1_unchanged_C_idx, neighbor.GetIdx()
+                        )
+                        if bond.GetBondType() == Chem.rdchem.BondType.DOUBLE:
+                            return True
+                mol1_atom1_non_h_neighbors = [
+                    nbr.GetIdx()
+                    for nbr in mol1_atom1.GetNeighbors()
+                    if nbr.GetAtomicNum() == carbon_atom_num
+                ]
+                num_mol1_atom1_non_h_neighbors = len(mol1_atom1_non_h_neighbors)
+                mol1_atom2_non_h_neighbors = [
+                    nbr.GetIdx()
+                    for nbr in mol1_atom2.GetNeighbors()
+                    if nbr.GetAtomicNum() == carbon_atom_num
+                ]
+                num_mol1_atom2_non_h_neighbors = len(mol1_atom2_non_h_neighbors)
+                if (
+                    num_mol1_atom1_non_h_neighbors
+                    == num_mol1_atom2_non_h_neighbors
+                ):
+                    return True
+                if (
+                    num_mol1_atom1_non_h_neighbors
+                    > num_mol1_atom2_non_h_neighbors
+                ):
+                    mo1_more_sub_idx = mol1_atom1_idx
+                else:
+                    mo1_more_sub_idx = mol1_atom2_idx
+                return mo1_more_sub_idx == mol1_rebond_C_idx
+            elif mol1_ketone is True:  # 1,2-diketones, let it pass
+                return True
+            else:  # no ketone
+                raise ValueError(
+                    "No carbonyl group reacted in the Baeyer Villiger rxn"
+                )
+
+        elif Zaitsev or Hofmann:
+            carbon_atom_num = 6
+            if num_atoms2 - num_atoms1 == 1:
+                mol2_atom1_idx = next(
+                    second
+                    for first, second in matching_atoms
+                    if first == mol1_atom1_idx
+                )
+                mol2_atom2_idx = next(
+                    second
+                    for first, second in matching_atoms
+                    if first == mol1_atom2_idx
+                )
+                mol2_all_atom_indices = [
+                    atom.GetIdx() for atom in mol2.GetAtoms()
+                ]
+                mol2_matching_atoms = {t[1] for t in matching_atoms}
+                mol2_leaving_group_index = next(
+                    item
+                    for item in mol2_all_atom_indices
+                    if (
+                        item not in mol2_matching_atoms
+                        and mol2.GetAtomWithIdx(item).GetAtomicNum() != 1
+                    )
+                )
+                mol2_base_C = next(
+                    atom
+                    for atom in mol2.GetAtomWithIdx(
+                        mol2_leaving_group_index
+                    ).GetNeighbors()
+                    if atom.GetAtomicNum() != 1
+                )
+                mol2_loseH_C_idx = (
+                    mol2_atom1_idx
+                    if mol2_base_C.GetIdx() == mol2_atom2_idx
+                    else mol2_atom2_idx
+                )
+                base_neighbors = [  # find all neighbor C who has H
+                    atom
+                    for atom in mol2_base_C.GetNeighbors()
+                    if (
+                        atom.GetAtomicNum() == carbon_atom_num
+                        and any(
+                            neighbor.GetAtomicNum() == 1
+                            for neighbor in atom.GetNeighbors()
+                        )
+                    )
+                ]
+                num_neighbor_list = list()
+                for atom in base_neighbors:
+                    num_neighbor = len(
+                        [
+                            nbr.GetIdx()
+                            for nbr in atom.GetNeighbors()
+                            if nbr.GetAtomicNum() == carbon_atom_num
+                        ]
+                    )
+                    num_neighbor_list.append(num_neighbor)
+                if Zaitsev:
+                    max_value = max(num_neighbor_list)
+                    max_neighbor_atom_indices = {
+                        base_neighbors[i].GetIdx()
+                        for i, x in enumerate(num_neighbor_list)
+                        if x == max_value
+                    }
+                    return mol2_loseH_C_idx in max_neighbor_atom_indices
+                else:  # Hofmann
+                    min_value = min(num_neighbor_list)
+                    min_neighbor_atom_indices = {
+                        base_neighbors[i].GetIdx()
+                        for i, x in enumerate(num_neighbor_list)
+                        if x == min_value
+                    }
+                    return mol2_loseH_C_idx in min_neighbor_atom_indices
+            else:
+                raise ValueError(
+                    "The leaving group might be too big for the Zaitsev filter"
+                )
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(
+            operator_keys={
+                "Reaction_direction",
+                "regioselectivity",
+            }
+        )
+
+
 def get_smiles_from_file(file_name):
     def is_valid_smiles(smiles_string):
         try:
@@ -443,6 +785,41 @@ def get_smiles_from_file(file_name):
     return clean_list
 
 
+def validate_regioselectivity(regioselectivity):
+    allowed_values = {
+        "Markovnikov",
+        "Anti-Markovnikov",
+        "Zaitsev",
+        "Hofmann",
+        "Baeyer-Villiger",
+    }
+    if regioselectivity is None:
+        return None
+    elif regioselectivity == "all":
+        return {
+            "Markovnikov",
+            "Anti-Markovnikov",
+            "Zaitsev",
+            "Hofmann",
+            "Baeyer-Villiger",
+        }
+    elif isinstance(regioselectivity, (set, list, tuple)):
+        # Check if all elements in the collection are valid
+        if not all(item in allowed_values for item in regioselectivity):
+            raise ValueError(
+                "Invalid regioselectivity values. Allowed values:"
+                "Markovnikov, Anti-Markovnikov, Zaitsev, Hofmann,"
+                "Baeyer-Villiger"
+            )
+    else:
+        raise ValueError(
+            "Invalid regioselectivity values. Allowed values: None, all, or a"
+            "collection containing Markovnikov, Anti-Markovnikov, Zaitsev,"
+            "Hofmann, Baeyer-Villiger"
+        )
+    return regioselectivity  # If all checks pass, input is valid
+
+
 def generate_network(
     job_name="default_job",
     starters=False,
@@ -454,9 +831,13 @@ def generate_network(
     max_atoms=None,  # {"C": 20}
     allow_multiple_reactants="default",  # forward allowed, retro no
     targets=None,  # string or list, set, etc.
+    regioselectivity=None,  # None, "all", or use a selection:
+    # ("Markovnikov","Anti-Markovnikov","Zaitsev","Hofmann","Baeyer-Villiger")
 ):
     if not starters:
         raise Exception("At least one starter is needed to generate a network")
+
+    user_regio = validate_regioselectivity(regioselectivity)
 
     starters = get_smiles_from_file(starters)
     helpers = get_smiles_from_file(helpers)
@@ -505,6 +886,7 @@ def generate_network(
                     "allowed_elements": smarts.allowed_elements,
                     "Reaction_type": smarts.reaction_type,
                     "Reaction_direction": direction,
+                    "regioselectivity": smarts.regioselectivity,
                 },
             )
         if smarts.kekulize_flag is True:
@@ -526,6 +908,7 @@ def generate_network(
                     "allowed_elements": smarts.allowed_elements,
                     "Reaction_type": smarts.reaction_type,
                     "Reaction_direction": direction,
+                    "regioselectivity": smarts.regioselectivity,
                 },
             )
 
@@ -549,6 +932,7 @@ def generate_network(
             >> Enol_filter_forward()
             >> Check_balance_filter()
             >> Allowed_Elements_Filter()
+            >> Regioselectivity_filter(user_regio, "forward")
             >> Chem_Rxn_dH_Calculator(
                 "dH", "forward", molecule_thermo_calculator
             )
@@ -564,6 +948,7 @@ def generate_network(
             >> Enol_filter_retro()
             >> Allowed_Elements_Filter()
             >> Check_balance_filter()
+            >> Regioselectivity_filter(user_regio, "retro")
             >> Chem_Rxn_dH_Calculator("dH", "retro", molecule_thermo_calculator)
             >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
         )

@@ -31,6 +31,9 @@ class OperatorSmarts:
     reaction_type: typing.Optional[str] = (
         "Catalytic"  # Catalytic for chemical reactions. the other option is Enzymatic, for bio rxn rules
     )
+    regioselectivity: typing.Optional[tuple[str, int, int]] = (
+        None  # If not None, use a tuple like ("Markovnikov", 0, 0), can be "Markovnikov", "Anti-Markovnikov", "Zaitsev", "Hofmann", and "Baeyer-Villiger". Followed by the index of the main reactant in reactants and the index of main product in products
+    )
 
 
 op_retro_smarts = (
@@ -187,6 +190,7 @@ op_retro_smarts = (
         (1,),
         (1, 1),
         Retro_Not_Aromatic=True,
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     OperatorSmarts(
         "Addition of Alcohols or Acids to Alkenes, Intramolecular",
@@ -211,6 +215,7 @@ op_retro_smarts = (
         (1,),
         (1, 1),
         Retro_Not_Aromatic=True,
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     # Halogenation of Alkenes
     OperatorSmarts(
@@ -440,6 +445,7 @@ op_retro_smarts = (
         "[C+0:1]([F,Cl,Br,I;+0:3])=[C+0!H0:2]>>[*:1]#[*:2].[*:3]",
         (1,),
         (1, 1),
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     # Hydration of Alkynes
     OperatorSmarts(
@@ -447,6 +453,7 @@ op_retro_smarts = (
         "[C+0:1]([O+0H:3])=[C+0!H0:2]>>[*:1]#[*:2].[*:3]",
         (1,),
         (1, 1),
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     # Hydrogenation of Alkynes
     OperatorSmarts(
@@ -573,6 +580,7 @@ op_retro_smarts = (
         (1, 1),
         (1,),
         kekulize_flag=True,
+        regioselectivity=("Zaitsev", 0, 0),
     ),
     # Aromatic Halogenation
     OperatorSmarts(
@@ -798,6 +806,7 @@ op_retro_smarts = (
         (1, 1),
         (1,),
         kekulize_flag=True,
+        regioselectivity=("Zaitsev", 0, 0),
     ),
     # Dehydration of Alcohols, 2-step
     OperatorSmarts(
@@ -1040,6 +1049,7 @@ op_retro_smarts = (
         (1, 0.5),
         kekulize_flag=True,
         Retro_Not_Aromatic=True,
+        regioselectivity=("Baeyer-Villiger", 0, 0),
     ),
     OperatorSmarts(
         "Baeyer-Villiger Oxidation (Aldehydes)",  # with aldehydes doi.org/10.1002/0471264180.or043.03
@@ -1859,6 +1869,7 @@ op_retro_smarts = (
         (1, 1, 3),
         (1, 3),
         kekulize_flag=True,
+        regioselectivity=("Hofmann", 0, 0),
     ),
     OperatorSmarts(
         "Hofmann Elimination R-NHR",  # similar problem as above, so limit to N(CH3)(CH3)R
@@ -1902,7 +1913,7 @@ op_retro_smarts = (
         (1, 2),
         (1, 1, 1),
     ),
-    # Hydroamination of Alkenes
+    # Hydroamination of Alkenes    can be Markovnikov or anti-Markovnikov depending on the catalyst
     OperatorSmarts(
         "Hydroamination of Alkenes",
         "[C+0!H0:1][C+0:2]-!@[N+0X3:3]>>[*:1]=[*:2].[*:3]",
