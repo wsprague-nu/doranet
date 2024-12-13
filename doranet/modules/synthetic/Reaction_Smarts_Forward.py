@@ -54,48 +54,65 @@ op_smarts = (
         (1, 1),
     ),
     # Below are some typical cracking/pyrolysis reactions, use when necessary
-    # Propane Cracking
+    # # Propane Cracking (A special case of Alkane Cracking)
+    # OperatorSmarts(
+    #     "Propane Cracking",
+    #     "[C+0H3:1][C+0H2:2][C+0H3:3]>>[*:1]=[*:2].[*:3]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # # Butane Cracking (A special case of Alkane Cracking)
+    # OperatorSmarts(
+    #     "Butane Cracking 1",
+    #     "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1][*:2]=[*:3].[*:4]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # OperatorSmarts(
+    #     "Butane Cracking 2",
+    #     "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1]=[*:2].[*:3][*:4]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # # Pentane Cracking (A special case of Alkane Cracking)
+    # OperatorSmarts(
+    #     "Pentane Cracking",
+    #     "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H2:4][C+0H3:5]>>[*:1][*:2][*:3]=[*:4].[*:5]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # Alkane Cracking
     OperatorSmarts(
-        "Propane Cracking",
-        "[C+0H3:1][C+0H2:2][C+0H3:3]>>[*:1]=[*:2].[*:3]",
+        "Alkane Cracking",
+        "[C+0!H0:1][C+0:2]!@[C+0:3]>>[*:1]=[*:2].[*:3]",
         (1,),
         (1, 1),
+        allowed_elements=("C", "H"),
     ),
-    # Butane Cracking
     OperatorSmarts(
-        "Butane Cracking 1",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1][*:2]=[*:3].[*:4]",
+        "Alkane Cracking, Intramolecular",
+        "[C+0!H0:1][C+0:2]@[C+0:3]>>([*:1]=[*:2].[*:3])",
+        (1,),
+        (1,),
+        allowed_elements=("C", "H"),
+    ),
+    # Alkane Cyclization (a type of catalytic reforming)
+    OperatorSmarts(
+        "Alkane Cyclization",
+        "[C+0!H0:1][C+0:2][C+0:3][C+0:4][C+0:5][C+0!H0:6]>>[*:1]1[*:2][*:3][*:4][*:5][*:6]1.[H][H]",
         (1,),
         (1, 1),
+        allowed_elements=("C", "H"),
     ),
+    # Alkane Isomerization
     OperatorSmarts(
-        "Butane Cracking 2",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1]=[*:2].[*:3][*:4]",
+        "Alkane Isomerization",
+        "[C+0:1][C+0!H0:2][C+0:3][C+0H3:4]>>[*:1][*:2]([*:3])[*:4]",
         (1,),
-        (1, 1),
+        (1,),
+        allowed_elements=("C", "H"),
     ),
-    # Pentane Cracking
-    OperatorSmarts(
-        "Pentane Cracking",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H2:4][C+0H3:5]>>[*:1][*:2][*:3]=[*:4].[*:5]",
-        (1,),
-        (1, 1),
-    ),
-    # Catalytic Reforming
-    OperatorSmarts(
-        "Catalytic Reforming",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H2:4][C+0H2:5][C+0H3:6]>>[*:1]1[*:2][*:3][*:4][*:5][*:6]1.[H][H]",
-        (1,),
-        (1, 1),
-    ),
-    # Isomerization of Butane
-    OperatorSmarts(
-        "Isomerization of Butane",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1][*:2]([*:3])[*:4]",
-        (1,),
-        (1,),
-    ),
-    # Alkane Dehydrogenation     these are used in the cracking process but may not suit general organic chemistry applications, use when necessary
+    # Alkane Dehydrogenation
     OperatorSmarts(
         "Alkane Dehydrogenation",
         "[C+0!H0:1][C+0!H0:2]>>[*:1]=[*:2].[H][H]",
