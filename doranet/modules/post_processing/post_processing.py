@@ -930,6 +930,7 @@ def pathway_finder(
                     f_result.write(
                         "place holder " + path["pathway_by-product"] + "\n"
                     )
+                    f_result.write("place holder " + "empty" + "\n")
                     f_result.write(
                         "reaction SMILES stoichiometry "
                         + str(path["stoi"])
@@ -1235,6 +1236,36 @@ class No_helpers_reaction_Filter(metadata.ReactionFilterBase):  # mol.item.uid
         return False
 
 
+@typing.final
+@dataclasses.dataclass(frozen=True)
+class Allowed_Elements_Filter(metadata.ReactionFilterBase):
+    # only allow reactions with specified elements in reactants.
+    # does not check hydrogen
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if (
+            recipe.operator.meta is None
+            or recipe.operator.meta["allowed_elements"][0] == "All"
+        ):
+            return True
+        for mol in recipe.reactants:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Filter only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
+            for atom in mol.item.rdkitmol.GetAtoms():
+                if (
+                    atom.GetSymbol()
+                    not in recipe.operator.meta["allowed_elements"]
+                ):
+                    return False
+        return True
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(operator_keys={"allowed_elements"})
+
+
 def Byproduct_index(
     path_idx, _input_list, molecule_thermo_calculator, max_rxn_thermo_change
 ):
@@ -1262,6 +1293,7 @@ def Byproduct_index(
                     "kekulize_flag": smarts.kekulize_flag,
                     "Retro_Not_Aromatic": smarts.Retro_Not_Aromatic,
                     "number_of_steps": smarts.number_of_steps,
+                    "allowed_elements": smarts.allowed_elements,
                 },
             )
         if smarts.kekulize_flag is True:
@@ -1279,6 +1311,7 @@ def Byproduct_index(
                     "kekulize_flag": smarts.kekulize_flag,
                     "Retro_Not_Aromatic": smarts.Retro_Not_Aromatic,
                     "number_of_steps": smarts.number_of_steps,
+                    "allowed_elements": smarts.allowed_elements,
                 },
             )
 
@@ -1290,6 +1323,7 @@ def Byproduct_index(
         Ring_Issues_Filter()
         # >> H_calc
         # >> thermo_filter
+        >> Allowed_Elements_Filter()
         >> Chem_Rxn_dH_Calculator("dH", "forward", molecule_thermo_calculator)
         >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
     )
@@ -1335,6 +1369,7 @@ def Inter_byproduct(
                     "kekulize_flag": smarts.kekulize_flag,
                     "Retro_Not_Aromatic": smarts.Retro_Not_Aromatic,
                     "number_of_steps": smarts.number_of_steps,
+                    "allowed_elements": smarts.allowed_elements,
                 },
             )
         if smarts.kekulize_flag is True:
@@ -1352,6 +1387,7 @@ def Inter_byproduct(
                     "kekulize_flag": smarts.kekulize_flag,
                     "Retro_Not_Aromatic": smarts.Retro_Not_Aromatic,
                     "number_of_steps": smarts.number_of_steps,
+                    "allowed_elements": smarts.allowed_elements,
                 },
             )
 
@@ -1364,6 +1400,7 @@ def Inter_byproduct(
         >> Ring_Issues_Filter()
         # >> H_calc
         # >> thermo_filter
+        >> Allowed_Elements_Filter()
         >> Chem_Rxn_dH_Calculator("dH", "forward", molecule_thermo_calculator)
         >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
     )
@@ -1392,6 +1429,7 @@ def pathway_ranking(
     cool_reactions=None,
     molecule_thermo_calculator=None,  # for by-product calculator
     max_rxn_thermo_change=15,
+    chemicals_prices_name=None,  # csv file with SMILES and price by mole
 ):
     if not starters or not target:
         raise Exception("Starters and target are" " needed to rank pathways")
@@ -1426,6 +1464,7 @@ def pathway_ranking(
             "salt_score": 0,
             "in_reaxys": 0,
             "coolness": 0,
+            "profit": 0,
         }
     if reaxys_result_name is None:
         reaxys_result_name = f"{job_name}_reaxys_batch_result.csv"
@@ -1479,10 +1518,10 @@ def pathway_ranking(
     for idx, i in enumerate(clean_list):
         if "pathway number" in i:
             pathway_marker.append(idx)
-
+    smiles_line_pos = 7
     for idx, marker in enumerate(pathway_marker):
         temp_dict = dict()
-        temp_dict["stoi"] = eval(clean_list[marker + 4][30:])  # list of str
+        temp_dict["stoi"] = eval(clean_list[marker + 5][30:])  # list of str
 
         if idx + 1 < len(pathway_marker):  # 1, 2, 3
             next_marker = pathway_marker[idx + 1]
@@ -1490,17 +1529,23 @@ def pathway_ranking(
             next_marker = len(clean_list)
 
         temp_dict["SMILES"] = clean_list[
-            marker + 6 : marker + 6 + int((next_marker - (marker + 6)) / 3)
+            marker + smiles_line_pos : marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3)
         ]
         temp_dict["name"] = clean_list[
-            marker + 6 + int((next_marker - (marker + 6)) / 3) : marker
-            + 6
-            + int((next_marker - (marker + 6)) / 3) * 2
+            marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) : marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) * 2
         ]
         temp_dict["enthalpy"] = clean_list[
-            marker + 6 + int((next_marker - (marker + 6)) / 3) * 2 : marker
-            + 6
-            + int((next_marker - (marker + 6)) / 3) * 3
+            marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) * 2 : marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) * 3
         ]
         pathways_list.append(temp_dict)
 
@@ -1785,6 +1830,253 @@ def pathway_ranking(
     else:
         eco_score_list = [0] * len(data)
         eco_list = [0] * len(data)
+
+    # Profitability Index ###############################
+    # Profitability Index = Product price / Feedstock price
+    # Also referred to as the Return on Investment Ratio (ROI Ratio)
+    # A value greater than 1 indicates a profitable process
+    # Used as a preliminary metric when other cost is unknown
+    # modified from atom economy calculator, uses the prices of molecules
+    # instead of molecular weight
+    # for bio pathways ignore cofactors cost
+    # if a path has both chem and bio rxns, the result might be
+    # incorrect if a chem helper is also a bio cofactor
+
+    profit_list = list()
+    profit_score_list = list()
+
+    def path_profit(
+        _path,
+        has_bio,
+        prices_dict,
+    ):  # assuming no circular loops; if a middle rxn produces a starter
+        # or intermediat consumed in upstream, it's considered recycled;
+        _path = list(_path)
+        left_dict = dict()  # smiles: number of mol
+        right_dict = dict()
+        target_cost = prices_dict[target_smiles]
+        idx_remove = 0
+        for idx, rxn in enumerate(
+            _path
+        ):  # find rxn for final target, add reas in left,
+            # by-product in right, remove rxn
+            pros = rxn.split(">")[3].split(".")
+            reas = rxn.split(">")[0].split(".")
+            rea_stoi = eval(rxn.split(">")[2].split("$")[1])
+            pro_stoi = eval(rxn.split(">")[2].split("$")[2])
+
+            if target_smiles in pros:
+                idx_remove = idx
+                # target_idx = pros.index(target_smiles)
+                target_stoi = 0
+                for idx2, pro in enumerate(pros):
+                    if pro == target_smiles:
+                        target_stoi += pro_stoi[idx2]
+                for idx2, pro in enumerate(pros):
+                    if pro != target_smiles:
+                        if pro not in right_dict:
+                            right_dict[pro] = pro_stoi[idx2] / target_stoi
+                        else:
+                            right_dict[pro] = (
+                                right_dict[pro] + pro_stoi[idx2] / target_stoi
+                            )
+                for idx2, rea in enumerate(reas):
+                    if rea not in left_dict:
+                        left_dict[rea] = rea_stoi[idx2] / target_stoi
+                    else:
+                        left_dict[rea] = (
+                            left_dict[rea] + rea_stoi[idx2] / target_stoi
+                        )
+                break
+        del _path[idx_remove]
+
+        repeat_flag = True
+        # explored_rxns = set()
+        timeout = 100  # stop if encounter loops
+        timecount = 0
+        while (
+            repeat_flag is True and len(_path) > 0
+        ):  # repeat until left only contain starters;
+            # check if all parents are starters
+            timecount += 1
+            popkey = 99
+            for (
+                i
+            ) in left_dict:  # find idx for a intermediate molecule to produce
+                if i not in starters | set(has_bio):
+                    popkey = i
+                    break
+            # num_mol = left_dict.pop(popkey)
+            num_mol = left_dict[popkey]
+            for idx, rxn in enumerate(_path):
+                pros = rxn.split(">")[3].split(".")
+                reas = rxn.split(">")[0].split(".")
+                rea_stoi = eval(rxn.split(">")[2].split("$")[1])
+                pro_stoi = eval(rxn.split(">")[2].split("$")[2])
+                # if popkey in pros and rxn not in explored_rxns:
+                # find a rxn that product the molecule
+                if popkey in pros:
+                    # explored_rxns.add(rxn)
+                    # popmol_idx = pros.index(popkey)
+                    popmol_stoi = 0
+                    for idx2, pro in enumerate(pros):
+                        if pro == popkey:
+                            popmol_stoi += pro_stoi[idx2]
+                    for idx2, pro in enumerate(pros):
+                        # if pro != popkey: # add all reactants to left
+                        if pro not in right_dict:
+                            right_dict[pro] = (
+                                num_mol / popmol_stoi * pro_stoi[idx2]
+                            )
+                        else:
+                            right_dict[pro] = (
+                                right_dict[pro]
+                                + num_mol / popmol_stoi * pro_stoi[idx2]
+                            )
+                    for idx2, rea in enumerate(reas):
+                        if rea not in left_dict:
+                            left_dict[rea] = (
+                                num_mol / popmol_stoi * rea_stoi[idx2]
+                            )
+                        else:
+                            left_dict[rea] = (
+                                left_dict[rea]
+                                + num_mol / popmol_stoi * rea_stoi[idx2]
+                            )
+
+                    # move used rxn to end of list to avoid
+                    # code loop if a loop in pathway
+                    del _path[idx]
+                    _path.append(rxn)
+                    break
+
+            key_list = list()
+            for key in left_dict:  # balance left and right dict
+                if key not in starters | set(has_bio) and key in right_dict:
+                    key_list.append(key)
+            for key in key_list:
+                if left_dict[key] == right_dict[key]:
+                    # print(left_dict)
+                    left_dict.pop(key)
+                    # print(left_dict)
+                    right_dict.pop(key)
+                elif left_dict[key] < right_dict[key]:
+                    right_dict[key] = right_dict[key] - left_dict[key]
+                    left_dict.pop(key)
+                else:
+                    left_dict[key] = left_dict[key] - right_dict[key]
+                    right_dict.pop(key)
+
+            done_flag = True
+            for key in left_dict:
+                if key not in starters | set(has_bio):
+                    # check if left only contain starters
+                    done_flag = False
+            if done_flag is True or timecount == timeout:
+                repeat_flag = False
+
+        if timecount == timeout:
+            return None
+
+        feedstocks_cost = 0
+        for i in left_dict:
+            if i in has_bio:
+                feedstocks_cost += 0
+            else:
+                feedstocks_cost += prices_dict[i] * left_dict[i]
+
+        to_return = target_cost / feedstocks_cost
+        return to_return
+
+    if weights["profit"] != 0:
+        print("Pathway profitability index ranking working")
+
+        if chemicals_prices_name is None:
+            chemicals_prices_name = f"{job_name}_prices.csv"
+        try:
+            price_result = np.genfromtxt(
+                chemicals_prices_name,
+                comments="?",
+                dtype=[("column1", "U1000"), ("column2", "f8")],
+                delimiter=",",
+                skip_header=0,
+                usecols=(0, 1),
+            )
+        except FileNotFoundError:
+            print("Prices file not found, exiting pathway ranking")
+            raise
+
+        price_result = np.atleast_1d(price_result)
+        price_d = dict()  # {smiles: float}
+        for row in price_result:
+            smiles = str(row[0])
+            price = float(row[1])
+            price_d[Chem.MolToSmiles(Chem.MolFromSmiles(smiles))] = price
+
+        # check all pathways and gether all used starters
+        used_starters = set()
+        for path in data:
+            for rxn in path:
+                reas = rxn.split(">")[0].split(".")
+                for rea in reas:
+                    if rea in starters:
+                        used_starters.add(rea)
+        need_price = set()
+        for starter in used_starters:
+            if starter not in price_d:
+                need_price.add(starter)
+        if len(need_price) != 0:
+            raise ValueError(
+                "Prices of the following SMILES are needed:", need_price
+            )
+        # get scores
+        none_PI = 0
+        min_PI = float("inf")
+        max_PI = 0
+        for idx, path in enumerate(data):
+            has_bio_rxn_flag = False
+            for rxn in path:
+                name = rxn.split(">")[1]
+                if name in bio_rxn_names:
+                    has_bio_rxn_flag = True
+
+            price_zero = set()  # if bio rxn skip cofactors not in helpers
+            if has_bio_rxn_flag:
+                price_zero = cofactors_set - starters
+            try:
+                path_PI = path_profit(path, price_zero, price_d)
+            except KeyError:
+                path_PI = 0
+                print(
+                    "Profitability index calculation error for pathway", idx + 1
+                )
+            # print(idx)
+            if path_PI is None:
+                none_PI += 1
+                profit_list.append(None)
+            else:
+                min_PI = min(min_PI, path_PI)
+                max_PI = max(max_PI, path_PI)
+                profit_list.append(path_PI)
+
+        for idx, i in enumerate(profit_list):
+            if i is None:
+                profit_list[idx] = min_PI
+
+        print("Min_PI", min_PI)
+        print("Max_PI", max_PI)
+        print("None_PI", none_PI)
+        diff_PI = max_PI - min_PI
+        for i in profit_list:
+            if diff_PI != 0:
+                profit_score_list.append((i - min_PI) / diff_PI)
+            else:
+                profit_score_list.append((i - min_PI) / 0.001)
+        print("Pathway profitability index ranking finished")
+
+    else:
+        profit_score_list = [0] * len(data)
+        profit_list = [0] * len(data)
 
     # Number of steps ###############################
     if weights["number_of_steps"] != 0:
@@ -2088,6 +2380,7 @@ def pathway_ranking(
     weight.append(weights["salt_score"])
     weight.append(weights["in_reaxys"])
     weight.append(weights["coolness"])
+    weight.append(weights["profit"])
 
     final_score = list()
 
@@ -2100,6 +2393,7 @@ def pathway_ranking(
             + salt_score_list[i] * weight[4]
             + reaxys_score_list[i] * weight[5]
             + cool_score_list[i] * weight[6]
+            + profit_score_list[i] * weight[7]
         )
 
     # print("len(final_score)", len(final_score))
@@ -2120,6 +2414,8 @@ def pathway_ranking(
         salt_score_list,
         reaxys_score_list,
         cool_score_list,
+        profit_score_list,
+        profit_list,
     ) = zip(
         *sorted(
             zip(
@@ -2135,6 +2431,8 @@ def pathway_ranking(
                 salt_score_list,
                 reaxys_score_list,
                 cool_score_list,
+                profit_score_list,
+                profit_list,
                 strict=False,
             )
         ),
@@ -2149,7 +2447,6 @@ def pathway_ranking(
         dH_list = list()
         for rxn in _path:
             dH = rxn.split(">")[2].split("$")[0]
-
             rxn_str = rxn.split(">")[0] + ">>" + rxn.split(">")[3]
             clean_path.append(rxn_str)
             names.append(rxn.split(">")[1])
@@ -2227,6 +2524,14 @@ def pathway_ranking(
                     " = ",
                     cool_score_list[idx] * weight[6],
                 )
+                print(
+                    "Profitability idex score",
+                    profit_score_list[idx],
+                    " x ",
+                    weight[7],
+                    " = ",
+                    profit_score_list[idx] * weight[7],
+                )
 
                 f_result.write("final score " + str(final_score[idx]))
                 f_result.write("\n")
@@ -2235,6 +2540,9 @@ def pathway_ranking(
                 f_result.write("\n")
                 print("pathway by-product", by_pro_list[idx])
                 f_result.write("pathway by-product " + str(by_pro_list[idx]))
+                f_result.write("\n")
+                print("profitability idex", profit_list[idx])
+                f_result.write("profitability idex " + str(profit_list[idx]))
                 f_result.write("\n")
                 print(
                     "intermediate by-product",
@@ -2276,6 +2584,7 @@ def create_page(
     _reaxys_rxn_color,
     _normal_rxn_color,
     use_custom_layout,
+    price_d,
 ):
     font_path = Path(__file__).parent / "OpenSans-Regular.ttf"
 
@@ -2326,11 +2635,19 @@ def create_page(
         return result
 
     def add_text(img, msg):  # add a text on top-right of image
+        font_size = 25
         img_w, img_h = img.size
         I1 = ImageDraw.Draw(img)
-        myFont = ImageFont.truetype(str(font_path), 25)
+        myFont = ImageFont.truetype(str(font_path), font_size)
         new_box = I1.textbbox((0, 0), msg, font=myFont)
-        I1.text((img_w - new_box[2], 0), msg, font=myFont, fill=(0, 0, 255))
+        if new_box[2] > img_w:
+            myFont = ImageFont.truetype(str(font_path), 10)
+            new_box = I1.textbbox((0, 0), msg, font=myFont)
+            I1.text(
+                (img_w - new_box[2], 15), msg, font=myFont, fill=(0, 0, 255)
+            )
+        else:
+            I1.text((img_w - new_box[2], 0), msg, font=myFont, fill=(0, 0, 255))
         return img
 
     def SMILES_rm_keku(
@@ -2416,6 +2733,9 @@ def create_page(
         + "\n"
         + "Pathway by-product "
         + pathway_dict["pathway_by-product"]
+        + "\n"
+        + "Profitability Idex "
+        + pathway_dict["profitability_idex"]
     )  # to display on each page
 
     split_list = pathway_dict["enthalpy"]
@@ -2444,6 +2764,7 @@ def create_page(
         "intermediate_by-product"
     ]  # intermediate by product number, dict, key smiles, value int
     inter_py_pro["O=C=O"] = ""  # for reagent node (CO2)
+
     # rxn_node = 0
     node_labels_dict = dict()
     node_labels_reagent = dict()
@@ -2491,7 +2812,12 @@ def create_page(
                                 )
                             )
                         ),
-                        str(inter_py_pro.get(rea, "")),
+                        str(inter_py_pro.get(rea, ""))
+                        + (
+                            " $" + price_d.get(rea, "")
+                            if price_d.get(rea, "")
+                            else ""
+                        ),
                     ),
                 )
                 G.add_edge(rea, rxn_node, arror_margin=10)
@@ -2509,7 +2835,12 @@ def create_page(
                                         )
                                     )
                                 ),
-                                str(inter_py_pro.get(pro, "")),
+                                str(inter_py_pro.get(pro, ""))
+                                + (
+                                    " $" + price_d.get(pro, "")
+                                    if price_d.get(pro, "")
+                                    else ""
+                                ),
                             ),
                         )
                         G.add_edge(rxn_node, pro, arror_margin=120)
@@ -2542,7 +2873,12 @@ def create_page(
                                     )
                                 )
                             ),
-                            str(inter_py_pro.get(i, "")),
+                            str(inter_py_pro.get(i, ""))
+                            + (
+                                " $" + price_d.get(i, "")
+                                if price_d.get(i, "")
+                                else ""
+                            ),
                         ),
                     )
                     G2.add_edge(
@@ -2653,6 +2989,7 @@ def pathway_visualization(
     exclude_smiles=None,
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
+    chemicals_prices_name=None,
 ):
     start_time = time.time()
     print(f"Job name: {job_name}")
@@ -2778,6 +3115,7 @@ def pathway_visualization(
         if "ranking" in i:
             pathway_marker.append(idx)
 
+    smiles_line_pos = 7
     for idx, marker in enumerate(pathway_marker):
         temp_dict = dict()
         temp_dict["ranking"] = str(pathway_num)
@@ -2787,7 +3125,10 @@ def pathway_visualization(
             str("%.1f" % float(float(clean_list[marker + 2][15:]) * 100)) + "%"
         )
         temp_dict["pathway_by-product"] = clean_list[marker + 3][19:]
-        temp_dict["intermediate_by-product"] = eval(clean_list[marker + 4][24:])
+        temp_dict["profitability_idex"] = str(
+            round(float(clean_list[marker + 4][19:]), 2)
+        )
+        temp_dict["intermediate_by-product"] = eval(clean_list[marker + 5][24:])
 
         if idx + 1 < len(pathway_marker):  # 1, 2, 3
             next_marker = pathway_marker[idx + 1]
@@ -2795,7 +3136,9 @@ def pathway_visualization(
             next_marker = len(clean_list)
 
         temp_dict["SMILES"] = clean_list[
-            marker + 6 : marker + 6 + int((next_marker - (marker + 6)) / 3)
+            marker + smiles_line_pos : marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3)
         ]
 
         all_reas = list()
@@ -2804,14 +3147,18 @@ def pathway_visualization(
         temp_dict["all_reactants"] = set(all_reas)
 
         temp_dict["name"] = clean_list[
-            marker + 6 + int((next_marker - (marker + 6)) / 3) : marker
-            + 6
-            + int((next_marker - (marker + 6)) / 3) * 2
+            marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) : marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) * 2
         ]
         temp_dict["enthalpy"] = clean_list[
-            marker + 6 + int((next_marker - (marker + 6)) / 3) * 2 : marker
-            + 6
-            + int((next_marker - (marker + 6)) / 3) * 3
+            marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) * 2 : marker
+            + smiles_line_pos
+            + int((next_marker - (marker + smiles_line_pos)) / 3) * 3
         ]
 
         pathways_list.append(temp_dict)
@@ -2846,6 +3193,27 @@ def pathway_visualization(
                 )
             ] = helpers[key]
 
+    # read chemicals_prices file
+    if chemicals_prices_name is None:
+        chemicals_prices_name = f"{job_name}_prices.csv"
+    try:
+        price_result = np.genfromtxt(
+            chemicals_prices_name,
+            comments="?",
+            dtype=[("column1", "U1000"), ("column2", "f8")],
+            delimiter=",",
+            skip_header=0,
+            usecols=(0, 1),
+        )
+        price_result = np.atleast_1d(price_result)
+        price_d = dict()  # {smiles: float}
+        for row in price_result:
+            smiles = str(row[0])
+            price = str(row[1])
+            price_d[Chem.MolToSmiles(Chem.MolFromSmiles(smiles))] = price
+    except FileNotFoundError:
+        price_d = dict()
+
     print("Working on creating pages")
     print("You can adjust multi-processing number to speed up PDF generation")
     with Pool(processes=num_process) as pool:
@@ -2862,6 +3230,7 @@ def pathway_visualization(
                     reaxys_rxn_color,
                     normal_rxn_color,
                     use_custom_layout,
+                    price_d,
                 ),
             )
             for work in work_list
@@ -2920,6 +3289,7 @@ def one_step(
     max_rxn_thermo_change=15,
     consider_name_difference=True,
     reaxys_result_name=None,
+    chemicals_prices_name=None,
     exclude_smiles=None,
     reaxys_rxn_color="blue",
     normal_rxn_color="black",
@@ -2976,6 +3346,7 @@ def one_step(
         cool_reactions=cool_reactions,
         molecule_thermo_calculator=molecule_thermo_calculator,
         max_rxn_thermo_change=max_rxn_thermo_change,
+        chemicals_prices_name=chemicals_prices_name,
     )
 
     pathway_visualization(
@@ -2987,4 +3358,5 @@ def one_step(
         exclude_smiles=exclude_smiles,
         reaxys_rxn_color=reaxys_rxn_color,
         normal_rxn_color=normal_rxn_color,
+        chemicals_prices_name=chemicals_prices_name,
     )
