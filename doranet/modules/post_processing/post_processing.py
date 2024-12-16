@@ -633,8 +633,9 @@ def pathway_finder(
         for pro in products:
             producers_dict[pro][rxn_idx] = products_weight[pro] / total_weight
 
-    for smiles in producers_dict:  # number of producers, used to reduce forks
-        producers_dict_len[smiles] = len(producers_dict[smiles])
+    # number of producers, used to reduce forks
+    for smiles, value in producers_dict.items():
+        producers_dict_len[smiles] = len(value)
 
     distance_to_startrs_dict = dict()  # min distance to starters
     for smiles in starters_set:
@@ -1047,9 +1048,9 @@ def pathway_finder(
                         idx * max_rxns_per_batch :
                     ]
 
-            for key in output_dict:
+            for key, value in output_dict.items():
                 with open(key + ".txt", "w", encoding="utf-8") as f_result:
-                    for query in output_dict[key]:
+                    for query in value:
                         f_result.write("SMILES='" + query + "'")
                         f_result.write("\n")
         # Save a templet csv file, user can copy Reaxys query result over
@@ -1771,13 +1772,13 @@ def pathway_ranking(
         if timecount == timeout:
             return None
         by_product_weight = 0
-        for i in right_dict:
+        for i, value in right_dict.items():
             if i in has_bio:
                 by_product_weight += 0
             else:
                 by_product_weight += (
                     Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(i))
-                    * right_dict[i]
+                    * value
                 )
 
         to_return = target_weight / (target_weight + by_product_weight)
@@ -1979,11 +1980,11 @@ def pathway_ranking(
             return None
 
         feedstocks_cost = 0
-        for i in left_dict:
+        for i, value in left_dict.items():
             if i in has_bio:
                 feedstocks_cost += 0
             else:
-                feedstocks_cost += prices_dict[i] * left_dict[i]
+                feedstocks_cost += prices_dict[i] * value
 
         to_return = target_cost / feedstocks_cost
         return to_return
