@@ -3331,6 +3331,7 @@ def one_step(
             "salt_score": 0,
             "in_reaxys": 0,
             "coolness": 0,
+            "profit": 0,
         }
     if reaxys_result_name is None:
         reaxys_result_name = f"{job_name}_reaxys_batch_result.csv"
