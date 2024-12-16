@@ -751,6 +751,7 @@ class Regioselectivity_filter(metadata.ReactionFilterBase):
                 raise ValueError(
                     "The leaving group might be too big for the Zaitsev filter"
                 )
+        return True
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
