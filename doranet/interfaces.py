@@ -2915,4 +2915,9 @@ class MolecularFormula:
         self._internalarray[i] = value
 
     def __add__(self, other: "MolecularFormula") -> "MolecularFormula":
-        return MolecularFormula(self._internalarray + other._internalarray)
+        sum_array = (
+            (numpy.add(self._internalarray, other._internalarray))
+            .astype(numpy.uintp)
+            .flatten()
+        )
+        return MolecularFormula(sum_array)

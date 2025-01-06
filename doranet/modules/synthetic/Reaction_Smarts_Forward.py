@@ -31,6 +31,9 @@ class OperatorSmarts:
     reaction_type: typing.Optional[str] = (
         "Catalytic"  # Catalytic for chemical reactions. the other option is Enzymatic, for bio rxn rules
     )
+    regioselectivity: typing.Optional[tuple[str, int, int]] = (
+        None  # If not None, use a tuple like ("Markovnikov", 0, 0), can be "Markovnikov", "Anti-Markovnikov", "Zaitsev", "Hofmann", and "Baeyer-Villiger". Followed by the index of the main reactant in reactants and the index of main product in products
+    )
 
 
 op_smarts = (
@@ -51,48 +54,65 @@ op_smarts = (
         (1, 1),
     ),
     # Below are some typical cracking/pyrolysis reactions, use when necessary
-    # Propane Cracking
+    # # Propane Cracking (A special case of Alkane Cracking)
+    # OperatorSmarts(
+    #     "Propane Cracking",
+    #     "[C+0H3:1][C+0H2:2][C+0H3:3]>>[*:1]=[*:2].[*:3]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # # Butane Cracking (A special case of Alkane Cracking)
+    # OperatorSmarts(
+    #     "Butane Cracking 1",
+    #     "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1][*:2]=[*:3].[*:4]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # OperatorSmarts(
+    #     "Butane Cracking 2",
+    #     "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1]=[*:2].[*:3][*:4]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # # Pentane Cracking (A special case of Alkane Cracking)
+    # OperatorSmarts(
+    #     "Pentane Cracking",
+    #     "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H2:4][C+0H3:5]>>[*:1][*:2][*:3]=[*:4].[*:5]",
+    #     (1,),
+    #     (1, 1),
+    # ),
+    # Alkane Cracking
     OperatorSmarts(
-        "Propane Cracking",
-        "[C+0H3:1][C+0H2:2][C+0H3:3]>>[*:1]=[*:2].[*:3]",
+        "Alkane Cracking",
+        "[C+0!H0:1][C+0:2]!@[C+0:3]>>[*:1]=[*:2].[*:3]",
         (1,),
         (1, 1),
+        allowed_elements=("C", "H"),
     ),
-    # Butane Cracking
     OperatorSmarts(
-        "Butane Cracking 1",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1][*:2]=[*:3].[*:4]",
+        "Alkane Cracking, Intramolecular",
+        "[C+0!H0:1][C+0:2]@[C+0:3]>>([*:1]=[*:2].[*:3])",
+        (1,),
+        (1,),
+        allowed_elements=("C", "H"),
+    ),
+    # Alkane Cyclization (a type of catalytic reforming)
+    OperatorSmarts(
+        "Alkane Cyclization",
+        "[C+0!H0:1][C+0:2][C+0:3][C+0:4][C+0:5][C+0!H0:6]>>[*:1]1[*:2][*:3][*:4][*:5][*:6]1.[H][H]",
         (1,),
         (1, 1),
+        allowed_elements=("C", "H"),
     ),
+    # Alkane Isomerization
     OperatorSmarts(
-        "Butane Cracking 2",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1]=[*:2].[*:3][*:4]",
+        "Alkane Isomerization",
+        "[C+0:1][C+0!H0:2][C+0:3][C+0H3:4]>>[*:1][*:2]([*:3])[*:4]",
         (1,),
-        (1, 1),
+        (1,),
+        allowed_elements=("C", "H"),
     ),
-    # Pentane Cracking
-    OperatorSmarts(
-        "Pentane Cracking",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H2:4][C+0H3:5]>>[*:1][*:2][*:3]=[*:4].[*:5]",
-        (1,),
-        (1, 1),
-    ),
-    # Catalytic Reforming
-    OperatorSmarts(
-        "Catalytic Reforming",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H2:4][C+0H2:5][C+0H3:6]>>[*:1]1[*:2][*:3][*:4][*:5][*:6]1.[H][H]",
-        (1,),
-        (1, 1),
-    ),
-    # Isomerization of Butane
-    OperatorSmarts(
-        "Isomerization of Butane",
-        "[C+0H3:1][C+0H2:2][C+0H2:3][C+0H3:4]>>[*:1][*:2]([*:3])[*:4]",
-        (1,),
-        (1,),
-    ),
-    # Alkane Dehydrogenation     these are used in the cracking process but may not suit general organic chemistry applications, use when necessary
+    # Alkane Dehydrogenation
     OperatorSmarts(
         "Alkane Dehydrogenation",
         "[C+0!H0:1][C+0!H0:2]>>[*:1]=[*:2].[H][H]",
@@ -181,6 +201,7 @@ op_smarts = (
         "[C+0:1]=[C+0:2].[O+0!H0:3]>>[*:1][*:2][*:3]",
         (1, 1),
         (1,),
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     OperatorSmarts(
         "Addition of Alcohols or Acids to Alkenes, Intramolecular",
@@ -202,6 +223,7 @@ op_smarts = (
         "[C+0:1]=[C+0:2].[F,Cl,Br,I;+0H:3]>>[*:1][*:2][*:3]",
         (1, 1),
         (1,),
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     # Halogenation of Alkenes
     OperatorSmarts(
@@ -423,6 +445,7 @@ op_smarts = (
         "[C+0:1]#[C+0:2].[F,Cl,Br,I;+0H:3]>>[*:1]([*:3])=[*:2]",
         (1, 1),
         (1,),
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     # Hydration of Alkynes
     OperatorSmarts(
@@ -430,6 +453,7 @@ op_smarts = (
         "[C+0:1]#[C+0:2].[O+0H2:3]>>[*:1]([*:3])=[*:2]",
         (1, 1),
         (1,),
+        regioselectivity=("Markovnikov", 0, 0),
     ),
     # Hydrogenation of Alkynes
     OperatorSmarts(
@@ -562,6 +586,7 @@ op_smarts = (
         "[C+0:1]([F,Cl,Br,I;+0:2])[C+0!H0:3]>>[*:1]=[*:3].[*:2]",
         (1,),
         (1, 1),
+        regioselectivity=("Zaitsev", 0, 0),
     ),
     # Aromatic Halogenation
     OperatorSmarts(
@@ -772,6 +797,7 @@ op_smarts = (
         "[C+0!H0:1][C+0:2][O+0H:3]>>[*:1]=[*:2].[*:3]",
         (1,),
         (1, 1),
+        regioselectivity=("Zaitsev", 0, 0),
     ),
     # Dehydration of Alcohols, 2-step
     OperatorSmarts(
@@ -1003,6 +1029,7 @@ op_smarts = (
         "[C,c;+0:5][C+0:1](=[O+0:2])[C,c;+0:3].[O+0:4]=[O+0]>>[*:5][*:1](=[*:2])[*:4][*:3]",
         (1, 0.5),
         (1,),
+        regioselectivity=("Baeyer-Villiger", 0, 0),
     ),  # may use kekulize_flag = True but needs confirmation
     OperatorSmarts(
         "Baeyer-Villiger Oxidation (Aldehydes)",  # with aldehydes doi.org/10.1002/0471264180.or043.03
@@ -1784,6 +1811,7 @@ op_smarts = (
         "[C+0X4!H0:1][CX4+0:2][N+0H2:3].[C+0:4][F,Cl,Br,I;+0:5]>>[*:1]=[*:2].[*:3]([*:4])([*:4])[*:4].[*:5]",
         (1, 3),
         (1, 1, 3),
+        regioselectivity=("Hofmann", 0, 0),
     ),
     OperatorSmarts(
         "Hofmann Elimination R-NHR",
@@ -1822,7 +1850,7 @@ op_smarts = (
         (1, 1, 1),
         (1, 2),
     ),
-    # Hydroamination of Alkenes
+    # Hydroamination of Alkenes    can be Markovnikov or anti-Markovnikov depending on the catalyst
     OperatorSmarts(
         "Hydroamination of Alkenes",
         "[C+0:1]=[C+0:2].[N+0X3!H0:3]>>[*:1][*:2][*:3]",
@@ -1899,7 +1927,7 @@ op_smarts = (
         (1, 1, 1),
         (1, 2, 1),
     ),
-    # Primary Amines with Nitrous Acid to Alkenes         not including possible rearrangement
+    # Primary Amines with Nitrous Acid to Alkenes         not including possible rearrangement; Zaitsev?
     OperatorSmarts(
         "Primary Amines with Nitrous Acid to Alkenes",
         "[C+0!H0:6][C+0:1][N+0H2:2].[O+0H][N+0:4]=[O+0:5]>>[*:6]=[*:1].[*:5].[*:2]#[*:4]",
@@ -2496,7 +2524,7 @@ op_smarts = (
         (1, 1),
         (1,),
     ),
-    # Thiol-ene Reaction
+    # Thiol-ene Reaction   Anti-Markovnikov
     OperatorSmarts(
         "Thiol-ene Reaction",
         "[C,c;+0:1][SX2+0H:2].[C+0:3]=[C+0:4]>>[*:1][*:2][*:3][*:4]",
@@ -2666,7 +2694,7 @@ op_smarts = (
         (1, 1),
         (1, 1),
     ),
-    # Alkenes Addition by Sulfuric Acid
+    # Alkenes Addition by Sulfuric Acid    Markovnikov
     OperatorSmarts(
         "Alkenes Addition by Sulfuric Acid",
         "[C+0:1]=[C+0:2].[O+0:3]=[SX4+0:4](=[O+0:5])([O+0H:6])[O+0H:7]>>[*:1][*:2][*:6][*:4](=[*:3])(=[*:5])[*:7]",
@@ -2679,7 +2707,7 @@ op_smarts = (
         (1,),
         (1, 1),
     ),
-    # Alkenes Addition by Bisulfites
+    # Alkenes Addition by Bisulfites    Markovnikov?
     OperatorSmarts(
         "Alkenes Addition by Bisulfites",
         "[C+0:1]=[C+0:2].[O+0:3]=[SX3+0:4]([O+0H:5])[O+0H:6]>>[*:1][*:2][*:4](=[*:3])(=[*:5])[*:6]",
