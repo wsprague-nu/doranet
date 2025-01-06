@@ -430,6 +430,8 @@ class Regioselectivity_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if self.regio_user is None:  # if user doesn't use it
             return True
+        if recipe.operator.meta is None:
+            return True
         regio_rxn_tup = recipe.operator.meta["regioselectivity"]
         if regio_rxn_tup is None:  # if rxn doesn't have it
             return True
