@@ -17,7 +17,15 @@ def test_meta_update():
 
     strat.expand(reaction_plan=dn.metacalc.GenerationCalculator("gen"))
 
-    assert network.mols.meta(dn.interfaces.MolIndex(0), ("gen",))["gen"] == 0
-    assert network.mols.meta(dn.interfaces.MolIndex(1), ("gen",))["gen"] == 1
-    assert network.mols.meta(dn.interfaces.MolIndex(2), ("gen",))["gen"] == 1
-    assert network.mols.meta(dn.interfaces.MolIndex(3), ("gen",))["gen"] == 2  # noqa: PLR2004
+    assert (
+        network.mols.meta(dn.core.interfaces.MolIndex(0), ("gen",))["gen"] == 0
+    )
+    assert (
+        network.mols.meta(dn.core.interfaces.MolIndex(1), ("gen",))["gen"] == 1
+    )
+    assert (
+        network.mols.meta(dn.core.interfaces.MolIndex(2), ("gen",))["gen"] == 1
+    )
+    assert (
+        network.mols.meta(dn.core.interfaces.MolIndex(3), ("gen",))["gen"] == 2  # noqa: PLR2004
+    )

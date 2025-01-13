@@ -7,8 +7,9 @@ import itertools
 import math
 import typing
 
-from doranet import interfaces, metadata
+from doranet import metadata
 from doranet import network as pgnetworks
+from doranet.core import interfaces
 
 
 def _generate_recipes_from_compat_table(
@@ -744,10 +745,7 @@ def assemble_recipe_batch_job(
 
 @dataclasses.dataclass(frozen=True)
 class ReactionJob:
-    __slots__ = (
-        "operator",
-        "op_args",
-    )
+    __slots__ = ("operator", "op_args")
 
     operator: interfaces.DataPacketE[interfaces.OpDatBase]
     op_args: tuple[interfaces.DataPacketE[interfaces.MolDatBase], ...]
@@ -861,10 +859,7 @@ def execute_recipe_ranking(
                 (
                     recipe_item
                     for recipe_item in (
-                        RecipePriorityItem(
-                            None,
-                            recipe,
-                        )
+                        RecipePriorityItem(None, recipe)
                         for _, recipe in recipe_generator
                     )
                     if min_val is None or not (recipe_item < min_val)
@@ -1054,10 +1049,7 @@ def execute_reaction(
             for product in rxn_products
         )
         rxn = interfaces.ReactionExplicit(
-            operator_datapacket,
-            reactant_datapackets,
-            product_datapackets,
-            None,
+            operator_datapacket, reactant_datapackets, product_datapackets, None
         )
         yield rxn, True
 
@@ -1303,8 +1295,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                         value = v
                         if key in mc_update.op_updates and key in cur_vals:
                             value = mc_update.op_updates[key](
-                                value,
-                                cur_vals[key],
+                                value, cur_vals[key]
                             )
                         if key not in cur_vals or cur_vals[key] != value:
                             network.ops.set_meta(

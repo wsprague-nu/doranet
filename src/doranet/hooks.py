@@ -2,7 +2,7 @@
 
 import dataclasses
 
-from doranet import interfaces
+from doranet.core import interfaces
 
 
 @dataclasses.dataclass(slots=True)

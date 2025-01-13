@@ -34,6 +34,9 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
+      <a href="recent-changes">Recent Changes
+    </li>
+    <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
@@ -52,6 +55,14 @@
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
+
+<!-- RECENT CHANGES -->
+
+## Recent Changes
+
+- v0.6.0
+  - Breaking changes
+    - Changed the location of many interfaces to `doranet.core`; if you have problems importing stuff try changing your path (ex. `doranet.interfaces` -> `doranet.core.interfaces`)
 
 <!-- ABOUT THE PROJECT -->
 

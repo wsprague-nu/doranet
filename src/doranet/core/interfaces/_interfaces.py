@@ -23,11 +23,14 @@ import rdkit.Chem.rdChemReactions
 import rdkit.Chem.rdmolfiles
 import rdkit.Chem.rdmolops
 
+from ._dataunit import DataUnit
+from ._identifier import Identifier
+from ._molecule import MolDatBase
+
 if typing.TYPE_CHECKING:
     from doranet import filters, hooks, metacalc, metadata, strategies
 
 T = typing.TypeVar("T")
-T_ci = typing.TypeVar("T_ci", contravariant=False)
 T_ci_co = typing.TypeVar("T_ci_co", covariant=True)
 T_data = typing.TypeVar("T_data", bound="DataUnit")
 T_id = typing.TypeVar("T_id", bound="Identifier")
@@ -38,138 +41,6 @@ T_rank = typing.TypeVar("T_rank", bound="RankValue")
 MolIndex = typing.NewType("MolIndex", int)
 OpIndex = typing.NewType("OpIndex", int)
 RxnIndex = typing.NewType("RxnIndex", int)
-
-
-class Identifier(collections.abc.Hashable, typing.Protocol):
-    """
-    Unique identifier/name of object.
-
-    Should be orderable, hashable, and immutable.
-
-    Methods
-    -------
-    __hash__:
-        Hash function for object.
-    __eq__:
-        Equality function for object.
-    __lt__:
-        Ordering function for object.
-    """
-
-    def __hash__(self) -> int:
-        """
-        Hashes object to integer.
-
-        Returns
-        -------
-        int
-            Integer representing hashed value of object.  Should be
-            (effectively) unique.
-        """
-        ...
-
-    def __eq__(self, value: object, /) -> bool:
-        """
-        Compare object to others of similar type.
-
-        If x == y, then x is equivalent to y.  This enables hashtables.
-
-        Parameters
-        ----------
-        value
-            Object to be compared.
-
-        Returns
-        -------
-        bool
-            True if object is equivalent to value, False otherwise.
-        """
-        ...
-
-    def __lt__(self, other, /) -> bool:
-        """
-        Compare object to others of similar type.
-
-        If canonical, this functionality allows canonical sorting.
-
-        Parameters
-        ----------
-        other
-            Object to be compared.
-
-        Returns
-        -------
-        bool
-            True if other is after self when ordered, False otherwise.
-        """
-        ...
-
-
-class DataUnit(abc.ABC):
-    """
-    Basic data storage object.
-
-    Object which provides a unique, hashable identifier, and can serve up a
-    binary form of the object.
-
-    Attributes
-    ----------
-    blob : bytes
-        Binary representation of object.
-    uid : pickaxe_generic.interfaces.Identifier
-        Unique identifier of object.
-    """
-
-    __slots__ = ()
-
-    @property
-    @abc.abstractmethod
-    def blob(self) -> bytes:
-        """
-        Binary representation of object.
-
-        Must be able to initialize object when passed to __setstate__ method of
-        any sibling class with same immediate parent (viz. initialize a
-        MolDatBasicV2, even if obtained from a MolDatBasicV1).
-        """
-
-    @classmethod
-    @abc.abstractmethod
-    def from_bytes(
-        cls: type[T_ci], data: bytes, engine: "NetworkEngine"
-    ) -> T_ci:
-        """
-        Produce object from bytestring.
-
-        Bytestring should be derived from the .blob property.
-        """
-
-    @property
-    @abc.abstractmethod
-    def uid(self) -> Identifier:
-        """
-        Return unique identifier of object.
-
-        Must be hashable in order to facilitate lookup tables utilizing hashes.
-        """
-
-
-class MolDatBase(DataUnit):
-    """
-    Empty interface signalling molecule status of DataUnit class.
-
-    Classes implementing this interface manage information about a single
-    molecule, allowing for memory management and lumped molecule frameworks.
-
-    Attributes
-    ----------
-    blob : bytes
-        Binary representation of object.
-    uid : pickaxe_generic.interfaces.Identifier
-        Unique identifier of object.
-    """
-
-    __slots__ = ()
 
 
 class MolDatRDKit(MolDatBase):
@@ -453,11 +324,7 @@ class OpDatRDKit(OpDatBase):
     ) -> None: ...
 
     @classmethod
-    def from_bytes(
-        cls,
-        data: bytes,
-        engine: "NetworkEngine",
-    ) -> "OpDatRDKit":
+    def from_bytes(cls, data: bytes, engine: "NetworkEngine") -> "OpDatRDKit":
         """
         Load operator from bytestring.
 
@@ -956,9 +823,7 @@ class ReactionExplicit:
     reaction_meta: typing.Optional[collections.abc.Mapping]
 
     @property
-    def uid(
-        self,
-    ) -> Identifier:
+    def uid(self) -> Identifier:
         return (
             self.operator.item.uid,
             tuple(mol.item.uid for mol in self.reactants),
@@ -1822,10 +1687,7 @@ class NetworkEngine(abc.ABC):
 
     @abc.abstractmethod
     def network_from_file(
-        self,
-        filename: str,
-        path: str = "./",
-        ext: str = ".pgnet",
+        self, filename: str, path: str = "./", ext: str = ".pgnet"
     ) -> "ChemNetwork":
         """
         Create network from file.
@@ -2532,9 +2394,7 @@ class RecipeRanker(abc.ABC, typing.Generic[T_rank]):
 
     @abc.abstractmethod
     def __call__(
-        self,
-        recipe: RecipeExplicit,
-        min_rank: typing.Optional[T_rank] = None,
+        self, recipe: RecipeExplicit, min_rank: typing.Optional[T_rank] = None
     ) -> typing.Optional[T_rank]:
         """
         Produce rank of `recipe`.
@@ -2664,10 +2524,7 @@ class PriorityQueueStrategy(abc.ABC):
     __slots__ = ()
 
     @abc.abstractmethod
-    def __init__(
-        self,
-        network: ChemNetwork,
-    ) -> None: ...
+    def __init__(self, network: ChemNetwork) -> None: ...
 
     @abc.abstractmethod
     def expand(

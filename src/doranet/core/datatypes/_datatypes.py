@@ -14,18 +14,13 @@ import rdkit.Chem.rdinchi
 import rdkit.Chem.rdmolfiles
 import rdkit.Chem.rdmolops
 
-from doranet import interfaces
+from doranet.core import interfaces
 
 # some code to make loads more safe to arbitrary code execution
 # necessary since external data from a database may be input
 # if you are having issues, add relevant classes to _safe_%module%_classes
 # or if modules not in builtins required, add other if clauses
-_safe_builtins_classes: frozenset[str] = frozenset(
-    {
-        "frozenset",
-        "tuple",
-    }
-)
+_safe_builtins_classes: frozenset[str] = frozenset({"frozenset", "tuple"})
 
 
 class __SafeUnpickler(pickle.Unpickler):

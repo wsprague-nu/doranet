@@ -8,31 +8,31 @@ def generate_network(
     starters: str
     | pathlib.Path
     | Iterable[
-        dn.interfaces.MolDatBase
-        | dn.interfaces.MetaStruct[dn.interfaces.MolDatBase]
+        dn.core.interfaces.MolDatBase
+        | dn.core.interfaces.MetaStruct[dn.core.interfaces.MolDatBase]
     ],
     operators: str
     | pathlib.Path
     | Iterable[
-        dn.interfaces.OpDatBase
-        | dn.interfaces.MetaStruct[dn.interfaces.OpDatBase]
+        dn.core.interfaces.OpDatBase
+        | dn.core.interfaces.MetaStruct[dn.core.interfaces.OpDatBase]
     ],
     targets: str
     | pathlib.Path
     | Iterable[
-        dn.interfaces.MolDatBase
-        | dn.interfaces.MetaStruct[dn.interfaces.MolDatBase]
+        dn.core.interfaces.MolDatBase
+        | dn.core.interfaces.MetaStruct[dn.core.interfaces.MolDatBase]
     ]
     | None = None,
     helpers: str
     | pathlib.Path
     | Iterable[
-        dn.interfaces.MolDatBase
-        | dn.interfaces.MetaStruct[dn.interfaces.MolDatBase]
+        dn.core.interfaces.MolDatBase
+        | dn.core.interfaces.MetaStruct[dn.core.interfaces.MolDatBase]
     ]
     | None = None,
     max_depth: int | None = 1,
-) -> dn.interfaces.ChemNetwork:
+) -> dn.core.interfaces.ChemNetwork:
     """
     Generate a synthetic chemical network.
 

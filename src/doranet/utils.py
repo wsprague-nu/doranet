@@ -5,7 +5,7 @@ import dataclasses
 import itertools
 import typing
 
-from doranet import interfaces
+from doranet.core import interfaces
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

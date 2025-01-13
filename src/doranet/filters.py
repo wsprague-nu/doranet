@@ -8,7 +8,8 @@ import rdkit
 import rdkit.Chem
 import rdkit.Chem.rdqueries
 
-from doranet import interfaces, metadata
+from doranet import metadata
+from doranet.core import interfaces
 
 # class AlwaysTrueFilter(interfaces.ReactionFilter):
 #     def __call__(self, operator, reactants, products):

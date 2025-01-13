@@ -16,7 +16,8 @@ from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 from rdkit.Chem.rdmolops import GetFormalCharge
 
 import doranet as dn
-from doranet import interfaces, metadata
+from doranet import metadata
+from doranet.core import interfaces
 
 
 def clean_SMILES(smiles):
@@ -328,11 +329,7 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
 
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
-        return interfaces.MetaKeyPacket(
-            operator_keys={
-                "enthalpy_correction",
-            }
-        )
+        return interfaces.MetaKeyPacket(operator_keys={"enthalpy_correction"})
 
 
 @typing.final
@@ -472,11 +469,7 @@ def generate_network(
             and not set(excluded_cofactors) & set(pros_types)
         ):
             network.add_op(
-                engine.op.rdkit(
-                    x,
-                    kekulize=False,
-                    drop_errors=True,
-                ),
+                engine.op.rdkit(x, kekulize=False, drop_errors=True),
                 meta={
                     "name": bio_rules["Name"][idx],
                     "Reactants": bio_rules["Reactants"][idx],

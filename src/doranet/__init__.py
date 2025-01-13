@@ -1,6 +1,7 @@
 """A streamlined, generic rewrite of Pickaxe."""
 
 __all__ = [
+    "core",
     "create_engine",
     "datatypes",
     "engine",
@@ -18,11 +19,10 @@ __all__ = [
 from doranet.engine import create_engine
 
 from . import (
-    datatypes,
+    core,
     engine,
     filters,
     hooks,
-    interfaces,
     metacalc,
     metadata,
     modules,
@@ -30,3 +30,4 @@ from . import (
     strategies,
     utils,
 )
+from .core import datatypes, interfaces

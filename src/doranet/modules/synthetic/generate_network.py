@@ -12,7 +12,8 @@ from rdkit.Chem import rdqueries, rdRascalMCES
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 import doranet as dn
-from doranet import interfaces, metadata
+from doranet import metadata
+from doranet.core import interfaces
 from doranet.modules.synthetic.Reaction_Smarts_Forward import op_smarts
 from doranet.modules.synthetic.Reaction_Smarts_Retro import op_retro_smarts
 
@@ -758,10 +759,7 @@ class Regioselectivity_filter(metadata.ReactionFilterBase):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return interfaces.MetaKeyPacket(
-            operator_keys={
-                "Reaction_direction",
-                "regioselectivity",
-            }
+            operator_keys={"Reaction_direction", "regioselectivity"}
         )
 
 
@@ -873,10 +871,7 @@ def generate_network(
     for smarts in smarts_list:
         if smarts.kekulize_flag is False:
             network.add_op(
-                engine.op.rdkit(
-                    smarts.smarts,
-                    drop_errors=True,
-                ),
+                engine.op.rdkit(smarts.smarts, drop_errors=True),
                 meta={
                     "name": smarts.name,
                     "reactants_stoi": smarts.reactants_stoi,
@@ -894,11 +889,7 @@ def generate_network(
             )
         if smarts.kekulize_flag is True:
             network.add_op(
-                engine.op.rdkit(
-                    smarts.smarts,
-                    kekulize=True,
-                    drop_errors=True,
-                ),
+                engine.op.rdkit(smarts.smarts, kekulize=True, drop_errors=True),
                 meta={
                     "name": smarts.name,
                     "reactants_stoi": smarts.reactants_stoi,

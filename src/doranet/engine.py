@@ -11,15 +11,8 @@ import xml.dom.minidom
 import rdkit.Chem
 import rdkit.Chem.rdChemReactions
 
-from doranet import (
-    datatypes,
-    filters,
-    hooks,
-    interfaces,
-    metacalc,
-    network,
-    strategies,
-)
+from doranet import filters, hooks, metacalc, network, strategies
+from doranet.core import datatypes, interfaces
 
 
 def create_engine(speed: int = 5, np: int = 1) -> interfaces.NetworkEngine:
@@ -118,13 +111,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         Number of processes to be used by strategies.
     """
 
-    __slots__ = (
-        "_Mol",
-        "_Op",
-        "_Rxn",
-        "_speed",
-        "_np",
-    )
+    __slots__ = ("_Mol", "_Op", "_Rxn", "_speed", "_np")
     _Mol: typing.Any
 
     def __init__(self, speed: int = 5, np: int = 1):
@@ -199,8 +186,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
     @property
     def strat(self):
         return interfaces.StrategyTypes(
-            _cartesian_op_init(self),
-            strategies.PriorityQueueStrategyBasic,
+            _cartesian_op_init(self), strategies.PriorityQueueStrategyBasic
         )
 
     @property
@@ -241,10 +227,7 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         return network.ChemNetworkBasic()
 
     def network_from_file(
-        self,
-        filename: str,
-        path: str = "./",
-        ext: str = ".pgnet",
+        self, filename: str, path: str = "./", ext: str = ".pgnet"
     ) -> interfaces.ChemNetwork:
         filepath = os.path.join(path, filename + ext)
         with gzip.open(filepath, "r") as fin:

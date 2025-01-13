@@ -1,9 +1,0 @@
-name: pickaxe-env-lint
-channels:
- - conda-forge
-dependencies:
- - ipython
- - pillow
- - python>=3.9
- - rdkit
- - tox

@@ -189,7 +189,7 @@ def test_tutorial_4():
     )
 
     assert reaction_i == 0
-    assert network.rxns[0] == dn.interfaces.Reaction(0, (1, 0), (2,))
+    assert network.rxns[0] == dn.core.interfaces.Reaction(0, (1, 0), (2,))
 
     assert network.consumers(0) == [0]
     assert network.producers(0) == []

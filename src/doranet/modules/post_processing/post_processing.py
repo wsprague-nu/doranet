@@ -33,7 +33,8 @@ from rdkit.Chem import Descriptors, Draw
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 import doranet as dn
-from doranet import interfaces, metadata
+from doranet import metadata
+from doranet.core import interfaces
 from doranet.modules.synthetic.Reaction_Smarts_Forward import op_smarts
 
 bio_rules_path = (
@@ -44,10 +45,7 @@ cofactors_path = (
 )
 bio_rules = pd.read_csv(bio_rules_path, sep="\t")
 cofactors = pd.read_csv(cofactors_path, sep="\t")
-excluded_cofactors = (
-    "CARBONYL_CoF",
-    "AMINO_CoF",
-)  # temporary
+excluded_cofactors = ("CARBONYL_CoF", "AMINO_CoF")  # temporary
 bio_rxn_names = set()
 for i in bio_rules["Name"]:
     bio_rxn_names.add(i)
@@ -1176,7 +1174,7 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
             products_dict: dict[str, int | float] = dict()
             pattern = r"([A-Z][a-z]*)(\d*)"
             for idx, mol in enumerate(recipe.reactants):
-                if not isinstance(mol.item, dn.interfaces.MolDatRDKit):
+                if not isinstance(mol.item, dn.core.interfaces.MolDatRDKit):
                     raise NotImplementedError(
                         f"""Ring_Issues_Filter not implemented for molecule type
                             {type(mol.item)}"""
@@ -1191,7 +1189,7 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
                         + count * recipe.operator.meta["reactants_stoi"][idx]
                     )
             for idx, mol in enumerate(recipe.products):
-                if not isinstance(mol.item, dn.interfaces.MolDatRDKit):
+                if not isinstance(mol.item, dn.core.interfaces.MolDatRDKit):
                     raise NotImplementedError(
                         f"""Ring_Issues_Filter not implemented for molecule type
                             {type(mol.item)}"""
@@ -1299,10 +1297,7 @@ def Byproduct_index(
             )
         if smarts.kekulize_flag is True:
             network.add_op(
-                engine.op.rdkit(
-                    smarts.smarts,
-                    kekulize=True,
-                ),
+                engine.op.rdkit(smarts.smarts, kekulize=True),
                 meta={
                     "name": smarts.name,
                     "reactants_stoi": smarts.reactants_stoi,
@@ -1375,10 +1370,7 @@ def Inter_byproduct(
             )
         if smarts.kekulize_flag is True:
             network.add_op(
-                engine.op.rdkit(
-                    smarts.smarts,
-                    kekulize=True,
-                ),
+                engine.op.rdkit(smarts.smarts, kekulize=True),
                 meta={
                     "name": smarts.name,
                     "reactants_stoi": smarts.reactants_stoi,
@@ -1450,7 +1442,7 @@ def pathway_ranking(
     #     )
     # else:
     target_smiles = rdkit.Chem.rdmolfiles.MolToSmiles(
-        rdkit.Chem.rdmolfiles.MolFromSmiles(list(target)[0]),
+        rdkit.Chem.rdmolfiles.MolFromSmiles(list(target)[0])
     )
 
     if helpers is None:
@@ -1638,8 +1630,7 @@ def pathway_ranking(
     eco_score_list = list()
 
     def path_eco(
-        _path,
-        has_bio,
+        _path, has_bio
     ):  # assuming no circular loops; if a middle rxn produces a starter
         # or intermediat consumed in upstream, it's considered recycled;
         _path = list(_path)
@@ -1847,9 +1838,7 @@ def pathway_ranking(
     profit_score_list = list()
 
     def path_profit(
-        _path,
-        has_bio,
-        prices_dict,
+        _path, has_bio, prices_dict
     ):  # assuming no circular loops; if a middle rxn produces a starter
         # or intermediat consumed in upstream, it's considered recycled;
         _path = list(_path)
@@ -2757,7 +2746,7 @@ def create_page(
         name_list[idx] = name_list[idx] + "\n" + dH_list[idx]
 
     G = nx.DiGraph(
-        rankdir="TB",  # top to bottom layout
+        rankdir="TB"  # top to bottom layout
         # ranksep="0.8",
     )
 

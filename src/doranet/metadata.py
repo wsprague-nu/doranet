@@ -7,7 +7,8 @@ import itertools
 import operator
 import typing
 
-from doranet import interfaces, utils
+from doranet import utils
+from doranet.core import interfaces
 
 
 class MetaSink(typing.Protocol):
@@ -835,10 +836,7 @@ def metalib_to_rxn_meta(
                     )
                     for mol in rxn.products
                 ),
-                _mmd(
-                    rxn.reaction_meta,
-                    rxn_info[rxn.uid],
-                ),
+                _mmd(rxn.reaction_meta, rxn_info[rxn.uid]),
             ),
             passed_filter,
         )
