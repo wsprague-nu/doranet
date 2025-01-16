@@ -243,13 +243,13 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
                 else:
                     raise NotImplementedError(
                         f"""File at {filepath} is incompatible with this version
-                            of Pickaxe_Generic, please update (file
+                            of DORAnet, please update (file
                             version={version}.{subversion}, max
                             supported=0.0)"""
                     )
             else:
                 raise NotImplementedError(
                     f"""File at {filepath} is incompatible with this version of
-                        Pickaxe_Generic, please update (file version={version},
+                        DORAnet, please update (file version={version},
                         max supported=0)"""
                 )

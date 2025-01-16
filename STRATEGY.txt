@@ -1,0 +1,12 @@
+Strategy going forward:
+
+1. move all current imports into __init__.py imports (without breaking API)
+2. refactor dependency trees
+3. reorganize various interfaces into domains:
+  - Objects (Molecules, Metadata, and Storage)
+  - Interactions (Operators)
+  - Networks (Static State)
+  - Processes (Performing Expansion)
+    - Defining the scope (filters, etc.)
+    - Storage of intermediate processing w/ context (Dynamic State)
+    - Dispatching to processes

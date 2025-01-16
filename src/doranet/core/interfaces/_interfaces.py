@@ -68,7 +68,7 @@ class MolDatRDKit(MolDatBase):
     inchikey : str
     rdkitmol : rdkit.Chem.rdchem.Mol
     smiles : str
-    uid : pickaxe_generic.interfaces.Identifier
+    uid : doranet.interfaces.Identifier
 
     Other Parameters
     ----------------
@@ -117,12 +117,12 @@ class MolDatRDKit(MolDatBase):
         data : bytes
             Bytestring containing sufficient binary information to initialize
             molecule.  Should be the binary form of an RDKit molecule.
-        engine : pickaxe_generic.interfaces.NetworkEngine
+        engine : doranet.interfaces.NetworkEngine
             Engine containing settings for molecule initialization.
 
         Returns
         -------
-        pickaxe_generic.interfaces.MolDatRDKit
+        doranet.interfaces.MolDatRDKit
             Molecule returned from processing bytestring.
         """
         return engine.mol.rdkit(rdkit.Chem.rdchem.Mol(data), sanitize=False)
@@ -219,7 +219,7 @@ class OpDatBase(DataUnit):
     ----------
     blob : bytes
         Binary representation of operator.
-    uid : pickaxe_generic.interfaces.Identifier
+    uid : doranet.interfaces.Identifier
         Unique identifier of operator.
 
     Methods
@@ -247,12 +247,12 @@ class OpDatBase(DataUnit):
 
         Parameters
         ----------
-        *reactants : pickaxe_generic.interfaces.MolDatBase
+        *reactants : doranet.interfaces.MolDatBase
             Reactants which match the arguments in the operator.
 
         Returns
         -------
-        collections.abc.Iterable[collections.abc.Iterable[pickaxe_generic.interfaces.RxnDatBase]]
+        collections.abc.Iterable[collections.abc.Iterable[doranet.interfaces.RxnDatBase]]
             Iterable of reaction product sets.
         """
 
@@ -278,7 +278,7 @@ class OpDatBase(DataUnit):
 
         Parameters
         ----------
-        mol : pickaxe_generic.interfaces.MolDatBase
+        mol : doranet.interfaces.MolDatBase
             MolDat object which is to be compared.
         arg : int
             Index of argument which is to be compared.
@@ -306,7 +306,7 @@ class OpDatRDKit(OpDatBase):
         RDKit reaction object.
     smarts : str
         SMARTS string representing operator.
-    uid : pickaxe_generic.interfaces.Identifier
+    uid : doranet.interfaces.Identifier
         Unique identifier of operator.
     """
 
@@ -336,12 +336,12 @@ class OpDatRDKit(OpDatBase):
         data : bytes
             Bytestring containing sufficient binary information to initialize
             operator.
-        engine : pickaxe_generic.interfaces.NetworkEngine
+        engine : doranet.interfaces.NetworkEngine
             Engine containing settings for operator initialization.
 
         Returns
         -------
-        pickaxe_generic.interfaces.OpDatRDKit
+        doranet.interfaces.OpDatRDKit
             Operator returned from processing bytestring.
         """
         unpacked: tuple[rdkit.Chem.rdChemReactions.ChemicalReaction, bool] = (
@@ -2310,7 +2310,7 @@ class ChemNetwork(abc.ABC):
         data = ET.Element(
             "data",
             attrib={
-                "title": "Pickaxe-Generic network file",
+                "title": "DORAnet network file",
                 "version": "0",
                 "subversion": "0",
             },
@@ -2566,10 +2566,10 @@ class PriorityQueueStrategy(abc.ABC):
         reaction_plan : typing.Optional[
                        typing.Union[
 
-                           pickaxe_generic.metadata.RxnAnalysisStep,
-                           pickaxe_generic.metadata.PropertyCompositor,
-                           pickaxe_generic.metadata.ReactionFilterBase,
-                           pickaxe_generic.metadata.LocalPropertyCalc,
+                           doranet.metadata.RxnAnalysisStep,
+                           doranet.metadata.PropertyCompositor,
+                           doranet.metadata.ReactionFilterBase,
+                           doranet.metadata.LocalPropertyCalc,
 
                        ]
 

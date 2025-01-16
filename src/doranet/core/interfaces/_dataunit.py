@@ -21,7 +21,7 @@ class DataUnit(abc.ABC):
     ----------
     blob : bytes
         Binary representation of object.
-    uid : pickaxe_generic.interfaces.Identifier
+    uid : doranet.interfaces.Identifier
         Unique identifier of object.
     """
 
