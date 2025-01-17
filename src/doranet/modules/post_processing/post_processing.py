@@ -128,7 +128,7 @@ def pretreat_networks(
     molecule_thermo_calculator=None,
 ):
     """
-    Load pickaxe network files and unpack them into a json file.
+    Load DORAnet network files and unpack them into a json file.
 
     Able to remove rxn if it's between helpers
     Able to remove rxn if it cannot be reached from the starters

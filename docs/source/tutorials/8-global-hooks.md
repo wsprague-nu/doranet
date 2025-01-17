@@ -155,7 +155,7 @@ Global hooks can also be used in order to refresh/update metadata in order to re
 
 🚧UNDER CONSTRUCTION🚧
 
-There are not currently any global hook functions providing such a functionality. However, the implementation is relatively simple and looking over the examples in [hooks.py](../pickaxe_generic/hooks.py) should provide some suggestions as to how these may be implemented. In addition, the interface that global hooks subclass from (located in [interfaces.py](../pickaxe_generic/interfaces.py)) contains a docstring for the `__call__` method which describes the meaning of the different `Enum` return types.
+There are not currently any global hook functions providing such a functionality. However, the implementation is relatively simple and looking over the examples in [hooks.py](../doranet/hooks.py) should provide some suggestions as to how these may be implemented. In addition, the interface that global hooks subclass from (located in [doranet/core/interfaces](../doranet/core/interfaces)) contains a docstring for the `__call__` method which describes the meaning of the different `Enum` return types.
 
 ## Addendum: Global Hook Functions and the Cartesian Strategy
 

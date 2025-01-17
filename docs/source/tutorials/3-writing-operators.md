@@ -101,7 +101,7 @@ This shows that the operator has exactly two arguments. If we try to call this o
 >>> aldol_condensation(acetone)
 
 Traceback (most recent call last):
-  File "C:\Users\sprag\GitHub-Repos\doranet\pickaxe_generic\datatypes.py", line 301, in __call__
+  File "C:\Users\sprag\GitHub-Repos\doranet\datatypes\_datatypes.py", line 301, in __call__
     for products in self._rdkitrxn.RunReactants(
 ValueError: ChemicalParserException: Number of reactants provided does not match number of reactant templates.
 
@@ -109,7 +109,7 @@ The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
   File "<string>", line 1, in <module>
-  File "C:\Users\sprag\GitHub-Repos\doranet\pickaxe_generic\datatypes.py", line 306, in __call__
+  File "C:\Users\sprag\GitHub-Repos\doranet\core\datatypes\_datatypes.py", line 306, in __call__
     raise RuntimeError(
 RuntimeError: Error occurred when using operator OpDatBasic('[O&+0:1]=[C&+0:2]-[C&+0;H2,H3:3].[C&+0:4]=[O&+0:5]>>[*:1]=[*:2]-[*:3]=[*:4].[*:5]') on (MolDatBasic('CC(C)=O'),)
 ```
@@ -147,7 +147,7 @@ Trying to perform the intermolecular reaction with the intramolecular operator r
 ```sh
 >>> esterification_intra(hydroxyvaleric_acid,ethanol)
 Traceback (most recent call last):
-  File "C:\Users\sprag\GitHub-Repos\doranet\pickaxe_generic\datatypes.py", line 301, in __call__
+  File "C:\Users\sprag\GitHub-Repos\doranet\datatypes\_datatypes.py", line 301, in __call__
     for products in self._rdkitrxn.RunReactants(
 ValueError: ChemicalParserException: Number of reactants provided does not match number of reactant templates.
 
@@ -155,7 +155,7 @@ The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-  File "C:\Users\sprag\GitHub-Repos\doranet\pickaxe_generic\datatypes.py", line 306, in __call__
+  File "C:\Users\sprag\GitHub-Repos\doranet\datatypes\_datatypes.py", line 306, in __call__
     raise RuntimeError(
 RuntimeError: Error occurred when using operator OpDatBasic('([O&+0:1]=[C&+0:2]-[O&+0&H1:3].[O&+0&H1:4])>>[*:1]=[*:2]-[*:4].[*:3]') on (MolDatBasic('O=C(O)CCCCO'), MolDatBasic('CCO'))
 ```
