@@ -419,6 +419,45 @@ class Max_Atoms_Filter(metadata.ReactionFilterBase):
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return interfaces.MetaKeyPacket()
 
+@typing.final
+@dataclasses.dataclass(frozen=True)
+class Free_Radical_Polymerization_Filter(metadata.ReactionFilterBase):
+    __slots__ = ("frp_types")
+    frp_types: tuple
+
+    # only allow products with functional groups that allow for FRP
+    def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
+        if self.frp_types is None:
+            return True
+        
+        frp_substructures = {
+            "ionic": Chem.MolFromSmarts("[CX3H1](=[O,S])[#6]"),
+            "ROMP": Chem.MolFromSmarts("[RC]=[RC]"),
+            "vinyl": Chem.MolFromSmarts("[!RC]=[C]"),
+            "ROP": Chem.MolFromSmarts("[O,S;X1]=[C,S;X3;R]-[N,O,S;R]"),
+        }
+
+        for mol in recipe.products:
+            if not isinstance(mol.item, interfaces.MolDatRDKit):
+                raise NotImplementedError(
+                    f"""Filter only implemented for molecule type \
+                        MolDatRDKit, not {type(mol.item)}"""
+                )
+            
+            # loop through FRP types and see if possible
+            # return at first instance of available polymerization
+            for frp_type in self.frp_types:
+                if mol.item.rdkitmol.GetSubstructMatch(frp_substructures[frp_type]):
+                    return True
+            
+            # if no matches
+            return False
+            
+        return True
+
+    @property
+    def meta_required(self) -> interfaces.MetaKeyPacket:
+        return interfaces.MetaKeyPacket(operator_keys={"frp_types"})
 
 def get_smiles_from_file(file_name):
     def is_valid_smiles(smiles_string):
@@ -451,6 +490,7 @@ def generate_network(
     direction="forward",
     molecule_thermo_calculator=None,
     max_rxn_thermo_change=15,
+    frp_types=None,
     max_atoms=None,  # {"C": 20}
     allow_multiple_reactants="default",  # forward allowed, retro no
     targets=None,  # string or list, set, etc.
@@ -553,6 +593,7 @@ def generate_network(
                 "dH", "forward", molecule_thermo_calculator
             )
             >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
+            >> Free_Radical_Polymerization_Filter(frp_types)
         )
         recipe_filter = None
 
@@ -566,6 +607,7 @@ def generate_network(
             >> Check_balance_filter()
             >> Chem_Rxn_dH_Calculator("dH", "retro", molecule_thermo_calculator)
             >> Rxn_dH_Filter(max_rxn_thermo_change, "dH")
+            >> Free_Radical_Polymerization_Filter("frp_types")
         )
         recipe_filter = Cross_Reaction_Filter(tuple(range(my_start_i)))
 
