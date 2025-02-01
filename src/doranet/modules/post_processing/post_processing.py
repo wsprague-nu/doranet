@@ -2577,6 +2577,7 @@ def create_page(
     price_d,
 ):
     font_path = Path(__file__).parent / "OpenSans-Regular.ttf"
+    price_unit = "/mol"
 
     def custom_layout(graph):
         # topological sort of the graph
@@ -2804,7 +2805,7 @@ def create_page(
                         ),
                         str(inter_py_pro.get(rea, ""))
                         + (
-                            " $" + price_d.get(rea, "")
+                            " $" + price_d.get(rea, "") + price_unit
                             if price_d.get(rea, "")
                             else ""
                         ),
@@ -2827,7 +2828,7 @@ def create_page(
                                 ),
                                 str(inter_py_pro.get(pro, ""))
                                 + (
-                                    " $" + price_d.get(pro, "")
+                                    " $" + price_d.get(pro, "") + price_unit
                                     if price_d.get(pro, "")
                                     else ""
                                 ),
@@ -2865,7 +2866,7 @@ def create_page(
                             ),
                             str(inter_py_pro.get(i, ""))
                             + (
-                                " $" + price_d.get(i, "")
+                                " $" + price_d.get(i, "") + price_unit
                                 if price_d.get(i, "")
                                 else ""
                             ),
