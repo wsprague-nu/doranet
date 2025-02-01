@@ -54,7 +54,7 @@ draw = [
 ]
 lint = [
     "mypy",
-    "ruff",
+    "ruff<=0.7.3",
 ]
 profile = [
     "scalene",
