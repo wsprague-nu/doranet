@@ -762,10 +762,11 @@ class Regioselectivity_filter(metadata.ReactionFilterBase):
             operator_keys={"Reaction_direction", "regioselectivity"}
         )
 
+
 @typing.final
 @dataclasses.dataclass(frozen=True)
 class Free_Radical_Polymerization_Filter(metadata.ReactionFilterBase):
-    __slots__ = ("frp_types")
+    __slots__ = ("frp_types",)
     frp_types: tuple
 
     # only allow products with functional groups that allow for FRP
@@ -790,7 +791,9 @@ class Free_Radical_Polymerization_Filter(metadata.ReactionFilterBase):
             # loop through FRP types and see if possible
             # return at first instance of available polymerization
             for frp_type in self.frp_types:
-                if mol.item.rdkitmol.GetSubstructMatch(frp_substructures[frp_type]):
+                if mol.item.rdkitmol.GetSubstructMatch(
+                    frp_substructures[frp_type]
+                ):
                     return True
 
             # if no matches
@@ -801,6 +804,7 @@ class Free_Radical_Polymerization_Filter(metadata.ReactionFilterBase):
     @property
     def meta_required(self) -> interfaces.MetaKeyPacket:
         return interfaces.MetaKeyPacket(operator_keys={"frp_types"})
+
 
 def get_smiles_from_file(file_name):
     def is_valid_smiles(smiles_string):
