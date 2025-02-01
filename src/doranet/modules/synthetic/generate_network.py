@@ -772,7 +772,7 @@ class Free_Radical_Polymerization_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if self.frp_types is None:
             return True
-        
+
         frp_substructures = {
             "ionic": Chem.MolFromSmarts("[CX3H1](=[O,S])[#6]"),
             "ROMP": Chem.MolFromSmarts("[RC]=[RC]"),
@@ -786,16 +786,16 @@ class Free_Radical_Polymerization_Filter(metadata.ReactionFilterBase):
                     f"""Filter only implemented for molecule type \
                         MolDatRDKit, not {type(mol.item)}"""
                 )
-            
+
             # loop through FRP types and see if possible
             # return at first instance of available polymerization
             for frp_type in self.frp_types:
                 if mol.item.rdkitmol.GetSubstructMatch(frp_substructures[frp_type]):
                     return True
-            
+
             # if no matches
             return False
-            
+
         return True
 
     @property
