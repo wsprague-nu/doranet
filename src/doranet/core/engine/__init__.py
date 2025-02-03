@@ -2,4 +2,4 @@
 
 __all__ = ["NetworkEngineBasic", "create_engine"]
 
-from .core.engine import NetworkEngineBasic, create_engine
+from ._engine import NetworkEngineBasic, create_engine
