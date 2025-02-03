@@ -23,6 +23,7 @@ from . import (
     engine,
     filters,
     hooks,
+    interfaces,
     metacalc,
     metadata,
     modules,
@@ -30,4 +31,4 @@ from . import (
     strategies,
     utils,
 )
-from .core import datatypes, interfaces
+from .core import datatypes
