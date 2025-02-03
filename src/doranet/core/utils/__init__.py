@@ -2,4 +2,4 @@
 
 __all__ = ["RxnTrackerDepthFirstNetwork", "logreduce"]
 
-from .core.utils import RxnTrackerDepthFirstNetwork, logreduce
+from ._utils import RxnTrackerDepthFirstNetwork, logreduce
