@@ -2,7 +2,4 @@
 
 __all__ = ["CartesianStrategyUpdated", "PriorityQueueStrategyBasic"]
 
-from .core.strategies import (
-    CartesianStrategyUpdated,
-    PriorityQueueStrategyBasic,
-)
+from ._strategies import CartesianStrategyUpdated, PriorityQueueStrategyBasic
