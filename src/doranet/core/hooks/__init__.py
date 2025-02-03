@@ -6,7 +6,7 @@ __all__ = [
     "TargetMoleculeCondition",
 ]
 
-from .core.hooks import (
+from ._hooks import (
     MaxMoleculesCondition,
     NumberIterCondition,
     TargetMoleculeCondition,

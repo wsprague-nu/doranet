@@ -1,5 +1,5 @@
 """Core, generic DORAnet code."""
 
-__all__ = ["interfaces"]
+__all__ = ["filters", "hooks", "interfaces"]
 
-from . import interfaces
+from . import filters, hooks, interfaces
