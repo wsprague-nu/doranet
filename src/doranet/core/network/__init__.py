@@ -2,4 +2,4 @@
 
 __all__ = ["ChemNetworkBasic", "ChemNetworkFacadeMetaTrigger"]
 
-from .core.network import ChemNetworkBasic, ChemNetworkFacadeMetaTrigger
+from ._network import ChemNetworkBasic, ChemNetworkFacadeMetaTrigger
