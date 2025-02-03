@@ -13,7 +13,7 @@ __all__ = [
     "ReplaceNewValue",
 ]
 
-from .core.filters import (
+from ._filters import (
     BundleFilterCoreactants,
     CoreactantFilter,
     GenerationFilter,
