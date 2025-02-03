@@ -7,7 +7,7 @@ __all__ = [
     "MolWeightCalculator",
 ]
 
-from .core.metacalc import (
+from ._metacalc import (
     GenerationCalculator,
     MassWasteCalculator,
     MolFormulaCalculator,
