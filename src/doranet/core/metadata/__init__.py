@@ -17,7 +17,7 @@ __all__ = [
     "as_rxn_analysis_step",
 ]
 
-from .core.metadata import (
+from ._metadata import (
     LocalPropertyCalc,
     MetaDataResolverFunc,
     MetaSink,
