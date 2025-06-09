@@ -94,7 +94,7 @@ You will need to the `pip` package manager to install DORAnet, either in a virtu
 pip install doranet
 ```
 
-3. The program is now installed! If this is your first time, please proceed to the [Tutorial](https://github.com/wsprague-nu/doranet/blob/main/doc/source/tutorials/1-introduction.md).
+3. The program is now installed! If this is your first time, please proceed to the [Tutorial](https://github.com/wsprague-nu/doranet/blob/main/docs/source/tutorials/1-introduction.md).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
