@@ -1379,7 +1379,9 @@ class CartesianStrategyUpdated:
         ] = None,
         save_unreactive: bool = True,
         # max_gen: typing.Optional[int] = None,
+        save_multiplicity: bool = False,
     ):
+        self._network.save_multiplicity = save_multiplicity
         engine = self._engine
         p_strat = engine.strat.pq(self._network)
         # mol_filter: typing.Optional[interfaces.MolFilter] = None
