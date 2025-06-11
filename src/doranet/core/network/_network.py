@@ -536,11 +536,10 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
                 new_meta = dict(meta)
                 new_meta["multiplicity"] = 1
             self._rxn_meta.append(new_meta)
+        elif meta is None:
+            self._rxn_meta.append({})
         else:
-            if meta is None:
-                self._rxn_meta.append({})
-            else:
-                self._rxn_meta.append(dict(meta))
+            self._rxn_meta.append(dict(meta))
 
         return rxn_index
 
