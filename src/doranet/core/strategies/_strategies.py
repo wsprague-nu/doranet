@@ -1381,7 +1381,7 @@ class CartesianStrategyUpdated:
         # max_gen: typing.Optional[int] = None,
         save_multiplicity: bool = False,
     ):
-        self._network.save_multiplicity = save_multiplicity
+        self._network._save_multiplicity = save_multiplicity
         engine = self._engine
         p_strat = engine.strat.pq(self._network)
         # mol_filter: typing.Optional[interfaces.MolFilter] = None

@@ -264,7 +264,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         "_op_query",
         "_rxn_query",
         "_reactive_list",
-        "save_multiplicity",
+        "_save_multiplicity",
     )
 
     def __init__(self) -> None:
@@ -298,7 +298,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         ] = None
 
         self._reactive_list: list[bool] = []
-        self.save_multiplicity: bool = True
+        self._save_multiplicity: bool = True
 
     @property
     def mols(
@@ -492,7 +492,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         if rxn in self._rxn_map:
             rxn_index = self._rxn_map[rxn]
             # Increment the multiplicity counter in the metadata
-            if self.save_multiplicity:
+            if self._save_multiplicity:
                 existing_meta = self._rxn_meta[rxn_index]
                 existing_meta["multiplicity"] = (
                     existing_meta.get("multiplicity", 1) + 1)
@@ -529,7 +529,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             self._mol_producers[i].append(rxn_index)
 
         # add rxn metadata to table
-        if self.save_multiplicity:
+        if self._save_multiplicity:
             if meta is None:
                 new_meta = {"multiplicity": 1}
             else:
