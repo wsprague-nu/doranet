@@ -495,7 +495,8 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
             if self._save_multiplicity:
                 existing_meta = self._rxn_meta[rxn_index]
                 existing_meta["multiplicity"] = (
-                    existing_meta.get("multiplicity", 1) + 1)
+                    existing_meta.get("multiplicity", 1) + 1
+                )
             if meta is not None:
                 self._rxn_meta[rxn_index].update(meta)
             return rxn_index
