@@ -53,7 +53,7 @@ draw = [
     "pygraphviz",
 ]
 lint = [
-    "mypy",
+    "mypy<=1.15",
     "ruff<=0.7.3",
 ]
 profile = [
