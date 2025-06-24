@@ -806,11 +806,15 @@ class Reaction:
     products : tuple[MolIndex, ...]
         A tuple of product indices in some ChemNetwork.  If any is negative,
         this indicates an unknown provenance.
+    multiplicity : int
+        The "multiplicity" of the Reaction; if the reaction is produced more
+        than once by application of the referenced Operator.
     """
 
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
     products: tuple[MolIndex, ...]
+    multiplicity: int
 
 
 @dataclasses.dataclass(frozen=True, slots=True, order=True)
@@ -821,6 +825,7 @@ class ReactionExplicit:
     reactants: tuple[DataPacketE[MolDatBase], ...]
     products: tuple[DataPacketE[MolDatBase], ...]
     reaction_meta: typing.Optional[collections.abc.Mapping]
+    multiplicity: int
 
     @property
     def uid(self) -> Identifier:

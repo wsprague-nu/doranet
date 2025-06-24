@@ -152,7 +152,7 @@ reaction_i = network.add_rxn(
 >>> reaction_i
 0
 >>> network.rxns[0]
-Reaction(operator=0, reactants=(1, 0), products=(2,))
+Reaction(operator=0, reactants=(1, 0), products=(2,), multiplicity=1)
 ```
 
 The Reaction object is basically just a [named tuple](https://docs.python.org/3/library/typing.html#other-special-directives) which associates the indices of the components involved, so it takes up only a minimum of storage space.

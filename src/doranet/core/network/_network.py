@@ -474,6 +474,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
         ] = None,
         meta: typing.Optional[collections.abc.Mapping] = None,
         rxn: typing.Optional[interfaces.Reaction] = None,
+        mult: int = 1,
     ) -> interfaces.RxnIndex:
         if rxn is None:
             if operator is None or reactants is None or products is None:
@@ -483,7 +484,7 @@ class ChemNetworkBasic(interfaces.ChemNetwork):
                         None"""
                 )
             rxn = interfaces.Reaction(
-                operator, tuple(reactants), tuple(products)
+                operator, tuple(reactants), tuple(products), mult
             )
 
         # if already in database, return existing index

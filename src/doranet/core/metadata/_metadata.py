@@ -840,6 +840,7 @@ def metalib_to_rxn_meta(
                     for mol in rxn.products
                 ),
                 _mmd(rxn.reaction_meta, rxn_info[rxn.uid]),
+                rxn.multiplicity,
             ),
             passed_filter,
         )
