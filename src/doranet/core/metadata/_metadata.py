@@ -176,22 +176,25 @@ class KeyOutput:
         new_mol_keys = self.mol_keys | other.mol_keys
         if len(new_mol_keys) > len(self.mol_keys) + len(other.mol_keys):
             raise KeyError(
-                f"""Conflicting molecule metadata key outputs {self.mol_keys &
-                    other.mol_keys}; separate expressions with >> or combine
+                f"""Conflicting molecule metadata key outputs {
+                    self.mol_keys & other.mol_keys
+                }; separate expressions with >> or combine
                     using other operator"""
             )
         new_op_keys = self.op_keys | other.op_keys
         if len(new_op_keys) > len(self.op_keys) + len(other.op_keys):
             raise KeyError(
-                f"""Conflicting operator metadata key outputs {self.op_keys &
-                    other.op_keys}; separate expressions with >> or combine
+                f"""Conflicting operator metadata key outputs {
+                    self.op_keys & other.op_keys
+                }; separate expressions with >> or combine
                     using other operator"""
             )
         new_rxn_keys = self.rxn_keys | other.rxn_keys
         if len(new_rxn_keys) > len(self.rxn_keys) + len(other.rxn_keys):
             raise KeyError(
-                f"""Conflicting reaction metadata key outputs {self.rxn_keys &
-                    other.rxn_keys}; separate expressions with >> or combine
+                f"""Conflicting reaction metadata key outputs {
+                    self.rxn_keys & other.rxn_keys
+                }; separate expressions with >> or combine
                     using other operator"""
             )
         return KeyOutput(new_mol_keys, new_op_keys, new_rxn_keys)
