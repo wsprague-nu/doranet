@@ -806,7 +806,7 @@ class Reaction:
     products : tuple[MolIndex, ...]
         A tuple of product indices in some ChemNetwork.  If any is negative,
         this indicates an unknown provenance.
-    multiplicity : int
+    mult : int
         The "multiplicity" of the Reaction; if the reaction is produced more
         than once by application of the referenced Operator.
     """
@@ -814,7 +814,7 @@ class Reaction:
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
     products: tuple[MolIndex, ...]
-    multiplicity: int
+    mult: int
 
 
 @dataclasses.dataclass(frozen=True, slots=True, order=True)
