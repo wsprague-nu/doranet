@@ -833,6 +833,7 @@ class ReactionExplicit:
             self.operator.item.uid,
             tuple(mol.item.uid for mol in self.reactants),
             tuple(mol.item.uid for mol in self.products),
+            self.multiplicity,
         )
 
 
