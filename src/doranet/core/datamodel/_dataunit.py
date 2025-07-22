@@ -2,6 +2,8 @@ import abc
 import typing
 import warnings
 
+import typing_extensions
+
 from ._identifier import Identifier
 
 if typing.TYPE_CHECKING:
@@ -99,7 +101,7 @@ class DataUnit(_DataUnitDeprecated):
 
     @classmethod
     @abc.abstractmethod
-    def from_bytes_fast(cls, bstring: bytes) -> typing.Self:
+    def from_bytes_fast(cls, bstring: bytes) -> typing_extensions.Self:
         """
         Deserialize `Self` from speed-optimized binary form.
 
@@ -130,7 +132,7 @@ class DataUnit(_DataUnitDeprecated):
         return self.to_bytes_fast()
 
     @classmethod
-    def from_bytes_small(cls, bstring: bytes) -> typing.Self:
+    def from_bytes_small(cls, bstring: bytes) -> typing_extensions.Self:
         """
         Deserialize `Self` from size-optimized binary form.
 
@@ -210,7 +212,9 @@ class DataUnit(_DataUnitDeprecated):
 
     @typing.final
     @classmethod
-    def from_bytes(cls, data: bytes, engine: "NetworkEngine") -> typing.Self:
+    def from_bytes(
+        cls, data: bytes, engine: "NetworkEngine"
+    ) -> typing_extensions.Self:
         warnings.warn(
             "DataUnit.from_bytes() is a deprecated function, please use"
             "DataUnit.from_bytes_fast() instead",

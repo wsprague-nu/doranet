@@ -558,7 +558,7 @@ def pathway_finder(
     starters_set = set(mol_smiles)
 
     print(
-        "Pathway finder started, " "total number of reactions in network",
+        "Pathway finder started, total number of reactions in network",
         len(data),
     )
 
@@ -1425,7 +1425,7 @@ def pathway_ranking(
     chemicals_prices_name=None,  # csv file with SMILES and price by mole
 ):
     if not starters or not target:
-        raise Exception("Starters and target are" " needed to rank pathways")
+        raise Exception("Starters and target are needed to rank pathways")
 
     print(f"Job name: {job_name}")
     print("Job type: pathway ranking")

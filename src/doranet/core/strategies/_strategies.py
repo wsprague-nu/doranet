@@ -1037,19 +1037,34 @@ def execute_reaction(
     if rxn_job.operator.item is None or any(mol is None for mol in reactants):
         raise ValueError("ReactionJob has non-None item components!")
     product_packets = rxn_job.operator.item(*reactants)
+    product_packet_order: dict[
+        tuple[interfaces.Identifier, ...],
+        tuple[tuple[interfaces.MolDatBase, ...], int],
+    ] = {}
+    for pack in (tuple(p) for p in product_packets):
+        pack_uid = tuple(p.uid for p in pack)
+        if pack_uid in product_packet_order:
+            pack_int = product_packet_order[pack_uid][1]
+            product_packet_order[pack_uid] = (pack, pack_int + 1)
+        else:
+            product_packet_order[pack_uid] = (pack, 1)
     reactant_datapackets = tuple(
         interfaces.DataPacketE(p.i, p.item, p.meta) for p in rxn_job.op_args
     )
     operator_datapacket = interfaces.DataPacketE(
         rxn_job.operator.i, rxn_job.operator.item, rxn_job.operator.meta
     )
-    for rxn_products in product_packets:
+    for rxn_products, mult in product_packet_order.values():
         product_datapackets = tuple(
             interfaces.DataPacketE(-1, product, None)
             for product in rxn_products
         )
         rxn = interfaces.ReactionExplicit(
-            operator_datapacket, reactant_datapackets, product_datapackets, None
+            operator_datapacket,
+            reactant_datapackets,
+            product_datapackets,
+            None,
+            mult,
         )
         yield rxn, True
 
@@ -1245,6 +1260,7 @@ class PriorityQueueStrategyBasic(interfaces.PriorityQueueStrategy):
                     interfaces.OpIndex(rxn.operator.i),
                     reactants_indices,
                     products_indices,
+                    rxn.multiplicity,
                 )
 
                 # add reaction to network
