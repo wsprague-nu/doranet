@@ -303,7 +303,7 @@ class MolDatRDKit(MolDatBase):
         neutralize: bool = False,
     ) -> rdkit.Chem.rdchem.Mol:
         if isinstance(molecule, bytes):
-            rdkitmol = rdkit.Chem.rdchem.Mol(molecule)  # type: ignore[call-overload,unused-ignore]
+            rdkitmol = rdkit.Chem.rdchem.Mol(molecule)  # type: ignore[arg-type,call-overload,unused-ignore]
             # if sanitize:
             #    SanitizeMol(rdkitmol)
             #    AssignStereochemistry(rdkitmol, True, True, True)
