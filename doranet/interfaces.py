@@ -254,7 +254,8 @@ class MolDatRDKit(MolDatBase):
         pickaxe_generic.interfaces.MolDatRDKit
             Molecule returned from processing bytestring.
         """
-        return engine.mol.rdkit(rdkit.Chem.rdchem.Mol(data), sanitize=False)
+        mol: rdkit.Chem.rdchem.Mol = rdkit.Chem.rdchem.Mol(data)  # type: ignore[call-overload,unused-ignore]
+        return engine.mol.rdkit(mol, sanitize=False)
 
     @property
     @abc.abstractmethod
@@ -302,7 +303,7 @@ class MolDatRDKit(MolDatBase):
         neutralize: bool = False,
     ) -> rdkit.Chem.rdchem.Mol:
         if isinstance(molecule, bytes):
-            rdkitmol = rdkit.Chem.rdchem.Mol(molecule)
+            rdkitmol = rdkit.Chem.rdchem.Mol(molecule)  # type: ignore[call-overload,unused-ignore]
             # if sanitize:
             #    SanitizeMol(rdkitmol)
             #    AssignStereochemistry(rdkitmol, True, True, True)
@@ -2924,7 +2925,10 @@ class MolecularFormula:
         self._internalarray[i] = value
 
     def __add__(self, other: "MolecularFormula") -> "MolecularFormula":
-        return MolecularFormula(self._internalarray + other._internalarray)
+        sum_arr: numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]] = (
+            self._internalarray + other._internalarray
+        )
+        return MolecularFormula(sum_arr)
 
     def __hash__(self) -> int:
         return hash(dataclasses.astuple(self))
