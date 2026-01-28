@@ -2926,7 +2926,7 @@ class MolecularFormula:
 
     def __add__(self, other: "MolecularFormula") -> "MolecularFormula":
         sum_arr: numpy.ndarray[tuple[int], numpy.dtype[numpy.uintp]] = (
-            self._internalarray + other._internalarray
+            self._internalarray + other._internalarray  # type: ignore[assignment, unused-ignore]
         )
         return MolecularFormula(sum_arr)
 
