@@ -633,8 +633,11 @@ def pathway_finder(
         for pro in products:
             producers_dict[pro][rxn_idx] = products_weight[pro] / total_weight
 
-    for smiles in producers_dict:  # number of producers, used to reduce forks
-        producers_dict_len[smiles] = len(producers_dict[smiles])
+    for (
+        smiles,
+        _smiles_item,
+    ) in producers_dict.items():  # number of producers, used to reduce forks
+        producers_dict_len[smiles] = len(_smiles_item)
 
     distance_to_startrs_dict = dict()  # min distance to starters
     for smiles in starters_set:
@@ -1046,9 +1049,9 @@ def pathway_finder(
                         idx * max_rxns_per_batch :
                     ]
 
-            for key in output_dict:
+            for key, _keyitem in output_dict.items():
                 with open(key + ".txt", "w", encoding="utf-8") as f_result:
-                    for query in output_dict[key]:
+                    for query in _keyitem:
                         f_result.write("SMILES='" + query + "'")
                         f_result.write("\n")
         # Save a templet csv file, user can copy Reaxys query result over
@@ -1726,13 +1729,13 @@ def pathway_ranking(
         if timecount == timeout:
             return None
         by_product_weight = 0
-        for i in right_dict:
+        for i, _i_item in right_dict.items():
             if i in has_bio:
                 by_product_weight += 0
             else:
                 by_product_weight += (
                     Descriptors.MolWt(rdkit.Chem.rdmolfiles.MolFromSmiles(i))
-                    * right_dict[i]
+                    * _i_item
                 )
 
         to_return = target_weight / (target_weight + by_product_weight)

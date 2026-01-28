@@ -443,16 +443,12 @@ def generate_network(
     engine = dn.create_engine()
     network = engine.new_network()
 
-    for key in cofactors_dict:
+    for key, _keyitem in cofactors_dict.items():
         if excluded_cofactors is None or key not in excluded_cofactors:
             # add cofactors to network, they're like helpers in chem expansion
             network.add_mol(
-                engine.mol.rdkit(cofactors_dict[key]),
-                meta={
-                    "SMILES": Chem.MolToSmiles(
-                        Chem.MolFromSmiles(cofactors_dict[key])
-                    )
-                },
+                engine.mol.rdkit(_keyitem),
+                meta={"SMILES": Chem.MolToSmiles(Chem.MolFromSmiles(_keyitem))},
             )
 
     my_start_i = -1
