@@ -44,8 +44,8 @@ draw = [
     "pygraphviz",
 ]
 lint = [
-    "mypy",
-    "ruff",
+    "mypy==1.17",
+    "ruff==0.14",
 ]
 profile = [
     "scalene",
