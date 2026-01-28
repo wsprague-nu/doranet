@@ -28,7 +28,7 @@ dependencies = [
     "pillow",
     "pyarrow",
     "pypdf",
-    "rdkit<=2023.9.5",
+    "rdkit",
     "scipy",
 ]
 
