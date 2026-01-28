@@ -560,7 +560,7 @@ def pathway_finder(
     starters_set = set(mol_smiles)
 
     print(
-        "Pathway finder started, " "total number of reactions in network",
+        "Pathway finder started, total number of reactions in network",
         len(data),
     )
 
@@ -1394,7 +1394,7 @@ def pathway_ranking(
     max_rxn_thermo_change=15,
 ):
     if not starters or not target:
-        raise Exception("Starters and target are" " needed to rank pathways")
+        raise Exception("Starters and target are needed to rank pathways")
 
     print(f"Job name: {job_name}")
     print("Job type: pathway ranking")
