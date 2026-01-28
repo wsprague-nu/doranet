@@ -1049,6 +1049,9 @@ class Recipe:
             return True
         return other.reactants < self.reactants
 
+    def __hash__(self) -> int:
+        return hash(dataclasses.astuple(self))
+
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -2499,6 +2502,9 @@ class RankValue(typing.Protocol):
             Whether `self` is equivalent to `other`.
         """
 
+    @abc.abstractmethod
+    def __hash__(self) -> int: ...
+
 
 class SizedTuple(tuple[typing.Optional[RankValue], ...]):
     __slots__ = ()
@@ -2523,6 +2529,9 @@ class SizedTuple(tuple[typing.Optional[RankValue], ...]):
         raise NotImplementedError(
             f"Comparison between {type(self)} and {type(other)} not supported."
         )
+
+    def __hash__(self) -> int:
+        return super().__hash__()
 
 
 class RecipeRanker(abc.ABC, typing.Generic[T_rank]):
@@ -2916,3 +2925,6 @@ class MolecularFormula:
 
     def __add__(self, other: "MolecularFormula") -> "MolecularFormula":
         return MolecularFormula(self._internalarray + other._internalarray)
+
+    def __hash__(self) -> int:
+        return hash(dataclasses.astuple(self))
