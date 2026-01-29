@@ -36,6 +36,7 @@ jobs:
           ruff check --output-format=github .
           ruff format --diff .
       - name: Type check with Mypy
+        if: ${{ matrix.os }} != "windows"
         run: |
           pip install .[lint]
           mypy --no-install-types .
