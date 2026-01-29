@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = 'doranet'
-version = '0.5.6a1'
+version = '0.5.7a1'
 authors = [
     { name='William Sprague', email='wsprague@u.northwestern.edu' },
     { name='Quan Zhang', email='quanzhang@northwestern.edu' },
@@ -28,7 +28,7 @@ dependencies = [
     "pillow",
     "pyarrow",
     "pypdf",
-    "rdkit<=2023.9.5",
+    "rdkit",
     "scipy",
 ]
 
@@ -44,8 +44,8 @@ draw = [
     "pygraphviz",
 ]
 lint = [
-    "mypy",
-    "ruff",
+    "mypy==1.17",
+    "ruff==0.14",
 ]
 profile = [
     "scalene",

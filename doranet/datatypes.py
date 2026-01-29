@@ -87,7 +87,7 @@ class MolDatBasicV1(interfaces.MolDatRDKit):
 
     @property
     def rdkitmol(self) -> rdkit.Chem.rdchem.Mol:
-        return rdkit.Chem.rdchem.Mol(self._blob)
+        return rdkit.Chem.rdchem.Mol(self._blob)  # type: ignore[call-overload,unused-ignore]
 
     @property
     def smiles(self) -> str:
@@ -283,7 +283,7 @@ class OpDatBasic(interfaces.OpDatRDKit):
         self, mols: collections.abc.Iterable[rdkit.Chem.rdchem.Mol]
     ) -> collections.abc.Iterable[rdkit.Chem.rdchem.Mol]:
         try:
-            return self._rdkitrxn.RunReactants(mols, maxProducts=0)
+            return self._rdkitrxn.RunReactants(tuple(mols), maxProducts=0)
         except Exception as err:
             print(type(err))
             raise err

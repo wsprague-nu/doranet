@@ -2,6 +2,7 @@
 
 import collections.abc
 import dataclasses
+import math
 import re
 import time
 import typing
@@ -104,7 +105,7 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
         dH = recipe.reaction_meta[self.dH_key]
         if dH == "No_Thermo":
             return True
-        if dH == float("nan"):
+        if math.isnan(dH):
             return False
         return dH < self.max_dH
 
