@@ -446,10 +446,10 @@ def generate_network(
             f"Invalid ruleset '{ruleset}'. "
             f"Available rulesets: {list(AVAILABLE_RULESETS.keys())}"
         )
-    
+
     ruleset_path = AVAILABLE_RULESETS[ruleset]
     bio_rules_local = pd.read_csv(ruleset_path, sep="\t")
-    
+
     starters = get_smiles_from_file(starters)
     targets = get_smiles_from_file(targets)
 
