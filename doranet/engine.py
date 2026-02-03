@@ -250,11 +250,14 @@ class NetworkEngineBasic(interfaces.NetworkEngine):
         with gzip.open(filepath, "r") as fin:
             md = xml.dom.minidom
             data = md.parse(fin).documentElement
+            assert data is not None
             version = int(data.getAttribute("version"))
             if version == 0:
                 subversion = int(data.getAttribute("subversion"))
                 if subversion == 0:
-                    bvals = base64.urlsafe_b64decode(data.firstChild.data)
+                    fc = data.firstChild
+                    fc_data = fc.data  # type: ignore[union-attr]
+                    bvals = base64.urlsafe_b64decode(fc_data)
                     network: interfaces.ChemNetwork = pickle.loads(bvals)
                     return network
                 else:

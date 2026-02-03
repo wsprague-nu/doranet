@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [macos, ubuntu, windows]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +36,7 @@ jobs:
           ruff check --output-format=github .
           ruff format --diff .
       - name: Type check with Mypy
+        if: ${{ matrix.os != 'windows' }}
         run: |
           pip install .[lint]
           mypy --no-install-types .

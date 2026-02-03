@@ -119,7 +119,7 @@ class MassWasteCalculator(metadata.MolPropertyFromRxnCalc[float]):
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True)
-class MolWeightCalculator(metadata.MolPropertyCalc[int]):
+class MolWeightCalculator(metadata.MolPropertyCalc[float]):
     weight_key: collections.abc.Hashable
 
     @property
@@ -131,14 +131,14 @@ class MolWeightCalculator(metadata.MolPropertyCalc[int]):
         return interfaces.MetaKeyPacket()
 
     @property
-    def resolver(self) -> metadata.MetaDataResolverFunc[int]:
+    def resolver(self) -> metadata.MetaDataResolverFunc[float]:
         return metadata.TrivialMetaDataResolverFunc
 
     def __call__(
         self,
         data: interfaces.DataPacketE[interfaces.MolDatBase],
-        prev_value: typing.Optional[int] = None,
-    ) -> typing.Optional[int]:
+        prev_value: typing.Optional[float] = None,
+    ) -> typing.Optional[float]:
         if prev_value is not None:
             return prev_value
         item = data.item
