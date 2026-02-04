@@ -62,7 +62,14 @@ def neutralise_charges(smiles):
     return new_smiles
 
 
-bio_rules_path = Path(__file__).parent / "JN3604IMT_rules.tsv"
+# Available enzymatic rulesets
+AVAILABLE_RULESETS = {
+    "JN3604IMT": Path(__file__).parent / "JN3604IMT_rules.tsv",
+    "JN1224MIN": Path(__file__).parent / "JN1224MIN_rules.tsv",
+}
+DEFAULT_RULESET = "JN3604IMT"
+
+bio_rules_path = AVAILABLE_RULESETS[DEFAULT_RULESET]
 cofactors_path = Path(__file__).parent / "all_cofactors.tsv"
 
 bio_rules = pd.read_csv(bio_rules_path, sep="\t")
@@ -428,15 +435,27 @@ def generate_network(
     max_atoms=None,  # {"C": 20}
     allow_multiple_reactants=False,
     targets=None,  # string or list, set, etc.
+    ruleset="JN3604IMT",  # "JN3604IMT" or "JN1224MIN"
 ):
     if not starters:
         raise Exception("At least one starter is needed to generate a network")
+
+    # Validate and load the specified ruleset
+    if ruleset not in AVAILABLE_RULESETS:
+        raise ValueError(
+            f"Invalid ruleset '{ruleset}'. "
+            f"Available rulesets: {list(AVAILABLE_RULESETS.keys())}"
+        )
+
+    ruleset_path = AVAILABLE_RULESETS[ruleset]
+    bio_rules_local = pd.read_csv(ruleset_path, sep="\t")
 
     starters = get_smiles_from_file(starters)
     targets = get_smiles_from_file(targets)
 
     print(f"Job name: {job_name}")
     print(f"Job type: enzymatic network expansion {direction}")
+    print(f"Ruleset: {ruleset} ({ruleset_path.name})")
     print("Job started on:", datetime.now())
     start_time = time.time()
 
@@ -464,9 +483,9 @@ def generate_network(
                 meta={"SMILES": Chem.MolToSmiles(Chem.MolFromSmiles(smiles))},
             )
 
-    for idx, x in enumerate(bio_rules["SMARTS"]):
-        reas_types = bio_rules["Reactants"][idx].split(";")
-        pros_types = bio_rules["Products"][idx].split(";")
+    for idx, x in enumerate(bio_rules_local["SMARTS"]):
+        reas_types = bio_rules_local["Reactants"][idx].split(";")
+        pros_types = bio_rules_local["Products"][idx].split(";")
 
         if excluded_cofactors is None or (
             not set(excluded_cofactors) & set(reas_types)
@@ -479,10 +498,10 @@ def generate_network(
                     drop_errors=True,
                 ),
                 meta={
-                    "name": bio_rules["Name"][idx],
-                    "Reactants": bio_rules["Reactants"][idx],
-                    "Products": bio_rules["Products"][idx],
-                    "Comments": bio_rules["Comments"][idx],
+                    "name": bio_rules_local["Name"][idx],
+                    "Reactants": bio_rules_local["Reactants"][idx],
+                    "Products": bio_rules_local["Products"][idx],
+                    "Comments": bio_rules_local["Comments"][idx],
                     "SMARTS": x,
                     "reactants_stoi": (1,) * len(x.split(">>")[0].split(".")),
                     "products_stoi": (1,) * len(x.split(">>")[1].split(".")),
