@@ -91,9 +91,8 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Rxn_dH_Filter(metadata.ReactionFilterBase):
-    __slots__ = ("max_dH", "dH_key")
     max_dH: float
     dH_key: collections.abc.Hashable
 
@@ -115,7 +114,7 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Ring_Issues_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if recipe.operator.meta is None:
@@ -178,7 +177,7 @@ class Ring_Issues_Filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         rea_aro_ring_num = 0
@@ -228,7 +227,7 @@ class Retro_Not_Aromatic_Filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Check_balance_filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if (
@@ -287,7 +286,7 @@ class Check_balance_filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Cross_Reaction_Filter(interfaces.RecipeFilter):
     # no rea1 + rea2 or pure helper rxns. rea1 + rea1 or rea1 + helper ok
     # __slots__ = "coreactants"
@@ -306,7 +305,7 @@ class Cross_Reaction_Filter(interfaces.RecipeFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Enol_filter_forward(metadata.ReactionFilterBase):
     # if an enol is in reactants, only allow tautomerization rxn
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
@@ -335,7 +334,7 @@ class Enol_filter_forward(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Enol_filter_retro(metadata.ReactionFilterBase):
     # if an enol is in reactants, only allow tautomerization rxn
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
@@ -364,7 +363,7 @@ class Enol_filter_retro(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Allowed_Elements_Filter(metadata.ReactionFilterBase):
     # only allow reactions with specified elements in reactants.
     # does not check hydrogen

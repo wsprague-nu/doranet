@@ -10,10 +10,8 @@ from doranet import interfaces, metadata
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class GenerationCalculator(metadata.MolPropertyFromRxnCalc[int]):
-    __slots__ = ("gen_key",)
-
     gen_key: collections.abc.Hashable
 
     @property

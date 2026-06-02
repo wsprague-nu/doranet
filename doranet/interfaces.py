@@ -988,27 +988,6 @@ class Recipe:
     operator: OpIndex
     reactants: tuple[MolIndex, ...]
 
-    def __eq__(self, other: object) -> bool:
-        """
-        Compare the equality of recipes.
-
-        Parameters
-        ----------
-        other : object
-            Object to be compared.
-
-        Returns
-        -------
-        bool
-            If other is a Recipe, return equality of attributes between it and
-            self.  If other is not a Recipe, return False.
-        """
-        return (
-            isinstance(other, Recipe)
-            and self.operator == other.operator
-            and self.reactants == other.reactants
-        )
-
     def __lt__(self, other: "Recipe") -> bool:
         """
         Compare Recipes for sorting purposes.
@@ -1049,9 +1028,6 @@ class Recipe:
         elif other.operator < self.operator:
             return True
         return other.reactants < self.reactants
-
-    def __hash__(self) -> int:
-        return hash(dataclasses.astuple(self))
 
 
 @typing.final
@@ -2768,7 +2744,7 @@ class PriorityQueueStrategy(abc.ABC):
             job to evaluate at once.  Affects how recipes are bundled.  Value
             of `None` indicates no limit on number of recipes.  Tune when using
             parallel processes.
-        save_unreactive : bool (default: False)
+        save_unreactive : bool (default: True)
             Store reactions rejected by reaction_plan in the network.  If
             False, reactions which are rejected will simply be deleted, along
             with their products, instead of stored.  Depending on the

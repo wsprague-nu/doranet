@@ -1362,6 +1362,13 @@ op_retro_smarts = (
         (1,),
         kekulize_flag=True,
     ),
+    # Esterification of Amides
+    OperatorSmarts(
+        "Esterification of Amides",
+        "[C+0:1](=[O+0:2])!@[O+0:5][C,c;!$(*=O);+0:4].[N;+0!H0:3]>>[*:1](=[*:2])[*:3].[*:4][*:5]",
+        (1, 1),
+        (1, 1),
+    ),
     # Ester Reduction
     # To Aldehydes
     OperatorSmarts(
@@ -1415,6 +1422,12 @@ op_retro_smarts = (
         (1, 1),
         ring_issue=True,
         Retro_Not_Aromatic=True,
+    ),
+    OperatorSmarts(
+        "Acetoacetylation via diketenes",
+        "[O,N;+0H0:1]-[C+0:3](=[O+0:2])-[C+0:4]-[C+0:5](-[C+0;!H0:6])=[O+0:7]>>[*:1].[*:2]=[*:3]1[*:4][*:5](=[*:6])[*:7]1",
+        (1, 1),
+        (1,),
     ),
     # Benzene and Derivatives #############################################
     # Benzene Hydrogenation

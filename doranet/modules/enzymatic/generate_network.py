@@ -130,7 +130,7 @@ class SMILESCalculator(metadata.MolPropertyCalc[str]):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Reaction_Type_Filter(interfaces.RecipeFilter):
     # used for bio rxns, check reactants
     Allow_multi_reactants: bool
@@ -175,7 +175,7 @@ class Reaction_Type_Filter(interfaces.RecipeFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Product_Filter(metadata.ReactionFilterBase):
     # used for bio rxns, check if product type is correct.
     # Filter out radicals and fragments
@@ -218,7 +218,7 @@ class Product_Filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Check_balance_filter(metadata.ReactionFilterBase):
     # used for bio rxns, check balance
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
@@ -344,9 +344,8 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Rxn_dH_Filter(metadata.ReactionFilterBase):
-    __slots__ = ("max_dH", "dH_key")
     max_dH: float
     dH_key: collections.abc.Hashable
 

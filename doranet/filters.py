@@ -84,7 +84,7 @@ from doranet import interfaces, metadata
 #         return True
 
 
-# @dataclasses.dataclass(frozen=True)
+# @dataclasses.dataclass(frozen=True, slots=True)
 # class CoreactantUIDPreFilter(interfaces.UIDPreFilter):
 #     coreactants: collections.abc.Container[interfaces.Identifier]
 
@@ -97,9 +97,8 @@ from doranet import interfaces, metadata
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterMetaVal(interfaces.MolFilter):
-    __slots__ = ("key", "val")
     key: collections.abc.Hashable
     val: typing.Any
 
@@ -121,9 +120,8 @@ class MolFilterMetaVal(interfaces.MolFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class MolFilterMetaExist(interfaces.MolFilter):
-    __slots__ = ("key",)
     key: collections.abc.Hashable
 
     def __call__(
@@ -217,9 +215,8 @@ class BundleFilterCoreactants(interfaces.BundleFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class CoreactantFilter(interfaces.RecipeFilter):
-    __slots__ = ("coreactants",)
     coreactants: collections.abc.Container[interfaces.MolIndex]
 
     def __call__(self, recipe: interfaces.RecipeExplicit) -> bool:
@@ -231,10 +228,8 @@ class CoreactantFilter(interfaces.RecipeFilter):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class GenerationFilter(metadata.ReactionFilterBase):
-    __slots__ = ("max_gens", "gen_key")
-
     max_gens: int
     gen_key: collections.abc.Hashable
 

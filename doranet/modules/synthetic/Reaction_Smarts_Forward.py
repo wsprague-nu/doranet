@@ -1306,6 +1306,13 @@ op_smarts = (
         (1,),
         (1, 1),
     ),
+    # Esterification of Amides
+    OperatorSmarts(
+        "Esterification of Amides",
+        "[C+0:1](=[O+0:2])[N;+0:3].[C,c;!$(*=O);+0:4][O+0H:5]>>[*:1](=[*:2])[*:5][*:4].[*:3]",
+        (1, 1),
+        (1, 1),
+    ),
     # Ester Reduction
     # To Aldehydes
     OperatorSmarts(
@@ -1353,6 +1360,12 @@ op_smarts = (
     OperatorSmarts(
         "[2+2] Cycloaddition",
         "[C+0:1]=[C+0:2]=[O+0:3].[C!$(*(=O)=O)!$(*-O)+0:4]=[O,N;+0:5]>>[*:1]1[*:2](=[*:3])[*:5][*:4]1",
+        (1, 1),
+        (1,),
+    ),
+    OperatorSmarts(
+        "Acetoacetylation via diketenes",
+        "[O,N;+0!H0:1].[O+0:2]=[C+0:3]1[C+0:4][C+0:5](=[C+0:6])[O+0:7]1>>[*:1][*:3](=[*:2])[*:4][*:5]([*:6])=[*:7]",
         (1, 1),
         (1,),
     ),

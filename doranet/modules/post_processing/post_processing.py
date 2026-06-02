@@ -1141,9 +1141,8 @@ class Chem_Rxn_dH_Calculator(metadata.RxnPropertyCalc[float]):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Rxn_dH_Filter(metadata.ReactionFilterBase):
-    __slots__ = ("max_dH", "dH_key")
     max_dH: float
     dH_key: collections.abc.Hashable
 
@@ -1165,7 +1164,7 @@ class Rxn_dH_Filter(metadata.ReactionFilterBase):
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Ring_Issues_Filter(metadata.ReactionFilterBase):
     def __call__(self, recipe: interfaces.ReactionExplicit) -> bool:
         if (
