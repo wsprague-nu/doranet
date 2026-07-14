@@ -267,7 +267,8 @@ pathway_ranking(
                                       #  "atom_economy": 1,
                                       #  "salt_score": 0,
                                       #  "in_reaxys": 0,
-                                      #  "coolness": 0}
+                                      #  "coolness": 0,
+                                      #  "profit": 0},
     num_process=1,                    # Number of CPU processes
     reaxys_result_name=None,          # CSV filename.
     job_name="default_job_name",

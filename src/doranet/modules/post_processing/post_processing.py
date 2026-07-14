@@ -187,7 +187,10 @@ def pretreat_networks(
             reactants = rxn.reactants
             products = rxn.products
             operator = rxn.operator
-            reaction = dn.interfaces.Reaction(operator, reactants, products)
+            multiplicity = rxn.mult
+            reaction = dn.interfaces.Reaction(
+                operator, reactants, products, multiplicity
+            )
             reaction_i = n.rxns.i(reaction)
             reaction_meta = n.rxns.meta(reaction_i)
             thermo_value = reaction_meta["dH"]
